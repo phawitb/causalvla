@@ -1,0 +1,16 @@
+(lerobot2) phawit@Phawits-M2 lerobot % lerobot-info
+- LeRobot version: 0.6.1
+- Platform: macOS-26.5.2-arm64-arm-64bit
+- Python version: 3.12.13
+- Huggingface Hub version: 1.26.0
+- Transformers version: N/A
+- Datasets version: N/A
+- Numpy version: 2.2.6
+- FFmpeg version: 8.1.2
+- PyTorch version: 2.11.0
+- Torchcodec version: N/A
+- Is PyTorch built with CUDA support?: False
+- Cuda version: N/A
+- GPU model: N/A
+- Using GPU in script?: <fill in>
+- lerobot scripts: ['lerobot-annotate', 'lerobot-calibrate', 'lerobot-dataset-viz', 'lerobot-edit-dataset', 'lerobot-eval', 'lerobot-find-cameras', 'lerobot-find-joint-limits', 'lerobot-find-port', 'lerobot-imgtransform-viz', 'lerobot-info', 'lerobot-record', 'lerobot-replay', 'lerobot-rollout', 'lerobot-setup-can', 'lerobot-setup-motors', 'lerobot-teleoperate', 'lerobot-train', 'lerobot-train-tokenizer']

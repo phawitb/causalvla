@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CausalVLA — Augmented Dataset Preview</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<style>
+  :root {
+    --bg: #ffffff; --surface: #f8f9fb; --border: #d8dde4;
+    --text: #1a1a2e; --text-dim: #6b7280; --accent: #2563eb;
+    --green: #16a34a; --orange: #ea580c; --purple: #7c3aed;
+    --sidebar-w: 200px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Thai', sans-serif;
+    background: var(--bg); color: var(--text); line-height:1.5; font-size:14px;
+    display: flex; flex-direction: column; height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    background: var(--surface); border-bottom:1px solid var(--border);
+    padding:12px 24px; display:flex; align-items:center; gap:12px;
+    flex-shrink: 0;
+  }
+  .header h1 { font-size:18px; font-weight:800; color:var(--accent); }
+  .header h1 span { color:var(--text); }
+  .header .badge {
+    font-size:11px; font-weight:700; background:#ffedd5; color:#c2410c;
+    padding:2px 10px; border-radius:12px;
+  }
+  .header .subtitle { font-size:13px; font-weight:600; color:var(--text-dim); }
+  .nav-tab {
+    padding:6px 16px; font-size:13px; font-weight:600; color:var(--text-dim);
+    text-decoration:none; border-bottom:2px solid transparent;
+    transition:all 0.15s;
+  }
+  .nav-tab:hover { color:var(--text); }
+  .nav-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+
+  /* Layout */
+  .layout { display:flex; flex:1; overflow:hidden; }
+
+  /* Sidebar */
+  .sidebar {
+    width: var(--sidebar-w); border-right:1px solid var(--border);
+    background: var(--surface); overflow-y:auto; flex-shrink:0;
+  }
+  .sidebar h3 {
+    padding:12px 16px 8px; font-size:11px; text-transform:uppercase;
+    letter-spacing:0.5px; color:var(--text-dim); font-weight:700;
+  }
+  .ep-item {
+    padding:10px 16px; cursor:pointer; border-left:3px solid transparent;
+    transition: all 0.15s; font-size:13px; font-weight:500;
+  }
+  .ep-item:hover { background:#e8edf3; }
+  .ep-item.active {
+    background:#dbeafe; border-left-color:var(--accent);
+    color:var(--accent); font-weight:700;
+  }
+  .ep-item .ep-frames {
+    font-size:11px; color:var(--text-dim); font-weight:400;
+  }
+
+  /* Main content */
+  .main { flex:1; overflow-y:auto; padding:20px 24px; }
+
+  /* Section titles */
+  .section-title {
+    font-size:13px; font-weight:700; color:var(--text-dim);
+    text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .section-title::before {
+    content:''; width:8px; height:8px; border-radius:50%;
+    display:inline-block;
+  }
+  .section-title.camera::before { background:var(--purple); }
+  .section-title.params-title::before { background:var(--orange); }
+  .section-title.graph-title::before { background:var(--green); }
+
+  /* Video comparison — all 4 videos in one row */
+  .videos-section { margin-bottom:24px; }
+  .videos-grid {
+    display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px;
+  }
+  .video-card {
+    border:1px solid var(--border); border-radius:8px; overflow:hidden;
+  }
+  .video-card .card-label {
+    padding:5px 10px; font-size:11px; font-weight:700;
+    border-bottom:1px solid var(--border);
+  }
+  .video-card.original .card-label { background:#dbeafe; color:#1d4ed8; }
+  .video-card.augmented .card-label { background:#ffedd5; color:#c2410c; }
+  .video-card video { width:100%; display:block; background:#000; }
+
+  /* Task instruction */
+  .task-instruction {
+    margin-bottom:16px; padding:10px 14px; background:#eff6ff;
+    border:1px solid #bfdbfe; border-radius:8px;
+    font-size:13px; color:#1e40af; font-weight:500;
+  }
+  .task-instruction .label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#3b82f6; margin-bottom:2px; }
+
+  /* Playback controls */
+  .playback-bar {
+    display:flex; align-items:center; gap:8px; margin-bottom:20px;
+    padding:8px 12px; background:var(--surface); border:1px solid var(--border);
+    border-radius:6px; flex-wrap:wrap;
+  }
+  .play-btn {
+    padding:4px 14px; border:1px solid var(--accent); border-radius:4px;
+    background:white; cursor:pointer; font-size:12px; font-weight:600;
+    color:var(--accent); transition:all 0.15s; flex-shrink:0;
+  }
+  .play-btn:hover { background:var(--accent); color:white; }
+  .seek-bar {
+    flex:1; min-width:120px; height:6px; -webkit-appearance:none; appearance:none;
+    background:#e5e7eb; border-radius:3px; outline:none; cursor:pointer;
+  }
+  .seek-bar::-webkit-slider-thumb {
+    -webkit-appearance:none; width:14px; height:14px; border-radius:50%;
+    background:var(--accent); cursor:pointer; border:2px solid white;
+    box-shadow:0 1px 3px rgba(0,0,0,0.2);
+  }
+  .playback-bar .frame-info { font-size:12px; color:var(--text-dim); font-family:'SF Mono',monospace; flex-shrink:0; }
+
+  /* Params grid */
+  .params-section { margin-bottom:24px; }
+  .params-grid {
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));
+    gap:6px;
+  }
+  .param-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:6px; padding:6px 10px;
+  }
+  .param-card .name { font-size:10px; color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:0.3px; }
+  .param-card .value { font-size:14px; font-weight:700; font-family:'SF Mono',monospace; }
+  .param-card .value.positive { color:var(--green); }
+  .param-card .value.negative { color:var(--orange); }
+  .param-card .value.neutral { color:var(--text); }
+
+  /* Charts */
+  .charts-section { margin-bottom:24px; }
+  .chart-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+  .chart-box {
+    border:1px solid var(--border); border-radius:8px; padding:12px;
+    background:white;
+  }
+  .chart-box h4 { font-size:12px; font-weight:700; color:var(--text-dim); margin-bottom:8px; }
+  .chart-box canvas { width:100% !important; height:200px !important; }
+
+  /* Paths */
+  .paths {
+    margin-top:16px; padding:12px 16px; background:var(--surface);
+    border:1px solid var(--border); border-radius:8px; font-size:12px;
+  }
+  .paths h4 { font-size:12px; font-weight:700; margin-bottom:6px; }
+  .path-row { display:flex; gap:8px; margin:3px 0; align-items:baseline; }
+  .path-label { font-weight:700; min-width:110px; color:var(--text-dim); }
+  .path-value {
+    font-family:'SF Mono',monospace; background:#e5e7eb;
+    padding:2px 6px; border-radius:3px; word-break:break-all; font-size:11px;
+  }
+
+  .note {
+    margin-top:12px; padding:8px 12px; background:#f0fdf4;
+    border:1px solid #bbf7d0; border-radius:6px;
+    font-size:12px; color:#166534;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Causal<span>VLA</span></h1>
+  <a class="nav-tab" href="../pipeline.html" onclick="goTab(event,'planning')">Planning</a>
+  <a class="nav-tab" href="../pipeline.html" onclick="goTab(event,'mywork')">My Work</a>
+  <a class="nav-tab active" href="./">Augment Preview</a>
+  <span style="flex:1"></span>
+  <span class="badge" id="ep-count" style="background:#dbeafe;color:#1d4ed8;">...</span>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <h3>Episodes</h3>
+    <div id="ep-list"></div>
+  </div>
+  <div class="main" id="main-content">
+    <div style="color:var(--text-dim);padding:40px;text-align:center;">Loading...</div>
+  </div>
+</div>
+
+<script>
+// ── Data (loaded from JSON) ──
+let AUG_PARAMS = {};
+let EP_TASKS = {};
+
+const PARAM_LABELS = {
+  angle_deg:{name:'Rotation',unit:'deg'},
+  perspective_mag:{name:'Perspective',unit:''},
+  affine_tx:{name:'Translate X',unit:''},
+  affine_ty:{name:'Translate Y',unit:''},
+  affine_shear:{name:'Shear',unit:''},
+  affine_scale:{name:'Scale',unit:'x',neutral:1.0},
+  brightness:{name:'Brightness',unit:'x',neutral:1.0},
+  contrast:{name:'Contrast',unit:'x',neutral:1.0},
+  saturation:{name:'Saturation',unit:'x',neutral:1.0},
+  hue_shift:{name:'Hue Shift',unit:''},
+  shadow_alpha:{name:'Shadow',unit:''},
+  shadow_dir:{name:'Shadow Dir',unit:''},
+};
+
+let currentEp = 0;
+let totalEps = 0;
+let stateChart = null;
+let actionChart = null;
+
+const STATE_NAMES = ['x','y','z','rx','ry','rz','grip_l','grip_r'];
+const ACTION_NAMES = ['dx','dy','dz','drx','dry','drz','gripper'];
+const COLORS = ['#ef4444','#f97316','#eab308','#22c55e','#06b6d4','#3b82f6','#8b5cf6','#ec4899'];
+
+// ── Episode data cache (lazy loaded per-episode) ──
+const epDataCache = {};
+
+async function loadEpData(idx) {
+  const key = `ep_${idx}`;
+  if (epDataCache[key]) return epDataCache[key];
+  try {
+    const resp = await fetch(`${key}.json`);
+    if (resp.ok) {
+      epDataCache[key] = await resp.json();
+      return epDataCache[key];
+    }
+  } catch(e) {}
+  return null;
+}
+
+// ── Init ──
+async function init() {
+  // Load aug_params + task instructions (both small)
+  const [paramResp, taskResp] = await Promise.all([
+    fetch('aug_params.json'),
+    fetch('ep_tasks.json'),
+  ]);
+  AUG_PARAMS = await paramResp.json();
+  EP_TASKS = await taskResp.json();
+
+  // Build sidebar from all episodes in aug_params
+  const list = document.getElementById('ep-list');
+  const epKeys = Object.keys(AUG_PARAMS).sort((a, b) => parseInt(a.split('_')[1]) - parseInt(b.split('_')[1]));
+  totalEps = epKeys.length;
+  epKeys.forEach((key, i) => {
+    const idx = parseInt(key.split('_')[1]);
+    const level = AUG_PARAMS[key]?.aug_level || 'training';
+    const el = document.createElement('div');
+    el.className = 'ep-item' + (i === 0 ? ' active' : '');
+    el.innerHTML = `Ep ${idx}<div class="ep-frames"><span style="color:var(--orange);font-weight:600;">${level}</span></div>`;
+    el.onclick = () => selectEp(idx);
+    el.dataset.ep = idx;
+    list.appendChild(el);
+  });
+
+  document.getElementById('ep-count').textContent = totalEps + ' episodes';
+  await selectEp(0);
+}
+
+async function selectEp(idx) {
+  currentEp = idx;
+  document.querySelectorAll('.ep-item').forEach(el => {
+    el.className = 'ep-item' + (parseInt(el.dataset.ep) === idx ? ' active' : '');
+  });
+  // Lazy load episode data
+  const epData = await loadEpData(idx);
+  renderEp(idx, epData);
+}
+
+function valClass(key, val) {
+  if (typeof val === 'string') return 'neutral';
+  const info = PARAM_LABELS[key] || {};
+  const neutral = info.neutral || 0;
+  if (Math.abs(val - neutral) < 0.005) return 'neutral';
+  return val > neutral ? 'positive' : 'negative';
+}
+
+function renderEp(idx, epData) {
+  const params = AUG_PARAMS[`ep_${idx}`];
+  const main = document.getElementById('main-content');
+
+  // ── Task instruction ──
+  const taskText = EP_TASKS[`ep_${idx}`] || '';
+  let taskHTML = taskText ? `<div class="task-instruction"><div class="label">Task Instruction</div>${taskText}</div>` : '';
+
+  // ── Params ──
+  const level = params.aug_level || 'training';
+  let paramsHTML = `<div class="params-section"><div class="section-title params-title">Augmentation Parameters &mdash; Level: <span style="color:var(--orange);font-weight:700;text-transform:capitalize;">${level}</span> (per-episode fixed)</div><div class="params-grid">`;
+  for (const [key, val] of Object.entries(params)) {
+    if (key === 'aug_level') continue;
+    const info = PARAM_LABELS[key] || {name:key, unit:''};
+    const display = typeof val === 'number' ? val.toFixed(3) : val;
+    const cls = valClass(key, val);
+    paramsHTML += `<div class="param-card"><div class="name">${info.name}</div><div class="value ${cls}">${display}${info.unit ? ' '+info.unit : ''}</div></div>`;
+  }
+  paramsHTML += '</div></div>';
+
+  const hasData = !!epData;
+
+  // ── Playback bar with seekbar ──
+  const duration = hasData ? (epData.num_frames / epData.fps) : 10;
+  let playHTML = `<div class="playback-bar">
+    <button class="play-btn" id="btn-play" onclick="togglePlay()">Play</button>
+    <button class="play-btn" onclick="syncSeek(0)">Reset</button>
+    <input type="range" class="seek-bar" id="seek-bar" min="0" max="${duration}" step="0.1" value="0" oninput="onSeek(this.value)">
+    <span class="frame-info" id="frame-info">${hasData ? epData.num_frames + ' frames @ ' + epData.fps + ' fps' : ''}</span>
+  </div>`;
+
+  // ── Videos (all 4 in one row: top-orig, top-aug, wrist-orig, wrist-aug) ──
+  let videosHTML = '';
+  if (hasData) {
+    videosHTML = `<div class="videos-section">
+      <div class="section-title camera">Top Camera &amp; Wrist Camera — Original vs Augmented</div>
+      <div class="videos-grid">
+        <div class="video-card original">
+          <div class="card-label">Top — Original</div>
+          <video id="vid-image-orig" src="ep${idx}_image_orig.mp4" muted loop preload="auto"></video>
+        </div>
+        <div class="video-card augmented">
+          <div class="card-label">Top — Augmented</div>
+          <video id="vid-image-aug" src="ep${idx}_image_aug.mp4" muted loop preload="auto"></video>
+        </div>
+        <div class="video-card original">
+          <div class="card-label">Wrist — Original</div>
+          <video id="vid-wrist_image-orig" src="ep${idx}_wrist_image_orig.mp4" muted loop preload="auto"></video>
+        </div>
+        <div class="video-card augmented">
+          <div class="card-label">Wrist — Augmented</div>
+          <video id="vid-wrist_image-aug" src="ep${idx}_wrist_image_aug.mp4" muted loop preload="auto"></video>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ── Charts ──
+  let chartsHTML = '';
+  if (hasData) {
+    chartsHTML = `<div class="charts-section">
+      <div class="section-title graph-title">Robot State & Action</div>
+      <div class="chart-row">
+        <div class="chart-box"><h4>State (8-dim)</h4><canvas id="chart-state"></canvas></div>
+        <div class="chart-box"><h4>Action (7-dim)</h4><canvas id="chart-action"></canvas></div>
+      </div>
+    </div>`;
+  }
+
+  // ── Paths ──
+  let pathsHTML = `<div class="paths"><h4>Dataset Paths</h4>
+    <div class="path-row"><span class="path-label">Original:</span><span class="path-value">lerobot/libero_spatial_image (HuggingFace Hub)</span></div>
+    <div class="path-row"><span class="path-label">Augmented:</span><span class="path-value">/Users/phawit/Projects/CausalVLA/lerobot/datasets/libero_spatial_augmented/</span></div>
+    <div class="path-row"><span class="path-label">Script:</span><span class="path-value">/Users/phawit/Projects/CausalVLA/scripts/augment_dataset.py</span></div>
+  </div>`;
+
+  let noteHTML = `<div class="note"><strong>Note:</strong> Geometric + photometric params are fixed per episode. Gaussian noise (sigma=0.03) and blur (20% prob) vary per frame.${hasData ? ' Videos play at ' + epData.fps + ' fps (real-time).' : ''}</div>`;
+
+  main.innerHTML = taskHTML + paramsHTML + playHTML + videosHTML + chartsHTML + pathsHTML + noteHTML;
+
+  // Render charts (only if data available)
+  if (hasData) renderCharts(epData);
+}
+
+function renderCharts(epData) {
+  const labels = epData.timestamps.map(t => t.toFixed(1));
+
+  // Destroy old charts
+  if (stateChart) stateChart.destroy();
+  if (actionChart) actionChart.destroy();
+
+  // State chart
+  const stateDatasets = STATE_NAMES.map((name, i) => ({
+    label: name,
+    data: epData.state.map(s => s[i]),
+    borderColor: COLORS[i],
+    backgroundColor: COLORS[i] + '20',
+    borderWidth: 1.5,
+    pointRadius: 0,
+    tension: 0.3,
+  }));
+  stateChart = new Chart(document.getElementById('chart-state'), {
+    type: 'line',
+    data: { labels, datasets: stateDatasets },
+    options: chartOptions('Time (s)', 'Value'),
+  });
+
+  // Action chart
+  const actionDatasets = ACTION_NAMES.map((name, i) => ({
+    label: name,
+    data: epData.action.map(a => a[i]),
+    borderColor: COLORS[i],
+    backgroundColor: COLORS[i] + '20',
+    borderWidth: 1.5,
+    pointRadius: 0,
+    tension: 0.3,
+  }));
+  actionChart = new Chart(document.getElementById('chart-action'), {
+    type: 'line',
+    data: { labels, datasets: actionDatasets },
+    options: chartOptions('Time (s)', 'Value'),
+  });
+}
+
+function chartOptions(xLabel, yLabel) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } },
+      annotation: {
+        annotations: {
+          playhead: {
+            type: 'line',
+            xMin: 0, xMax: 0,
+            borderColor: '#ef4444',
+            borderWidth: 2,
+            borderDash: [4, 2],
+            label: { display: false },
+          }
+        }
+      }
+    },
+    scales: {
+      x: { title: { display: true, text: xLabel, font: { size: 10 } }, ticks: { maxTicksLimit: 10, font: { size: 9 } } },
+      y: { title: { display: true, text: yLabel, font: { size: 10 } }, ticks: { font: { size: 9 } } },
+    },
+  };
+}
+
+// ── Video sync playback ──
+function getAllVideos() {
+  return document.querySelectorAll('video');
+}
+
+let playing = false;
+let rafId = null;
+
+function togglePlay() {
+  const videos = getAllVideos();
+  if (playing) {
+    videos.forEach(v => v.pause());
+    playing = false;
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    document.getElementById('btn-play').textContent = 'Play';
+  } else {
+    const t = videos[0] ? videos[0].currentTime : 0;
+    videos.forEach(v => { v.currentTime = t; v.play(); });
+    playing = true;
+    document.getElementById('btn-play').textContent = 'Pause';
+    startPlayheadLoop();
+  }
+}
+
+function syncSeek(time) {
+  const videos = getAllVideos();
+  videos.forEach(v => { v.pause(); v.currentTime = time; });
+  playing = false;
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  const btn = document.getElementById('btn-play');
+  if (btn) btn.textContent = 'Play';
+  const bar = document.getElementById('seek-bar');
+  if (bar) bar.value = time;
+  updatePlayhead(time);
+}
+
+function onSeek(val) {
+  const t = parseFloat(val);
+  const videos = getAllVideos();
+  videos.forEach(v => { v.currentTime = t; });
+  updatePlayhead(t);
+}
+
+function updatePlayhead(currentTime) {
+  const epData = epDataCache[`ep_${currentEp}`];
+  if (!epData) return;
+  // Find the closest label index for this time
+  const timeLabel = currentTime.toFixed(1);
+  const idx = epData.timestamps.findIndex(t => t.toFixed(1) === timeLabel);
+  const pos = idx >= 0 ? idx : Math.round(currentTime * epData.fps);
+
+  [stateChart, actionChart].forEach(chart => {
+    if (!chart) return;
+    const ann = chart.options.plugins.annotation.annotations.playhead;
+    ann.xMin = pos;
+    ann.xMax = pos;
+    chart.update('none');
+  });
+
+  // Update seekbar + frame info
+  const bar = document.getElementById('seek-bar');
+  if (bar) bar.value = currentTime;
+  const info = document.getElementById('frame-info');
+  if (info) {
+    const frame = Math.min(Math.round(currentTime * epData.fps), epData.num_frames - 1);
+    info.textContent = `Frame ${frame} / ${epData.num_frames - 1}  (${currentTime.toFixed(1)}s)`;
+  }
+}
+
+function startPlayheadLoop() {
+  function tick() {
+    const vid = document.getElementById('vid-image-orig');
+    if (vid && playing) {
+      updatePlayhead(vid.currentTime);
+      rafId = requestAnimationFrame(tick);
+    }
+  }
+  rafId = requestAnimationFrame(tick);
+}
+
+function goTab(e, tab) {
+  e.preventDefault();
+  window.location.href = `../pipeline.html#tab=${tab}`;
+}
+
+init();
+</script>
+</body>
+</html>

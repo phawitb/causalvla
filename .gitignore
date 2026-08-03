@@ -1,0 +1,26 @@
+# Large data / generated assets
+augment_preview/*.mp4
+augment_preview/*.json
+augment_preview/*.png
+outputs/
+
+# LeRobot is a submodule / cloned separately
+lerobot/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Env
+.env
+*.log

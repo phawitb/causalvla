@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CausalVLA — Experimental Development Pipeline</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f8f9fb;
+    --surface2: #f0f2f5;
+    --border: #d8dde4;
+    --text: #1a1a2e;
+    --text-dim: #6b7280;
+    --accent: #2563eb;
+    --accent2: #16a34a;
+    --accent3: #7c3aed;
+    --accent4: #ea580c;
+    --accent5: #db2777;
+    --red: #dc2626;
+    --yellow: #ca8a04;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.03);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Thai', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* ================================================================ */
+  /*  TABS                                                            */
+  /* ================================================================ */
+  .tab-bar {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 52px; background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 24px; z-index: 200;
+    box-shadow: var(--shadow);
+  }
+  .tab-bar .brand {
+    font-size: 17px; font-weight: 800; color: var(--accent);
+    margin-right: 32px; letter-spacing: -0.5px;
+  }
+  .tab-bar .brand span { color: var(--text); }
+  .tab-btn {
+    padding: 14px 20px; font-size: 14px; font-weight: 600;
+    color: var(--text-dim); cursor: pointer;
+    border: none; background: none;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s; position: relative; top: 1px;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ================================================================ */
+  /*  SIDEBAR (inside Planning tab)                                   */
+  /* ================================================================ */
+  .sidebar {
+    position: fixed; top: 52px; left: 0;
+    width: 260px; height: calc(100vh - 52px);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto; padding: 20px 0;
+    z-index: 100;
+  }
+  .sidebar nav a {
+    display: block; padding: 7px 18px;
+    color: var(--text-dim); text-decoration: none;
+    font-size: 13px; transition: all 0.15s;
+    border-left: 3px solid transparent;
+  }
+  .sidebar nav a:hover, .sidebar nav a.active {
+    color: var(--accent); background: rgba(37,99,235,0.05);
+    border-left-color: var(--accent);
+  }
+  .sidebar nav .section-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--text-dim);
+    padding: 16px 18px 6px; opacity: 0.7;
+  }
+  .phase-label {
+    display: inline-block;
+    font-size: 10px; font-weight: 700;
+    padding: 1px 6px; border-radius: 4px;
+    margin-right: 5px; min-width: 18px; text-align: center;
+  }
+  .p1 { background: #dbeafe; color: #1d4ed8; }
+  .p2 { background: #dcfce7; color: #15803d; }
+  .p3 { background: #ede9fe; color: #6d28d9; }
+  .p4 { background: #ffedd5; color: #c2410c; }
+  .p5 { background: #fce7f3; color: #be185d; }
+  .p6 { background: #fef9c3; color: #a16207; }
+
+  /* ================================================================ */
+  /*  MAIN CONTENT                                                    */
+  /* ================================================================ */
+  .planning-main {
+    margin-left: 260px; padding: 32px 56px 100px;
+    margin-top: 52px; max-width: 1060px;
+  }
+  .work-sidebar { display: none; }
+
+  /* ================================================================ */
+  /*  HERO                                                            */
+  /* ================================================================ */
+  .hero {
+    background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 50%, #faf5ff 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 44px;
+    margin-bottom: 44px; box-shadow: var(--shadow);
+  }
+  .hero h1 { font-size: 34px; font-weight: 800; letter-spacing: -1px; margin-bottom: 10px; color: var(--text); }
+  .hero h1 span { color: var(--accent); }
+  .hero .subtitle { color: var(--text-dim); font-size: 15px; margin-bottom: 18px; }
+  .hero .tags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .hero .tag {
+    padding: 4px 12px; border-radius: 20px; font-size: 12px;
+    font-weight: 600; border: 1px solid var(--border);
+    background: #fff;
+  }
+
+  /* ================================================================ */
+  /*  SECTIONS                                                        */
+  /* ================================================================ */
+  section { margin-bottom: 52px; scroll-margin-top: 80px; }
+  section > h2 {
+    font-size: 22px; font-weight: 700; margin-bottom: 20px;
+    padding-bottom: 10px; border-bottom: 2px solid var(--surface2);
+    display: flex; align-items: center; gap: 10px;
+  }
+  section > h2 .badge {
+    font-size: 12px; padding: 3px 10px; border-radius: 10px;
+    font-weight: 700;
+  }
+  h3 { font-size: 16px; font-weight: 700; margin: 24px 0 10px; color: var(--accent); }
+  h4 { font-size: 14px; font-weight: 700; margin: 18px 0 8px; color: var(--accent3); }
+  p { margin-bottom: 10px; }
+
+  /* ================================================================ */
+  /*  TABLES                                                          */
+  /* ================================================================ */
+  .table-wrap {
+    overflow-x: auto; margin: 14px 0 20px;
+    border-radius: 10px; border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead { background: var(--surface2); }
+  th {
+    padding: 10px 14px; text-align: left;
+    font-weight: 700; font-size: 12px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-dim); border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 10px 14px; border-bottom: 1px solid #eef0f3;
+    vertical-align: top; background: #fff;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8faff; }
+  td.model-ours { color: var(--accent); font-weight: 700; }
+
+  /* ================================================================ */
+  /*  CODE                                                            */
+  /* ================================================================ */
+  pre {
+    background: #f6f8fa; border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 20px;
+    overflow-x: auto; margin: 10px 0 18px;
+    font-size: 13px; line-height: 1.6;
+  }
+  code {
+    font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+    font-size: 13px; color: #1a1a2e;
+  }
+  :not(pre) > code {
+    background: #f0f2f5; padding: 2px 6px;
+    border-radius: 5px; font-size: 12px;
+    border: 1px solid #e5e7eb;
+  }
+  .code-title {
+    font-size: 12px; color: var(--text-dim); font-weight: 700;
+    margin-bottom: -6px; padding: 5px 12px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-bottom: none; border-radius: 10px 10px 0 0;
+    display: inline-block; margin-top: 10px;
+  }
+  .code-title + pre { border-radius: 0 10px 10px 10px; margin-top: 0; }
+
+  /* ================================================================ */
+  /*  CARDS                                                           */
+  /* ================================================================ */
+  .card {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: 12px; padding: 22px; margin: 14px 0;
+    box-shadow: var(--shadow);
+  }
+  .card h4 { margin-top: 0; }
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px; margin: 14px 0;
+  }
+  .card-sm {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px;
+    box-shadow: var(--shadow);
+  }
+  .card-sm h4 { margin: 0 0 6px; font-size: 14px; }
+  .card-sm p { margin: 0 0 4px; font-size: 13px; color: var(--text-dim); }
+
+  /* ================================================================ */
+  /*  STEPS (timeline)                                                */
+  /* ================================================================ */
+  .step {
+    position: relative; padding-left: 38px;
+    margin: 22px 0; padding-bottom: 8px;
+  }
+  .step::before {
+    content: ''; position: absolute; left: 12px; top: 30px;
+    bottom: -14px; width: 2px; background: var(--border);
+  }
+  .step:last-child::before { display: none; }
+  .step-num {
+    position: absolute; left: 0; top: 2px;
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 800;
+    border: 2px solid var(--accent); color: var(--accent);
+    background: #fff;
+  }
+  .step h4 { margin-top: 0; }
+
+  /* ================================================================ */
+  /*  CHECKLIST                                                       */
+  /* ================================================================ */
+  .check-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 5px 0; font-size: 13px;
+  }
+  .check-box {
+    width: 18px; height: 18px; border-radius: 5px;
+    border: 2px solid #cbd5e1; flex-shrink: 0;
+    margin-top: 2px; cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+    background: #fff;
+  }
+  .check-box:hover { border-color: var(--accent2); }
+  .check-box.checked { background: var(--accent2); border-color: var(--accent2); }
+  .check-box.checked::after { content: '\2713'; color: #fff; font-size: 12px; font-weight: 700; }
+
+  /* ================================================================ */
+  /*  CALLOUT                                                         */
+  /* ================================================================ */
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: #eff6ff;
+    padding: 12px 16px; margin: 14px 0;
+    border-radius: 0 8px 8px 0; font-size: 13px;
+  }
+  .callout.warn { border-left-color: var(--yellow); background: #fefce8; }
+  .callout.success { border-left-color: var(--accent2); background: #f0fdf4; }
+  .callout strong { color: var(--accent); }
+  .callout.warn strong { color: var(--yellow); }
+
+  /* ================================================================ */
+  /*  EQUATION                                                        */
+  /* ================================================================ */
+  .equation {
+    background: #faf5ff; border: 1px solid #e9d5ff;
+    border-radius: 10px; padding: 20px 28px;
+    text-align: center; font-size: 18px;
+    font-family: 'Georgia', serif; letter-spacing: 0.5px;
+    margin: 14px 0 22px;
+  }
+  .equation .var { color: var(--accent3); font-style: italic; }
+  .equation .sym { color: var(--text-dim); }
+
+  /* ================================================================ */
+  /*  WORKFLOW DIAGRAM                                                */
+  /* ================================================================ */
+  .diagram {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: 14px; padding: 28px; margin: 18px 0;
+    box-shadow: var(--shadow); overflow-x: auto;
+  }
+  .diagram-row {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 18px; margin: 10px 0;
+  }
+  .diagram-col { min-width: 200px; }
+  .diagram-col h4 {
+    font-size: 13px; font-weight: 700; margin-bottom: 10px;
+    padding: 7px 12px; border-radius: 8px; text-align: center;
+  }
+  .diagram-col.local h4 { background: #dbeafe; color: #1d4ed8; }
+  .diagram-col.hub h4 { background: #dcfce7; color: #15803d; }
+  .diagram-col.colab h4 { background: #ffedd5; color: #c2410c; }
+  .diagram-item {
+    font-size: 12px; padding: 7px 10px; margin: 4px 0;
+    background: var(--surface); border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  /* ================================================================ */
+  /*  FILE TREE                                                       */
+  /* ================================================================ */
+  .file-tree {
+    font-family: 'SF Mono', monospace; font-size: 13px;
+    line-height: 1.9; color: var(--text-dim);
+  }
+  .file-tree .dir { color: var(--accent); font-weight: 700; }
+  .file-tree .new { color: var(--accent2); font-weight: 600; }
+  .file-tree .comment { color: #9ca3af; font-style: italic; font-size: 11px; }
+
+  /* ================================================================ */
+  /*  MY WORK TAB                                                     */
+  /* ================================================================ */
+  .work-phase {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: 14px; margin-bottom: 24px;
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .work-phase-header {
+    padding: 16px 22px; display: flex;
+    align-items: center; gap: 12px; cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface); user-select: none;
+    transition: background 0.15s;
+  }
+  .work-phase-header:hover { background: var(--surface2); }
+  .work-phase-header h3 {
+    margin: 0; font-size: 15px; color: var(--text); flex: 1;
+  }
+  .work-phase-header .toggle {
+    font-size: 18px; color: var(--text-dim);
+    transition: transform 0.2s;
+  }
+  .work-phase-header.collapsed .toggle { transform: rotate(-90deg); }
+  .work-phase-body { padding: 0; max-height: 2000px; overflow: hidden; transition: max-height 0.3s ease; }
+  .work-phase-header.collapsed + .work-phase-body { max-height: 0; padding: 0; }
+
+  /* rendered markdown content inside My Work */
+  .md-content h1 { font-size: 22px; font-weight: 800; margin: 0 0 16px; color: var(--text); }
+  .md-content h2 { font-size: 18px; font-weight: 700; margin: 28px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--surface2); color: var(--text); }
+  .md-content h3 { font-size: 15px; font-weight: 700; margin: 20px 0 8px; color: var(--accent); }
+  .md-content h4 { font-size: 14px; font-weight: 700; margin: 16px 0 6px; color: var(--accent3); }
+  .md-content p { font-size: 13px; margin: 6px 0; }
+  .md-content ul { margin: 6px 0 6px 20px; font-size: 13px; }
+  .md-content li { margin: 3px 0; }
+  .md-content hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+  /* ================================================================ */
+  /*  RESPONSIVE                                                      */
+  /* ================================================================ */
+  @media (max-width: 900px) {
+    .sidebar, .work-sidebar { display: none !important; }
+    .planning-main { margin-left: 0; padding: 24px 16px; }
+    .hero { padding: 24px; }
+    .hero h1 { font-size: 22px; }
+    .diagram-row { grid-template-columns: 1fr; }
+    .work-summary { grid-template-columns: repeat(2, 1fr); }
+    .entry-form .form-row { flex-direction: column; }
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ================================================================ -->
+<!-- TAB BAR                                                          -->
+<!-- ================================================================ -->
+<div class="tab-bar">
+  <div class="brand"><span>Causal</span>VLA</div>
+  <button class="tab-btn active" onclick="switchTab('planning')">Planning</button>
+  <button class="tab-btn" onclick="switchTab('mywork')">My Work</button>
+  <a class="tab-btn" href="augment_preview/" style="text-decoration:none;">Augment Preview</a>
+</div>
+
+<!-- ================================================================ -->
+<!-- TAB: PLANNING                                                    -->
+<!-- ================================================================ -->
+<div id="tab-planning" class="tab-content active">
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <nav>
+    <div class="section-title">Overview</div>
+    <a href="#overview">Models &amp; Loss</a>
+
+    <div class="section-title">Phases</div>
+    <a href="#phase1"><span class="phase-label p1">1</span> Environment Setup</a>
+    <a href="#phase2"><span class="phase-label p2">2</span> CausalVLA Architecture</a>
+    <a href="#phase3"><span class="phase-label p3">3</span> Unit Testing</a>
+    <a href="#phase4"><span class="phase-label p4">4</span> OOD Perturbation</a>
+    <a href="#phase5"><span class="phase-label p5">5</span> Training</a>
+    <a href="#phase6"><span class="phase-label p6">6</span> Evaluation</a>
+
+    <div class="section-title">Reference</div>
+    <a href="#structure">Project Structure</a>
+    <a href="#workflow">Workflow Diagram</a>
+    <a href="#checklist">Checklist</a>
+    <a href="#notes">LeRobot v0.6.1 Notes</a>
+  </nav>
+</aside>
+
+<!-- Main Content -->
+<div class="planning-main">
+
+  <!-- HERO -->
+  <div class="hero" id="overview">
+    <h1>Causal<span>VLA</span> Pipeline</h1>
+    <p class="subtitle">
+      Step-by-Step Execution Pipeline สำหรับงานวิจัย CausalVLA<br>
+      Mac M2 (debug) + Google Colab (train) + HuggingFace Hub (transfer)
+    </p>
+    <div class="tags">
+      <span class="tag">LeRobot v0.6.1</span>
+      <span class="tag">LIBERO Benchmark</span>
+      <span class="tag">SmolVLA Base</span>
+      <span class="tag">PyTorch</span>
+      <span class="tag">HuggingFace Hub</span>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- OVERVIEW                                                     -->
+  <!-- ============================================================ -->
+  <section>
+    <h2>Models ที่ต้องเปรียบเทียบ</h2>
+    <p>ทั้งหมดใช้ <strong>SmolVLA</strong> เป็น Base Model</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Model</th><th>คำอธิบาย</th></tr></thead>
+        <tbody>
+          <tr><td><strong>A</strong></td><td>Standard SFT (Baseline)</td><td>SmolVLA fine-tune ปกติบน clean data &mdash; ไม่มี augmentation / causal loss</td></tr>
+          <tr><td><strong>B</strong></td><td>Domain Randomization</td><td>SmolVLA fine-tune บน <em>augmented data</em> (จำลอง poor env) &mdash; ไม่มี causal loss</td></tr>
+          <tr><td class="model-ours"><strong>C</strong></td><td class="model-ours">CausalVLA (Ours)</td><td>SmolVLA + <strong>Online GPU Counterfactual Augmentation</strong> + <strong>Dual Invariance Loss</strong> ครบทุกตัว</td></tr>
+          <tr><td><strong>D</strong></td><td>Ablation w/o L<sub>latent</sub></td><td>CausalVLA ตัด Counterfactual Latent Invariance Loss ออก</td></tr>
+          <tr><td><strong>E</strong></td><td>Ablation w/o L<sub>action</sub></td><td>CausalVLA ตัด Action Consistency Loss ออก</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Loss Function ของ CausalVLA</h3>
+    <div class="equation">
+      <span class="var">L</span><sub>total</sub> <span class="sym">=</span>
+      <span class="var">L</span><sub>task</sub> <span class="sym">+</span>
+      <span class="var">&lambda;</span><sub>latent</sub> <span class="sym">&middot;</span> <span class="var">L</span><sub>latent</sub> <span class="sym">+</span>
+      <span class="var">&lambda;</span><sub>action</sub> <span class="sym">&middot;</span> <span class="var">L</span><sub>action</sub> <span class="sym">+</span>
+      <span class="var">&lambda;</span><sub>smooth</sub> <span class="sym">&middot;</span> <span class="var">L</span><sub>smooth</sub>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Loss</th><th>สูตร</th><th>ความหมาย</th></tr></thead>
+        <tbody>
+          <tr><td><code>L_task</code></td><td>Flow matching loss (SmolVLA เดิม)</td><td>เรียนรู้ action จาก demonstration</td></tr>
+          <tr><td><code>L_latent</code></td><td>MSE(z<sub>0</sub>, z<sub>k</sub>) สำหรับ k=1..K</td><td>Latent representation คงที่แม้ภาพเปลี่ยน (causal invariance)</td></tr>
+          <tr><td><code>L_action</code></td><td>MSE(a<sub>0</sub>, a<sub>k</sub>) สำหรับ k=1..K</td><td>Action output เหมือนกันแม้ visual input ต่างกัน</td></tr>
+          <tr><td><code>L_smooth</code></td><td>MSE(a<sub>t</sub>, a<sub>t+1</sub>)</td><td>ลด action jitter ให้เคลื่อนไหวนุ่มนวล</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>2 ระบบ Augmentation</h3>
+    <div class="card-grid">
+      <div class="card-sm">
+        <h4 style="color:var(--accent4)">Offline Dataset Augmentation</h4>
+        <p><strong>ใช้สำหรับ:</strong> Model B (Domain Randomization)</p>
+        <p><strong>ทำอะไร:</strong> สร้าง dataset ใหม่ที่มี camera shift, light change, robot noise</p>
+        <p><strong>ที่มา:</strong> <code>Lerobot-Dataset-Manager</code></p>
+      </div>
+      <div class="card-sm">
+        <h4 style="color:var(--accent2)">Online GPU Counterfactual Aug.</h4>
+        <p><strong>ใช้สำหรับ:</strong> Model C/D/E (CausalVLA)</p>
+        <p><strong>ทำอะไร:</strong> สร้าง K counterfactual images แบบ on-the-fly บน GPU</p>
+        <p><strong>ที่มา:</strong> <code>causal_aug</code> package (สร้างใหม่)</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- PHASE 1                                                      -->
+  <!-- ============================================================ -->
+  <section id="phase1">
+    <h2><span class="badge p1">Phase 1</span> Environment Setup &amp; Sanity Check</h2>
+    <p>ยืนยันว่า LeRobot + LIBERO + HuggingFace Hub ทำงานร่วมกันได้</p>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <h4>ติดตั้ง Dependencies</h4>
+      <div class="code-title">Mac M2 (Local)</div>
+<pre><code>conda activate lerobot2
+lerobot-info    # ยืนยัน v0.6.1</code></pre>
+      <div class="code-title">Google Colab</div>
+<pre><code>pip install -e ".[libero,smolvla]"
+python -c "import torch; print(torch.cuda.is_available())"</code></pre>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <h4>Smoke Test: Training Pipeline</h4>
+<pre><code>python -m lerobot.scripts.lerobot_train \
+    --policy.type=smolvla \
+    --dataset.repo_id=lerobot/libero_spatial_image \
+    --output_dir=outputs/train/debug_smoke_test \
+    --job_name=smoke_test \
+    --policy.device=mps \
+    --batch_size=2 \
+    --steps=10 \
+    --save_freq=5 \
+    --env_eval_freq=0 \
+    --policy.push_to_hub=false</code></pre>
+      <div class="card">
+        <h4 style="margin-top:0">Checklist</h4>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div> Data download + load สำเร็จ</div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div> Forward pass ไม่มี error</div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div> Backward pass + optimizer step สำเร็จ</div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div> Checkpoint saved ที่ <code>outputs/train/debug_smoke_test/checkpoints/</code></div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div> Checkpoint มีไฟล์ <code>config.json</code>, <code>model.safetensors</code></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <h4>Smoke Test: Evaluation Pipeline</h4>
+      <div class="callout warn"><strong>หมายเหตุ:</strong> ต้องทำบน Colab เพราะ LIBERO ต้องใช้ MuJoCo + GPU render</div>
+<pre><code>lerobot-eval \
+    --policy.path=outputs/train/debug_smoke_test/checkpoints/000010/pretrained_model \
+    --env.type=libero \
+    --eval.batch_size=1 \
+    --eval.n_episodes=2 \
+    --policy.device=cuda</code></pre>
+      <div class="card">
+        <h4 style="margin-top:0">Checklist</h4>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div> LIBERO simulator สร้าง environment ได้</div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div> Policy inference ทำงาน</div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div> ได้ success rate กลับมา</div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div> Video render ได้</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <h4>Hub Round-Trip Test</h4>
+<pre><code># Push (local → Hub)
+huggingface-cli upload &lt;username&gt;/causalvla-smoke-test \
+    outputs/train/debug_smoke_test/checkpoints/000010/pretrained_model --private
+
+# Pull (Colab ← Hub)
+huggingface-cli download &lt;username&gt;/causalvla-smoke-test</code></pre>
+      <div class="card">
+        <h4 style="margin-top:0">Checklist</h4>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div> Upload สำเร็จ</div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div> Download สำเร็จ</div>
+        <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div> Model load ได้หลัง download</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- PHASE 2                                                      -->
+  <!-- ============================================================ -->
+  <section id="phase2">
+    <h2><span class="badge p2">Phase 2</span> CausalVLA Architecture</h2>
+    <p>สร้าง CausalVLA policy + Counterfactual Augmentation Engine</p>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <h4>สร้าง <code>causal_aug</code> Python Package</h4>
+      <div class="card" style="font-family: 'SF Mono', monospace; font-size: 13px; line-height: 2;">
+        <div class="file-tree">
+          <span class="dir">CausalVLA/</span><br>
+          &nbsp;&nbsp;<span class="dir new">causal_aug/</span> <span class="comment">&larr; Local Python Package</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;pyproject.toml<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="dir new">causal_aug/</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="new">__init__.py</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="new">gpu_augmenter.py</span> <span class="comment">CausalAugmenter (GPU, online)</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="new">augmentations.py</span> <span class="comment">Individual aug functions</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="new">ood_wrapper.py</span> <span class="comment">OOD Gym Wrapper (Phase 4)</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="dir">tests/</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;test_augmenter.py
+        </div>
+      </div>
+
+      <div class="code-title">ติดตั้ง</div>
+<pre><code>pip install -e /path/to/CausalVLA/causal_aug</code></pre>
+      <div class="code-title">การใช้งาน</div>
+<pre><code>from causal_aug import CausalAugmenter
+
+augmenter = CausalAugmenter(K=3, intensity=1.0).to("cuda")
+counterfactual_obs = augmenter(original_obs)  # [K, B, C, H, W]</code></pre>
+
+      <h4><code>gpu_augmenter.py</code> &mdash; CausalAugmenter</h4>
+<pre><code>class CausalAugmenter(nn.Module):
+    """
+    Online GPU Counterfactual Augmentation Engine.
+    สร้าง K ภาพสมมติ (counterfactual) จากภาพต้นฉบับ
+
+    Techniques (pure PyTorch GPU ops):
+    - Color Jitter: brightness, contrast, saturation, hue
+    - Lighting Shift: global brightness scale
+    - Gaussian Noise: additive noise
+    - (Optional) Perspective/Affine transform
+    """
+
+    def __init__(self, K=3, intensity=1.0):
+        self.K = K
+        self.intensity = intensity
+
+    def forward(self, obs: Tensor) -&gt; Tensor:
+        # obs: [B, C, H, W] → augmented: [K, B, C, H, W]
+        ...</code></pre>
+
+      <div class="callout">
+        <strong>อ้างอิง:</strong> เทคนิคจาก <code>Lerobot-Dataset-Manager/main.py</code>
+        (<code>_augp_camera</code>, <code>_augp_light</code>, <code>_aug_frame</code>) แปลงเป็น <strong>pure PyTorch GPU ops</strong>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <h4>สร้าง CausalVLA Policy ใน LeRobot</h4>
+
+      <div class="card" style="font-family: 'SF Mono', monospace; font-size: 13px; line-height: 2;">
+        <div class="file-tree">
+          <span class="dir">lerobot/src/lerobot/policies/</span><br>
+          &nbsp;&nbsp;<span class="dir">smolvla/</span> <span class="comment">Base (ไม่แก้ไข)</span><br>
+          &nbsp;&nbsp;<span class="dir new">causal_vla/</span> <span class="comment">&larr; NEW</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="new">__init__.py</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="new">configuration_causal_vla.py</span><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="new">modeling_causal_vla.py</span>
+        </div>
+      </div>
+
+      <div class="code-title">configuration_causal_vla.py</div>
+<pre><code>@PreTrainedConfig.register_subclass("causal_vla")
+@dataclass
+class CausalVLAConfig(SmolVLAConfig):
+    n_counterfactual: int = 3       # K: จำนวนภาพสมมติ
+    aug_intensity: float = 1.0
+
+    lambda_latent: float = 0.1      # น้ำหนัก L_latent
+    lambda_action: float = 0.1      # น้ำหนัก L_action
+    lambda_smooth: float = 0.01     # น้ำหนัก L_smooth
+
+    use_latent_loss: bool = True    # False = Model D
+    use_action_loss: bool = True    # False = Model E</code></pre>
+
+      <div class="code-title">modeling_causal_vla.py</div>
+<pre><code>class CausalVLAPolicy(SmolVLAPolicy):
+    config_class = CausalVLAConfig
+    name = "causal_vla"
+
+    def __init__(self, config, **kwargs):
+        super().__init__(config, **kwargs)
+        from causal_aug import CausalAugmenter
+        self.augmenter = CausalAugmenter(K=config.n_counterfactual,
+                                          intensity=config.aug_intensity)
+
+    def forward(self, batch, noise=None, time=None, reduction="mean"):
+        # 1. L_task (flow matching loss จาก SmolVLA)
+        loss_task, loss_dict = super().forward(batch, noise, time, reduction)
+
+        # 2. Extract z_0, a_0
+        z_0 = self._extract_latent(batch)
+        a_0 = self._extract_action_prediction(batch)
+
+        # 3. Generate K counterfactual images (GPU)
+        cf_images = self.augmenter(self._get_images_from_batch(batch))
+
+        # 4. Forward counterfactual → z_k, a_k
+        z_ks, a_ks = [], []
+        for k in range(self.config.n_counterfactual):
+            cf_batch = self._replace_images(batch, cf_images[k])
+            z_ks.append(self._extract_latent(cf_batch))
+            a_ks.append(self._extract_action_prediction(cf_batch))
+
+        # 5. Invariance losses
+        L_latent = sum(F.mse_loss(z_0, z_k) for z_k in z_ks) / len(z_ks)
+        L_action = sum(F.mse_loss(a_0, a_k) for a_k in a_ks) / len(a_ks)
+        L_smooth = F.mse_loss(a_0[:, :-1, :], a_0[:, 1:, :])
+
+        # 6. Combine
+        total_loss = loss_task
+        if self.config.use_latent_loss:
+            total_loss += self.config.lambda_latent * L_latent
+        if self.config.use_action_loss:
+            total_loss += self.config.lambda_action * L_action
+        total_loss += self.config.lambda_smooth * L_smooth
+
+        return total_loss, loss_dict</code></pre>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <h4>ลงทะเบียน Policy ใน LeRobot</h4>
+      <p>v0.6.1 ใช้ <code>@PreTrainedConfig.register_subclass("causal_vla")</code> &mdash; draccus ค้นหาอัตโนมัติ</p>
+      <div class="code-title">ทดสอบ registration</div>
+<pre><code>python -c "from lerobot.configs import PreTrainedConfig; \
+    print('causal_vla' in PreTrainedConfig._registry)"</code></pre>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- PHASE 3                                                      -->
+  <!-- ============================================================ -->
+  <section id="phase3">
+    <h2><span class="badge p3">Phase 3</span> Unit Test &mdash; Loss &amp; Gradient Flow</h2>
+
+    <div class="card">
+      <div class="code-title">tests/test_causal_vla.py</div>
+<pre><code>def test_causal_augmenter_output_shape():
+    augmenter = CausalAugmenter(K=3).to(device)
+    obs = torch.randn(2, 3, 256, 256, device=device)
+    assert augmenter(obs).shape == (3, 2, 3, 256, 256)
+
+def test_forward_loss_components():
+    loss, loss_dict = policy.forward(mock_batch)
+    assert not torch.isnan(loss)
+    for key in ["loss_task", "loss_latent", "loss_action", "loss_smooth"]:
+        assert key in loss_dict
+
+def test_gradient_flow():
+    loss, _ = policy.forward(mock_batch)
+    loss.backward()
+    for name, p in policy.named_parameters():
+        if p.requires_grad:
+            assert p.grad is not None, f"No gradient: {name}"
+
+def test_ablation_no_latent():
+    config = CausalVLAConfig(use_latent_loss=False)
+    ...
+
+def test_ablation_no_action():
+    config = CausalVLAConfig(use_action_loss=False)
+    ...</code></pre>
+    </div>
+
+    <div class="card">
+      <h4 style="margin-top:0">Checklist</h4>
+      <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div> ทุก test ผ่าน</div>
+      <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div> ไม่มี NaN ใน loss</div>
+      <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div> Gradient flow ถึงทุก trainable parameter</div>
+      <div class="check-item"><div class="check-box" onclick="this.classList.toggle('checked')"></div> Ablation configs ทำงานถูกต้อง</div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- PHASE 4                                                      -->
+  <!-- ============================================================ -->
+  <section id="phase4">
+    <h2><span class="badge p4">Phase 4</span> OOD Perturbation Engine</h2>
+
+    <h3>OOD Levels</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Level</th><th>Brightness</th><th>Noise &sigma;</th><th>Cutout</th><th>ลักษณะ</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Level 0</strong></td><td>1.0</td><td>0.00</td><td>-</td><td>In-Distribution</td></tr>
+          <tr><td><strong>Level 1</strong></td><td>&plusmn;30%</td><td>0.05</td><td>-</td><td>Mild OOD</td></tr>
+          <tr><td><strong>Level 2</strong></td><td>0.1x&ndash;3.0x</td><td>0.20</td><td>15%</td><td>Extreme OOD</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="code-title">causal_aug/ood_wrapper.py</div>
+<pre><code>class OODPerturbationWrapper(gym.ObservationWrapper):
+    OOD_LEVELS = {
+        "level_0": {"brightness_range": (1.0, 1.0), "noise_sigma": 0.0,  "cutout": False},
+        "level_1": {"brightness_range": (0.7, 1.3), "noise_sigma": 0.05, "cutout": False},
+        "level_2": {"brightness_range": (0.1, 3.0), "noise_sigma": 0.20,
+                     "cutout": True, "cutout_ratio": 0.15},
+    }
+    ...</code></pre>
+
+    <div class="callout success"><strong>แนะนำ:</strong> ใช้ wrapper script แยก (<code>scripts/eval_ood.py</code>) เพื่อไม่ต้องแก้ lerobot source code</div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- PHASE 5                                                      -->
+  <!-- ============================================================ -->
+  <section id="phase5">
+    <h2><span class="badge p5">Phase 5</span> Training ทุก Experiment Variants</h2>
+
+    <h3>Training Conditions (ทุก model เหมือนกัน)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Parameter</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>Base model</td><td>SmolVLA (<code>lerobot/smolvla_base</code>)</td></tr>
+          <tr><td>Dataset</td><td><code>lerobot/libero_spatial_image</code> (+augmented สำหรับ B)</td></tr>
+          <tr><td>Steps</td><td>50,000</td></tr>
+          <tr><td>Batch size</td><td>8</td></tr>
+          <tr><td>Seed</td><td>42</td></tr>
+          <tr><td>Save / Eval freq</td><td>10,000 steps</td></tr>
+          <tr><td>LIBERO suites</td><td><code>libero_spatial</code>, <code>libero_goal</code>, <code>libero_object</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Model A: Standard SFT</h3>
+<pre><code>python -m lerobot.scripts.lerobot_train \
+    --policy.type=smolvla \
+    --dataset.repo_id=lerobot/libero_spatial_image \
+    --output_dir=outputs/train/model_a_sft \
+    --policy.device=cuda --batch_size=8 --steps=50000 --seed=42 \
+    --save_freq=10000 --env_eval_freq=10000 \
+    --policy.push_to_hub=true --policy.repo_id=&lt;username&gt;/causalvla-model-a-sft</code></pre>
+
+    <h3>Model B: Domain Randomization</h3>
+    <div class="callout warn"><strong>ก่อน train:</strong> สร้าง augmented dataset ด้วย Lerobot-Dataset-Manager แล้ว push ขึ้น Hub</div>
+<pre><code>python -m lerobot.scripts.lerobot_train \
+    --policy.type=smolvla \
+    --dataset.repo_id=&lt;username&gt;/libero_spatial_augmented \
+    --output_dir=outputs/train/model_b_dr \
+    --policy.device=cuda --batch_size=8 --steps=50000 --seed=42 \
+    --policy.push_to_hub=true --policy.repo_id=&lt;username&gt;/causalvla-model-b-dr</code></pre>
+
+    <h3>Model C: CausalVLA (Ours)</h3>
+<pre><code>python -m lerobot.scripts.lerobot_train \
+    --policy.type=causal_vla \
+    --dataset.repo_id=lerobot/libero_spatial_image \
+    --output_dir=outputs/train/model_c_causal \
+    --policy.device=cuda --policy.n_counterfactual=3 \
+    --policy.lambda_latent=0.1 --policy.lambda_action=0.1 --policy.lambda_smooth=0.01 \
+    --batch_size=8 --steps=50000 --seed=42 \
+    --policy.push_to_hub=true --policy.repo_id=&lt;username&gt;/causalvla-model-c-ours</code></pre>
+
+    <h3>Model D: Ablation w/o L<sub>latent</sub></h3>
+<pre><code>python -m lerobot.scripts.lerobot_train \
+    --policy.type=causal_vla --policy.use_latent_loss=false \
+    --dataset.repo_id=lerobot/libero_spatial_image \
+    --output_dir=outputs/train/model_d_no_latent \
+    --policy.device=cuda --batch_size=8 --steps=50000 --seed=42 \
+    --policy.push_to_hub=true --policy.repo_id=&lt;username&gt;/causalvla-model-d</code></pre>
+
+    <h3>Model E: Ablation w/o L<sub>action</sub></h3>
+<pre><code>python -m lerobot.scripts.lerobot_train \
+    --policy.type=causal_vla --policy.use_action_loss=false \
+    --dataset.repo_id=lerobot/libero_spatial_image \
+    --output_dir=outputs/train/model_e_no_action \
+    --policy.device=cuda --batch_size=8 --steps=50000 --seed=42 \
+    --policy.push_to_hub=true --policy.repo_id=&lt;username&gt;/causalvla-model-e</code></pre>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- PHASE 6                                                      -->
+  <!-- ============================================================ -->
+  <section id="phase6">
+    <h2><span class="badge p6">Phase 6</span> Evaluation &amp; Results</h2>
+    <p><strong>5 models &times; 3 OOD levels = 15 runs</strong> (ต่อ LIBERO suite)</p>
+
+<pre><code>python scripts/eval_ood.py \
+    --policy.path=&lt;username&gt;/causalvla-model-{MODEL} \
+    --env.type=libero --env.task_suite=libero_spatial \
+    --ood_level={OOD_LEVEL} \
+    --eval.n_episodes=50 --eval.batch_size=10 --policy.device=cuda</code></pre>
+
+    <h3>Metrics</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Metric</th><th>วิธีเก็บ</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Success Rate (%)</strong></td><td>50 episodes ต่อ run</td></tr>
+          <tr><td><strong>Action Jitter</strong></td><td>mean(||a<sub>t</sub> - a<sub>t+1</sub>||)</td></tr>
+          <tr><td><strong>Latent Drift</strong></td><td>mean(||z<sub>0</sub> - z<sub>k</sub>||)</td></tr>
+          <tr><td><strong>t-SNE Plot</strong></td><td>clean vs perturbed latent</td></tr>
+          <tr><td><strong>Video</strong></td><td>rollout recording</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Results Template &mdash; Success Rate (%)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Model</th><th>Level 0 (Clean)</th><th>Level 1 (Mild)</th><th>Level 2 (Extreme)</th><th>&Delta;</th></tr></thead>
+        <tbody>
+          <tr><td>A: Standard SFT</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td>B: Domain Rand.</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td class="model-ours">C: CausalVLA (Ours)</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td>D: w/o L<sub>lat</sub></td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+          <tr><td>E: w/o L<sub>act</sub></td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- PROJECT STRUCTURE                                            -->
+  <!-- ============================================================ -->
+  <section id="structure">
+    <h2>Project Structure</h2>
+    <div class="card" style="font-family: 'SF Mono', monospace; font-size: 13px; line-height: 2.0;">
+      <div class="file-tree">
+        <span class="dir">CausalVLA/</span><br>
+        &nbsp;&nbsp;PIPELINE.md &nbsp; pipeline.html<br>
+        <br>
+        &nbsp;&nbsp;<span class="dir new">causal_aug/</span> <span class="comment">Local pip package</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;pyproject.toml<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="dir new">causal_aug/</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="new">__init__.py</span> &nbsp; <span class="new">gpu_augmenter.py</span> &nbsp; <span class="new">augmentations.py</span> &nbsp; <span class="new">ood_wrapper.py</span><br>
+        <br>
+        &nbsp;&nbsp;<span class="dir">lerobot/src/lerobot/policies/</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="dir">smolvla/</span> <span class="comment">Base (ไม่แก้ไข)</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="dir new">causal_vla/</span> <span class="comment">&larr; NEW</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="new">__init__.py</span> &nbsp; <span class="new">configuration_causal_vla.py</span> &nbsp; <span class="new">modeling_causal_vla.py</span><br>
+        <br>
+        &nbsp;&nbsp;<span class="dir new">scripts/</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="new">eval_ood.py</span> &nbsp; <span class="new">collect_results.py</span> &nbsp; <span class="new">plot_tsne.py</span><br>
+        <br>
+        &nbsp;&nbsp;<span class="dir new">tests/</span> <span class="new">test_causal_vla.py</span><br>
+        &nbsp;&nbsp;<span class="dir">outputs/</span> train/ &nbsp; eval/
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- WORKFLOW                                                     -->
+  <!-- ============================================================ -->
+  <section id="workflow">
+    <h2>Workflow: Local &harr; Hub &harr; Colab</h2>
+    <div class="diagram">
+      <div class="diagram-row">
+        <div class="diagram-col local">
+          <h4>Mac M2 (Local)</h4>
+          <div class="diagram-item">Phase 1: Smoke test (mps)</div>
+          <div class="diagram-item">Phase 2: Dev causal_aug</div>
+          <div class="diagram-item">Phase 2: Dev causal_vla</div>
+          <div class="diagram-item">Phase 3: Unit tests</div>
+          <div class="diagram-item" style="margin-top:12px; border-color:var(--accent)">Augment dataset &rarr; push</div>
+          <div class="diagram-item" style="margin-top:12px">Download models &larr; pull</div>
+          <div class="diagram-item" style="border-color:var(--accent4)">SO-101 eval [future]</div>
+        </div>
+        <div class="diagram-col hub">
+          <h4>HuggingFace Hub</h4>
+          <div class="diagram-item">Augmented Dataset</div>
+          <div class="diagram-item">Clean Dataset</div>
+          <div class="diagram-item" style="margin-top:12px">model-a-sft</div>
+          <div class="diagram-item">model-b-dr</div>
+          <div class="diagram-item" style="border-color:var(--accent);font-weight:600">model-c-ours</div>
+          <div class="diagram-item">model-d / model-e</div>
+          <div class="diagram-item" style="margin-top:12px">Eval Results</div>
+        </div>
+        <div class="diagram-col colab">
+          <h4>Google Colab (GPU)</h4>
+          <div class="diagram-item">Phase 1: LIBERO eval test</div>
+          <div class="diagram-item" style="margin-top:12px">Phase 5: Train A/B</div>
+          <div class="diagram-item" style="border-color:var(--accent)">Phase 5: Train C/D/E</div>
+          <div class="diagram-item" style="margin-top:12px">Phase 6: Eval L0/L1/L2</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- CHECKLIST                                                    -->
+  <!-- ============================================================ -->
+  <section id="checklist">
+    <h2>Experiment Checklist</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Phase</th><th>Deliverables</th><th>เครื่องมือ</th><th style="text-align:center">Status</th></tr></thead>
+        <tbody>
+          <tr><td><span class="phase-label p1">1</span></td><td>Verified environment &amp; baseline</td><td><code>lerobot-train</code>, <code>lerobot-eval</code></td><td style="text-align:center"><div class="check-box" onclick="this.classList.toggle('checked')" style="margin:0 auto"></div></td></tr>
+          <tr><td><span class="phase-label p2">2</span></td><td><code>causal_aug</code> + <code>causal_vla</code></td><td><code>causal_aug/</code>, <code>policies/causal_vla/</code></td><td style="text-align:center"><div class="check-box" onclick="this.classList.toggle('checked')" style="margin:0 auto"></div></td></tr>
+          <tr><td><span class="phase-label p3">3</span></td><td>Passed unit tests</td><td><code>pytest</code></td><td style="text-align:center"><div class="check-box" onclick="this.classList.toggle('checked')" style="margin:0 auto"></div></td></tr>
+          <tr><td><span class="phase-label p4">4</span></td><td>OOD Gym Wrapper</td><td><code>ood_wrapper.py</code></td><td style="text-align:center"><div class="check-box" onclick="this.classList.toggle('checked')" style="margin:0 auto"></div></td></tr>
+          <tr><td><span class="phase-label p5">5</span></td><td>5 trained checkpoints</td><td>WandB, Colab, Hub</td><td style="text-align:center"><div class="check-box" onclick="this.classList.toggle('checked')" style="margin:0 auto"></div></td></tr>
+          <tr><td><span class="phase-label p6">6</span></td><td>Results matrix, t-SNE, videos</td><td>matplotlib, seaborn</td><td style="text-align:center"><div class="check-box" onclick="this.classList.toggle('checked')" style="margin:0 auto"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- NOTES                                                        -->
+  <!-- ============================================================ -->
+  <section id="notes">
+    <h2>LeRobot v0.6.1 Notes</h2>
+    <div class="card-grid">
+      <div class="card-sm"><h4>Policy Path</h4><p><code>src/lerobot/policies/</code><br><span style="color:var(--red);font-size:12px">ไม่ใช่ lerobot/common/policies/</span></p></div>
+      <div class="card-sm"><h4>Env Path</h4><p><code>src/lerobot/envs/</code></p></div>
+      <div class="card-sm"><h4>Registration</h4><p><code>@PreTrainedConfig.register_subclass()</code></p></div>
+      <div class="card-sm"><h4>Training CLI</h4><p><code>lerobot-train</code></p></div>
+      <div class="card-sm"><h4>LIBERO Suites</h4><p>spatial, object, goal, 10, 90</p></div>
+      <div class="card-sm"><h4>SmolVLA Base</h4><p><code>SmolVLM2-500M-Video-Instruct</code> + Action Expert</p></div>
+      <div class="card-sm"><h4>forward() return</h4><p><code>(loss, loss_dict)</code></p></div>
+      <div class="card-sm"><h4>Eval CLI</h4><p><code>lerobot-eval</code></p></div>
+    </div>
+  </section>
+
+</div><!-- /planning-main -->
+</div><!-- /tab-planning -->
+
+<!-- ================================================================ -->
+<!-- TAB: MY WORK                                                     -->
+<!-- ================================================================ -->
+<div id="tab-mywork" class="tab-content">
+
+<!-- Work Sidebar -->
+<aside class="sidebar work-sidebar" id="work-sidebar">
+  <nav>
+    <div class="section-title">Work Log</div>
+    <div id="work-nav-list">
+      <!-- populated by JS -->
+    </div>
+    <div class="section-title" style="margin-top:18px">Info</div>
+    <div style="padding:4px 18px; font-size:11px; color:var(--text-dim); line-height:1.6;">
+      ไฟล์: <code style="font-size:10px">worklog/phase*.md</code><br>
+      เปิดด้วย <code style="font-size:10px">python -m http.server</code>
+    </div>
+  </nav>
+</aside>
+
+<div class="planning-main" id="worklog-main">
+  <div id="worklog-content">
+    <div style="text-align:center; color:var(--text-dim); padding:80px 0; font-size:14px;">
+      เลือก Phase จากเมนูทางซ้าย
+    </div>
+  </div>
+</div>
+
+</div><!-- /tab-mywork -->
+
+<!-- ================================================================ -->
+<!-- JAVASCRIPT                                                       -->
+<!-- ================================================================ -->
+<script>
+// --- Tab switching ---
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
+  document.querySelector('.sidebar:not(.work-sidebar)').style.display = tab === 'planning' ? 'block' : 'none';
+  document.getElementById('work-sidebar').style.display = tab === 'mywork' ? 'block' : 'none';
+}
+
+// --- Phase collapse ---
+function togglePhase(header) {
+  header.classList.toggle('collapsed');
+}
+
+// --- Nav highlight ---
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.sidebar nav a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 100) current = s.id;
+  });
+  navLinks.forEach(a => {
+    a.classList.remove('active');
+    if (a.getAttribute('href') === '#' + current) a.classList.add('active');
+  });
+});
+
+// ================================================================
+// Markdown → HTML renderer (lightweight, no dependencies)
+// ================================================================
+function mdToHtml(md) {
+  let html = '';
+  const lines = md.split('\n');
+  let i = 0;
+  let inCodeBlock = false, codeLang = '', codeLines = [];
+  let inTable = false, tableRows = [];
+  let inList = false, listLines = [];
+
+  function flushList() {
+    if (!inList) return;
+    html += '<ul>' + listLines.map(l => '<li>' + inlineFormat(l) + '</li>').join('') + '</ul>';
+    listLines = []; inList = false;
+  }
+  function flushTable() {
+    if (!inTable) return;
+    // tableRows: array of arrays of cell strings; row[1] is separator
+    let thead = tableRows[0];
+    let tbody = tableRows.slice(2);
+    html += '<div class="table-wrap"><table><thead><tr>';
+    thead.forEach(c => { html += '<th>' + inlineFormat(c.trim()) + '</th>'; });
+    html += '</tr></thead><tbody>';
+    tbody.forEach(row => {
+      html += '<tr>';
+      row.forEach(c => { html += '<td>' + inlineFormat(c.trim()) + '</td>'; });
+      html += '</tr>';
+    });
+    html += '</tbody></table></div>';
+    tableRows = []; inTable = false;
+  }
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Code blocks
+    if (line.match(/^```/)) {
+      if (!inCodeBlock) {
+        flushList(); flushTable();
+        inCodeBlock = true;
+        codeLang = line.slice(3).trim();
+        codeLines = [];
+        i++; continue;
+      } else {
+        html += '<pre><code>' + escHtml(codeLines.join('\n')) + '</code></pre>';
+        inCodeBlock = false;
+        i++; continue;
+      }
+    }
+    if (inCodeBlock) { codeLines.push(line); i++; continue; }
+
+    // Table rows
+    if (line.match(/^\|.+\|$/)) {
+      flushList();
+      const cells = line.slice(1, -1).split('|');
+      if (!inTable) inTable = true;
+      tableRows.push(cells);
+      i++; continue;
+    } else if (inTable) {
+      flushTable();
+    }
+
+    // List items
+    if (line.match(/^[-*]\s+/) || line.match(/^\d+\.\s+/)) {
+      flushTable();
+      inList = true;
+      listLines.push(line.replace(/^[-*]\s+/, '').replace(/^\d+\.\s+/, ''));
+      i++; continue;
+    } else if (inList) {
+      flushList();
+    }
+
+    // Headings
+    const hMatch = line.match(/^(#{1,6})\s+(.*)/);
+    if (hMatch) {
+      flushList(); flushTable();
+      const level = hMatch[1].length;
+      html += `<h${level}>${inlineFormat(hMatch[2])}</h${level}>`;
+      i++; continue;
+    }
+
+    // Horizontal rule
+    if (line.match(/^---+$/)) { html += '<hr style="border:none;border-top:1px solid var(--border);margin:24px 0">'; i++; continue; }
+
+    // Blockquote
+    if (line.match(/^>\s*/)) {
+      flushList(); flushTable();
+      let bq = '';
+      while (i < lines.length && lines[i].match(/^>\s*/)) {
+        bq += lines[i].replace(/^>\s*/, '') + ' ';
+        i++;
+      }
+      html += '<div class="callout">' + inlineFormat(bq.trim()) + '</div>';
+      continue;
+    }
+
+    // Empty line
+    if (line.trim() === '') { i++; continue; }
+
+    // Paragraph
+    html += '<p>' + inlineFormat(line) + '</p>';
+    i++;
+  }
+
+  flushList(); flushTable();
+  if (inCodeBlock) html += '<pre><code>' + escHtml(codeLines.join('\n')) + '</code></pre>';
+  return html;
+}
+
+function inlineFormat(s) {
+  s = escHtml(s);
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+  s = s.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  return s;
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ================================================================
+// Load worklog markdown files
+// ================================================================
+const PHASE_META = [
+  { num: 1, title: 'Environment Setup & Sanity Check', cls: 'p1' },
+  { num: 2, title: 'CausalVLA Architecture', cls: 'p2' },
+  { num: 3, title: 'Unit Testing', cls: 'p3' },
+  { num: 4, title: 'OOD Perturbation Engine', cls: 'p4' },
+  { num: 5, title: 'Training', cls: 'p5' },
+  { num: 6, title: 'Evaluation & Results', cls: 'p6' },
+];
+
+// Cache fetched markdown
+const worklogCache = {};
+let worklogNavBuilt = false;
+
+async function buildWorkNav() {
+  const nav = document.getElementById('work-nav-list');
+  nav.innerHTML = '';
+
+  // Fetch all phase files in parallel with GET (HEAD can fail on some servers)
+  const results = await Promise.all(PHASE_META.map(async (phase) => {
+    try {
+      const resp = await fetch(`worklog/phase${phase.num}.md`);
+      if (resp.ok) {
+        const text = await resp.text();
+        if (text.trim()) { worklogCache[phase.num] = text; return true; }
+      }
+    } catch(e) {}
+    return false;
+  }));
+
+  PHASE_META.forEach((phase, idx) => {
+    const a = document.createElement('a');
+    a.href = '#';
+    a.innerHTML = `<span class="phase-label ${phase.cls}">${phase.num}</span> ${phase.title}`;
+    if (!results[idx]) {
+      a.style.opacity = '0.35';
+      a.style.pointerEvents = 'none';
+    } else {
+      a.onclick = (e) => { e.preventDefault(); selectWorkPhase(phase.num); };
+    }
+    nav.appendChild(a);
+  });
+
+  worklogNavBuilt = true;
+}
+
+async function selectWorkPhase(num) {
+  // Highlight nav
+  document.querySelectorAll('#work-nav-list a').forEach(a => a.classList.remove('active'));
+  const links = document.querySelectorAll('#work-nav-list a');
+  if (links[num - 1]) links[num - 1].classList.add('active');
+
+  const content = document.getElementById('worklog-content');
+  const phase = PHASE_META[num - 1];
+
+  // Load from cache or fetch
+  if (!worklogCache[num]) {
+    try {
+      const resp = await fetch(`worklog/phase${num}.md`);
+      if (resp.ok) worklogCache[num] = await resp.text();
+    } catch(e) {}
+  }
+
+  if (worklogCache[num]) {
+    content.innerHTML = `<div class="md-content">${mdToHtml(worklogCache[num])}</div>`;
+  } else {
+    content.innerHTML = `<div style="text-align:center; color:var(--text-dim); padding:80px 0; font-size:14px;">
+      ไม่พบไฟล์ <code>worklog/phase${num}.md</code>
+    </div>`;
+  }
+  window.scrollTo(0, 0);
+}
+
+// Initialize worklog on tab switch
+const origSwitchTab = switchTab;
+switchTab = function(tab) {
+  origSwitchTab(tab);
+  if (tab === 'mywork') {
+    if (!worklogNavBuilt) {
+      buildWorkNav().then(() => {
+        // Auto-select first available phase
+        const firstLink = document.querySelector('#work-nav-list a:not([style*="pointer-events"])');
+        if (firstLink) firstLink.click();
+      });
+    }
+  }
+};
+
+// Auto-switch tab based on URL hash (e.g. pipeline.html#tab=mywork)
+(function() {
+  const hash = location.hash;
+  const m = hash.match(/^#tab=(\w+)$/);
+  if (m && (m[1] === 'planning' || m[1] === 'mywork')) {
+    switchTab(m[1]);
+  }
+})();
+</script>
+</body>
+</html>
