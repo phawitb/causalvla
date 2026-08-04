@@ -1,4 +1,6 @@
 # Large data / generated assets
+papers/*.pdf
+papers/download_list.txt
 augment_preview/*.mp4
 augment_preview/*.json
 augment_preview/*.png

@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CausalVLA — Related Papers</title>
+<style>
+  :root {
+    --bg: #f8f9fb; --surface: #ffffff; --border: #d8dde4;
+    --text: #1a1a2e; --text-dim: #6b7280; --accent: #2563eb;
+    --green: #16a34a; --orange: #ea580c; --purple: #7c3aed;
+    --red: #dc2626;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+  }
+
+  /* Nav tabs */
+  .nav-bar {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 0 32px; display: flex; gap: 0; position: sticky; top: 0; z-index: 100;
+  }
+  .nav-tab {
+    padding: 14px 20px; font-size: 14px; font-weight: 600; color: var(--text-dim);
+    text-decoration: none; border-bottom: 2px solid transparent; transition: all 0.2s;
+  }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* Header */
+  .header {
+    padding: 32px 32px 24px; border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .header h1 { font-size: 24px; font-weight: 800; }
+  .header h1 .accent { color: var(--accent); }
+  .header p { color: var(--text-dim); font-size: 14px; margin-top: 6px; }
+  .header .stats {
+    margin-top: 12px; display: flex; gap: 20px; font-size: 13px; color: var(--text-dim);
+  }
+  .header .stats span { font-weight: 700; color: var(--text); }
+
+  /* Filter */
+  .filter-bar {
+    padding: 16px 32px; display: flex; gap: 8px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--border); background: var(--surface);
+  }
+  .filter-btn {
+    padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+    background: var(--bg); font-size: 12px; font-weight: 600; cursor: pointer;
+    color: var(--text-dim); transition: all 0.15s;
+  }
+  .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* Paper list */
+  .papers { padding: 24px 32px; max-width: 960px; }
+
+  .paper-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px 24px; margin-bottom: 16px; transition: all 0.15s;
+  }
+  .paper-card:hover {
+    border-color: var(--accent); box-shadow: 0 2px 12px rgba(37,99,235,0.08);
+  }
+
+  .paper-num {
+    display: inline-block; width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent); color: white; font-size: 12px; font-weight: 700;
+    text-align: center; line-height: 28px; margin-right: 10px; flex-shrink: 0;
+  }
+
+  .paper-title {
+    font-size: 15px; font-weight: 700; display: inline; line-height: 1.4;
+  }
+
+  .paper-meta {
+    margin-top: 6px; font-size: 12px; color: var(--text-dim); display: flex;
+    gap: 16px; flex-wrap: wrap; align-items: center;
+  }
+  .paper-meta .authors { font-style: italic; }
+  .paper-meta .venue { font-weight: 600; color: var(--purple); }
+
+  .paper-tags { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag {
+    padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;
+  }
+  .tag.vla { background: #dbeafe; color: #1d4ed8; }
+  .tag.causal { background: #fce7f3; color: #be185d; }
+  .tag.augmentation { background: #dcfce7; color: #15803d; }
+  .tag.domain-rand { background: #fef3c7; color: #b45309; }
+  .tag.robustness { background: #fee2e2; color: #b91c1c; }
+  .tag.flow { background: #e0e7ff; color: #4338ca; }
+  .tag.benchmark { background: #f3e8ff; color: #7c3aed; }
+
+  .paper-summary {
+    margin-top: 10px; font-size: 13px; color: var(--text-dim); line-height: 1.6;
+  }
+
+  .paper-links {
+    margin-top: 10px; display: flex; gap: 10px;
+  }
+  .paper-links a {
+    font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 6px;
+    text-decoration: none; transition: all 0.15s;
+  }
+  .paper-links .pdf-link {
+    background: var(--accent); color: white;
+  }
+  .paper-links .pdf-link:hover { background: #1d4ed8; }
+  .paper-links .arxiv-link {
+    border: 1px solid var(--border); color: var(--text-dim);
+  }
+  .paper-links .arxiv-link:hover { border-color: var(--accent); color: var(--accent); }
+
+  .section-title {
+    font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--text-dim); margin: 32px 0 16px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--border);
+  }
+  .section-title:first-child { margin-top: 0; }
+</style>
+</head>
+<body>
+
+<div class="nav-bar">
+  <a class="nav-tab" href="../pipeline.html#tab=planning">Planning</a>
+  <a class="nav-tab" href="../pipeline.html#tab=mywork">My Work</a>
+  <a class="nav-tab" href="../augment_preview/">Augment Preview</a>
+  <a class="nav-tab active" href="./">Papers</a>
+</div>
+
+<div class="header">
+  <h1><span class="accent">Causal</span>VLA — Related Papers</h1>
+  <p>Key references for counterfactual augmentation, VLA models, causal reasoning, and robustness in robot manipulation</p>
+  <div class="stats">
+    <div><span id="paper-count">20</span> papers</div>
+    <div><span>7</span> categories</div>
+    <div><span>2017–2025</span></div>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <button class="filter-btn active" data-cat="all">All</button>
+  <button class="filter-btn" data-cat="vla">VLA Models</button>
+  <button class="filter-btn" data-cat="causal">Causal / Invariance</button>
+  <button class="filter-btn" data-cat="augmentation">Counterfactual Augmentation</button>
+  <button class="filter-btn" data-cat="domain-rand">Domain Randomization</button>
+  <button class="filter-btn" data-cat="robustness">Robustness</button>
+  <button class="filter-btn" data-cat="flow">Flow Matching / Diffusion</button>
+  <button class="filter-btn" data-cat="benchmark">Benchmark</button>
+</div>
+
+<div class="papers" id="papers-list"></div>
+
+<script>
+const PAPERS = [
+  // ── VLA Models ──
+  {
+    num: 1, cat: "vla",
+    title: "SmolVLA: A Vision-Language-Action Model for Affordable and Efficient Robotics",
+    authors: "Fanqi Lin et al.", year: 2025, venue: "arXiv 2025",
+    arxiv: "2506.01844", pdf: "smolvla.pdf",
+    tags: ["vla"],
+    summary: "The base model that CausalVLA extends. A small, efficient VLA using flow matching for action prediction with asynchronous inference, achieving performance comparable to 10x larger VLAs."
+  },
+  {
+    num: 2, cat: "vla",
+    title: "OpenVLA: An Open-Source Vision-Language-Action Model",
+    authors: "Moo Jin Kim et al.", year: 2024, venue: "CoRL 2024",
+    arxiv: "2406.09246", pdf: "openvla.pdf",
+    tags: ["vla"],
+    summary: "7B-parameter open-source VLA trained on 970k real-world robot demonstrations using dual vision encoders (DINOv2 + SigLIP) and Llama 2. Key baseline for VLA comparison."
+  },
+  {
+    num: 3, cat: "vla",
+    title: "RT-2: Vision-Language-Action Models Transfer Web Knowledge to Robotic Control",
+    authors: "Anthony Brohan et al.", year: 2023, venue: "arXiv 2023",
+    arxiv: "2307.15818", pdf: "rt2.pdf",
+    tags: ["vla"],
+    summary: "Seminal VLA that unifies vision, language, and action tokens in a single transformer co-trained on web-scale data. Established the VLA paradigm that CausalVLA builds upon."
+  },
+  {
+    num: 4, cat: "vla",
+    title: "\u03C00: A Vision-Language-Action Flow Model for General Robot Control",
+    authors: "Kevin Black et al. (Physical Intelligence)", year: 2024, venue: "arXiv 2024",
+    arxiv: "2410.24164", pdf: "pi0.pdf",
+    tags: ["vla", "flow"],
+    summary: "Introduces flow matching on top of a pre-trained VLM for action generation \u2014 the same paradigm used by SmolVLA/CausalVLA. Demonstrates flow matching as a powerful alternative to autoregressive action decoding."
+  },
+  {
+    num: 5, cat: "vla",
+    title: "Octo: An Open-Source Generalist Robot Policy",
+    authors: "Dibya Ghosh et al.", year: 2024, venue: "RSS 2024",
+    arxiv: "2405.12213", pdf: "octo.pdf",
+    tags: ["vla"],
+    summary: "Large transformer-based generalist policy trained on 800k trajectories from Open X-Embodiment. Key baseline for comparing generalist robot policies and fine-tuning approaches."
+  },
+
+  // ── Causal / Invariance ──
+  {
+    num: 6, cat: "causal",
+    title: "Towards Causal Representation Learning",
+    authors: "Bernhard Sch\u00F6lkopf et al.", year: 2021, venue: "Proc. IEEE 2021",
+    arxiv: "2102.11107", pdf: "causal_representation_learning.pdf",
+    tags: ["causal"],
+    summary: "Foundational paper connecting causal inference to representation learning. Argues that learning causal (rather than statistical) representations is key to transfer and generalization \u2014 the core motivation behind CausalVLA\u2019s invariance losses."
+  },
+  {
+    num: 7, cat: "causal",
+    title: "Invariant Risk Minimization",
+    authors: "Martin Arjovsky et al.", year: 2019, venue: "arXiv 2019",
+    arxiv: "1907.02893", pdf: "invariant_risk_minimization.pdf",
+    tags: ["causal"],
+    summary: "Introduces IRM \u2014 learning representations where the optimal classifier is invariant across environments. CausalVLA\u2019s dual invariance losses (L_latent, L_action) are inspired by this framework."
+  },
+  {
+    num: 8, cat: "causal",
+    title: "Learning Counterfactually Invariant Predictors",
+    authors: "Francesco Quinzan et al.", year: 2022, venue: "arXiv 2022",
+    arxiv: "2207.09768", pdf: "counterfactually_invariant_predictors.pdf",
+    tags: ["causal", "augmentation"],
+    summary: "Proposes graphical criteria and a model-agnostic framework (CIP) for learning predictors invariant under counterfactual changes. Directly relevant to CausalVLA\u2019s goal of visual counterfactual invariance."
+  },
+  {
+    num: 9, cat: "causal",
+    title: "Causal Counterfactuals for Improving the Robustness of Reinforcement Learning",
+    authors: "Tom He et al.", year: 2022, venue: "arXiv 2022",
+    arxiv: "2211.05551", pdf: "causal_counterfactuals_rl.pdf",
+    tags: ["causal", "robustness"],
+    summary: "Proposes CausalCF combining causal curiosity and counterfactual reasoning to improve RL robustness. Demonstrates that causal representations capture invariant mechanisms transferable across tasks."
+  },
+
+  // ── Counterfactual Augmentation ──
+  {
+    num: 10, cat: "augmentation",
+    title: "RoCoDA: Counterfactual Data Augmentation for Data-Efficient Robot Learning from Demonstrations",
+    authors: "Ezra Ameperosa et al.", year: 2024, venue: "ICRA 2025",
+    arxiv: "2411.16959", pdf: "rocoda.pdf",
+    tags: ["augmentation", "causal"],
+    summary: "Most directly related work \u2014 unifies invariance, equivariance, and causality for data augmentation in imitation learning. Combines causally invariant counterfactual augmentation with geometric equivariance."
+  },
+  {
+    num: 11, cat: "augmentation",
+    title: "Causal Action Influence Aware Counterfactual Data Augmentation",
+    authors: "Nuria Armengol Urpi et al.", year: 2024, venue: "ICML 2024",
+    arxiv: "2405.18917", pdf: "causal_action_influence.pdf",
+    tags: ["augmentation", "causal"],
+    summary: "Uses causal influence quantification to generate counterfactual transitions by swapping action-unaffected state components, improving robustness of offline learning against distributional shift."
+  },
+  {
+    num: 12, cat: "augmentation",
+    title: "From Invariant Representations to Invariant Data: Provable Robustness via Noisy Counterfactual Matching",
+    authors: "arXiv 2505.24843", year: 2025, venue: "arXiv 2025",
+    arxiv: "2505.24843", pdf: "noisy_counterfactual_matching.pdf",
+    tags: ["augmentation", "causal"],
+    summary: "Proposes shifting from learning invariant representations to leveraging invariant data pairs via Noisy Counterfactual Matching (NCM). Provides theoretical grounding for why counterfactual data pairs improve robustness."
+  },
+
+  // ── Domain Randomization ──
+  {
+    num: 13, cat: "domain-rand",
+    title: "Domain Randomization for Transferring Deep Neural Networks from Simulation to the Real World",
+    authors: "Josh Tobin et al.", year: 2017, venue: "IROS 2017",
+    arxiv: "1703.06907", pdf: "domain_randomization.pdf",
+    tags: ["domain-rand"],
+    summary: "Seminal work on visual domain randomization \u2014 training on randomized renderings so the real world appears as \u201Cjust another variation.\u201D CausalVLA\u2019s Model B baseline follows this approach."
+  },
+  {
+    num: 14, cat: "domain-rand",
+    title: "Solving Rubik\u2019s Cube with a Robot Hand (Automatic Domain Randomization)",
+    authors: "OpenAI, Ilge Akkaya et al.", year: 2019, venue: "arXiv 2019",
+    arxiv: "1910.07113", pdf: "automatic_domain_randomization.pdf",
+    tags: ["domain-rand"],
+    summary: "Introduces Automatic Domain Randomization (ADR) with distributions of increasing difficulty. Demonstrates that extensive visual/physical randomization enables zero-shot transfer of dexterous manipulation."
+  },
+
+  // ── Robustness ──
+  {
+    num: 15, cat: "robustness",
+    title: "THE COLOSSEUM: A Benchmark for Evaluating Generalization for Robotic Manipulation",
+    authors: "Wilbert Pumacay et al.", year: 2024, venue: "arXiv 2024",
+    arxiv: "2402.08191", pdf: "colosseum.pdf",
+    tags: ["robustness", "benchmark"],
+    summary: "Benchmark with 20 tasks and 14 perturbation axes (color, texture, lighting, camera, distractors). Shows 30-50% performance degradation under perturbation \u2014 the problem CausalVLA aims to solve."
+  },
+  {
+    num: 16, cat: "robustness",
+    title: "LIBERO-Plus: In-depth Robustness Analysis of Vision-Language-Action Models",
+    authors: "Senyu Fei et al.", year: 2025, venue: "arXiv 2025",
+    arxiv: "2510.13626", pdf: "libero_plus.pdf",
+    tags: ["robustness", "benchmark", "vla"],
+    summary: "Evaluates VLA robustness on LIBERO under 7 perturbation dimensions, finding performance drops from 95% to below 30%. Directly motivates CausalVLA\u2019s robustness approach on the same benchmark."
+  },
+  {
+    num: 17, cat: "robustness",
+    title: "What Makes Pre-Trained Visual Representations Successful for Robust Manipulation?",
+    authors: "Kaylee Burns et al.", year: 2023, venue: "arXiv 2023",
+    arxiv: "2312.12444", pdf: "visual_representations_manipulation.pdf",
+    tags: ["robustness"],
+    summary: "Investigates which properties of visual representations lead to robustness under visual distribution shifts. Finds manipulation-specific pre-training does not guarantee robustness to lighting/texture changes."
+  },
+
+  // ── Flow Matching / Diffusion ──
+  {
+    num: 18, cat: "flow",
+    title: "Flow Matching for Generative Modeling",
+    authors: "Yaron Lipman et al.", year: 2022, venue: "ICLR 2023",
+    arxiv: "2210.02747", pdf: "flow_matching.pdf",
+    tags: ["flow"],
+    summary: "Introduces flow matching as a simulation-free training method for continuous normalizing flows. The generative modeling foundation used by SmolVLA/CausalVLA for action prediction (L_task)."
+  },
+  {
+    num: 19, cat: "flow",
+    title: "Diffusion Policy: Visuomotor Policy Learning via Action Diffusion",
+    authors: "Cheng Chi et al.", year: 2023, venue: "RSS 2023",
+    arxiv: "2303.04137", pdf: "diffusion_policy.pdf",
+    tags: ["flow"],
+    summary: "Pioneered using diffusion models for robot visuomotor policy learning. Flow matching (used in SmolVLA/CausalVLA) is a closely related paradigm this work helped establish for robotics."
+  },
+
+  // ── Benchmark ──
+  {
+    num: 20, cat: "benchmark",
+    title: "LIBERO: Benchmarking Knowledge Transfer for Lifelong Robot Learning",
+    authors: "Bo Liu et al.", year: 2023, venue: "NeurIPS 2023",
+    arxiv: "2306.03310", pdf: "libero.pdf",
+    tags: ["benchmark"],
+    summary: "The primary evaluation benchmark for CausalVLA. Provides task suites (Spatial, Object, Goal, Long) for evaluating robot manipulation policy transfer with standardized BDDL environments."
+  },
+];
+
+let currentFilter = "all";
+
+function render() {
+  const container = document.getElementById("papers-list");
+  const filtered = currentFilter === "all" ? PAPERS : PAPERS.filter(p => p.cat === currentFilter || p.tags.includes(currentFilter));
+  document.getElementById("paper-count").textContent = filtered.length;
+
+  // Group by category
+  const groups = {};
+  const catOrder = ["vla", "causal", "augmentation", "domain-rand", "robustness", "flow", "benchmark"];
+  const catNames = {
+    "vla": "VLA Models for Robotics",
+    "causal": "Causal Reasoning & Invariance",
+    "augmentation": "Counterfactual Data Augmentation",
+    "domain-rand": "Domain Randomization",
+    "robustness": "Robustness Under Distribution Shift",
+    "flow": "Flow Matching & Diffusion",
+    "benchmark": "Benchmarks"
+  };
+
+  if (currentFilter === "all") {
+    filtered.forEach(p => {
+      if (!groups[p.cat]) groups[p.cat] = [];
+      groups[p.cat].push(p);
+    });
+  } else {
+    groups[currentFilter] = filtered;
+  }
+
+  let html = "";
+  const order = currentFilter === "all" ? catOrder : [currentFilter];
+  order.forEach(cat => {
+    if (!groups[cat]) return;
+    html += `<div class="section-title">${catNames[cat] || cat}</div>`;
+    groups[cat].forEach(p => {
+      const tagsHtml = p.tags.map(t => `<span class="tag ${t}">${t.replace("-", " ")}</span>`).join("");
+      html += `
+        <div class="paper-card">
+          <div style="display:flex;align-items:flex-start;">
+            <span class="paper-num">${p.num}</span>
+            <div>
+              <div class="paper-title">${p.title}</div>
+              <div class="paper-meta">
+                <span class="authors">${p.authors}</span>
+                <span>${p.year}</span>
+                <span class="venue">${p.venue}</span>
+              </div>
+              <div class="paper-tags">${tagsHtml}</div>
+              <div class="paper-summary">${p.summary}</div>
+              <div class="paper-links">
+                <a class="pdf-link" href="${p.pdf}" target="_blank">PDF</a>
+                <a class="arxiv-link" href="https://arxiv.org/abs/${p.arxiv}" target="_blank">arXiv: ${p.arxiv}</a>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    });
+  });
+  container.innerHTML = html;
+}
+
+// Filter buttons
+document.querySelectorAll(".filter-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentFilter = btn.dataset.cat;
+    render();
+  });
+});
+
+render();
+</script>
+</body>
+</html>
