@@ -38,7 +38,7 @@ class CausalVLAPolicy(SmolVLAPolicy):
         )
 
     def _pool_prefix_embs(self, prefix_embs: Tensor) -> Tensor:
-        """Mean-pool prefix embeddings to get a fixed-size latent vector [B, D]."""
+        """Mean-pool action-expert hidden states into latent vector [B, D]."""
         return prefix_embs.mean(dim=1)
 
     def _augment_images(self, images: list[Tensor]) -> list[list[Tensor]]:
