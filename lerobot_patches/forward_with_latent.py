@@ -6,9 +6,9 @@
         Used by CausalVLA to compute invariance losses without running the model twice.
 
         Returns:
-            (losses, prefix_embs, v_t) where:
+            (losses, expert_latent, v_t) where:
                 losses: [B, chunk_size, max_action_dim] per-element MSE losses
-                prefix_embs: [B, L_prefix, D] prefix embeddings (images + language + state)
+                expert_latent: [B, chunk_size, D] trainable action-expert hidden states
                 v_t: [B, chunk_size, max_action_dim] predicted velocity
         """
         if noise is None:
@@ -41,5 +41,4 @@
         suffix_out = suffix_out.to(dtype=torch.float32)
         v_t = self.action_out_proj(suffix_out)
         losses = F.mse_loss(u_t, v_t, reduction="none")
-        return losses, prefix_embs, v_t
-
+        return losses, suffix_out, v_t
