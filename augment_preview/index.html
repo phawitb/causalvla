@@ -23,20 +23,23 @@
   /* Header */
   .header {
     background: var(--surface); border-bottom:1px solid var(--border);
-    padding:12px 24px; display:flex; align-items:center; gap:12px;
-    flex-shrink: 0;
+    padding:0 24px; display:flex; align-items:center; gap:0;
+    flex-shrink: 0; height:52px; box-shadow:0 1px 3px rgba(0,0,0,0.04);
   }
-  .header h1 { font-size:18px; font-weight:800; color:var(--accent); }
-  .header h1 span { color:var(--text); }
+  .header .brand {
+    font-size:17px; font-weight:800; color:var(--accent);
+    margin-right:32px; letter-spacing:-0.5px;
+  }
+  .header .brand span { color:var(--text); }
   .header .badge {
     font-size:11px; font-weight:700; background:#ffedd5; color:#c2410c;
     padding:2px 10px; border-radius:12px;
   }
   .header .subtitle { font-size:13px; font-weight:600; color:var(--text-dim); }
   .nav-tab {
-    padding:6px 16px; font-size:13px; font-weight:600; color:var(--text-dim);
+    padding:14px 20px; font-size:14px; font-weight:600; color:var(--text-dim);
     text-decoration:none; border-bottom:2px solid transparent;
-    transition:all 0.15s;
+    transition:all 0.15s; position:relative; top:1px;
   }
   .nav-tab:hover { color:var(--text); }
   .nav-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
@@ -179,11 +182,12 @@
 <body>
 
 <div class="header">
-  <h1>Causal<span>VLA</span></h1>
-  <a class="nav-tab" href="../pipeline.html" onclick="goTab(event,'planning')">Planning</a>
-  <a class="nav-tab" href="../pipeline.html" onclick="goTab(event,'mywork')">My Work</a>
+  <div class="brand"><span>Causal</span>VLA</div>
+  <a class="nav-tab" href="../pipeline.html#tab=planning">Planning</a>
+  <a class="nav-tab" href="../pipeline.html#tab=mywork">My Work</a>
   <a class="nav-tab active" href="./">Augment Preview</a>
   <a class="nav-tab" href="../papers/">Papers</a>
+  <a class="nav-tab" href="../paper_final/">Paper Final</a>
   <span style="flex:1"></span>
   <span class="badge" id="ep-count" style="background:#dbeafe;color:#1d4ed8;">...</span>
 </div>
@@ -520,11 +524,6 @@ function startPlayheadLoop() {
     }
   }
   rafId = requestAnimationFrame(tick);
-}
-
-function goTab(e, tab) {
-  e.preventDefault();
-  window.location.href = `../pipeline.html#tab=${tab}`;
 }
 
 init();

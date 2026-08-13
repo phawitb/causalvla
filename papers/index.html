@@ -20,11 +20,19 @@
   /* Nav tabs */
   .nav-bar {
     background: var(--surface); border-bottom: 1px solid var(--border);
-    padding: 0 32px; display: flex; gap: 0; position: sticky; top: 0; z-index: 100;
+    padding: 0 24px; display: flex; align-items: center;
+    position: sticky; top: 0; z-index: 100;
+    height: 52px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
+  .nav-bar .brand {
+    font-size: 17px; font-weight: 800; color: var(--accent);
+    margin-right: 32px; letter-spacing: -0.5px;
+  }
+  .nav-bar .brand span { color: var(--text); }
   .nav-tab {
     padding: 14px 20px; font-size: 14px; font-weight: 600; color: var(--text-dim);
-    text-decoration: none; border-bottom: 2px solid transparent; transition: all 0.2s;
+    text-decoration: none; border-bottom: 2px solid transparent; transition: all 0.15s;
+    position: relative; top: 1px;
   }
   .nav-tab:hover { color: var(--text); }
   .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
@@ -126,17 +134,19 @@
 <body>
 
 <div class="nav-bar">
+  <div class="brand"><span>Causal</span>VLA</div>
   <a class="nav-tab" href="../pipeline.html#tab=planning">Planning</a>
   <a class="nav-tab" href="../pipeline.html#tab=mywork">My Work</a>
   <a class="nav-tab" href="../augment_preview/">Augment Preview</a>
   <a class="nav-tab active" href="./">Papers</a>
+  <a class="nav-tab" href="../paper_final/">Paper Final</a>
 </div>
 
 <div class="header">
   <h1><span class="accent">Causal</span>VLA — Related Papers</h1>
   <p>Key references for counterfactual augmentation, VLA models, causal reasoning, and robustness in robot manipulation</p>
   <div class="stats">
-    <div><span id="paper-count">20</span> papers</div>
+    <div><span id="paper-count">26</span> papers</div>
     <div><span>7</span> categories</div>
     <div><span>2017–2025</span></div>
   </div>
@@ -330,6 +340,57 @@ const PAPERS = [
     tags: ["benchmark"],
     summary: "The primary evaluation benchmark for CausalVLA. Provides task suites (Spatial, Object, Goal, Long) for evaluating robot manipulation policy transfer with standardized BDDL environments."
   },
+
+  // ── Additional Papers (from user's reference list) ──
+  {
+    num: 21, cat: "vla",
+    title: "RT-1: Robotics Transformer for Real-World Control at Scale",
+    authors: "Anthony Brohan et al.", year: 2022, venue: "RSS 2023",
+    arxiv: "2212.06817", pdf: "rt1.pdf",
+    tags: ["vla"],
+    summary: "Large-scale real-world robot learning with a transformer backbone. Trained on 130k demonstrations across 700+ tasks. Established the paradigm of large-scale imitation learning that VLAs build upon."
+  },
+  {
+    num: 22, cat: "robustness",
+    title: "Understanding Spurious Correlations in Disentangled Representation Learning (DILL)",
+    authors: "Yixin Wang et al.", year: 2024, venue: "ICLR 2024",
+    arxiv: null, pdf: null,
+    link: "https://openreview.net/forum?id=73fae11240",
+    tags: ["causal", "robustness"],
+    summary: "Analyzes how disentangled representations can still rely on spurious visual correlations. Relevant to CausalVLA's motivation: even good representations may fail under visual distribution shift without explicit invariance constraints."
+  },
+  {
+    num: 23, cat: "robustness",
+    title: "RobustVLA: Towards Robust VLA via Multimodal Ensemble and Test-Time Adaptation",
+    authors: "Haozhe Wang et al.", year: 2025, venue: "arXiv 2025",
+    arxiv: "2511.01331", pdf: "robustvla.pdf",
+    tags: ["robustness", "vla"],
+    summary: "Addresses VLA robustness via multimodal ensemble and test-time adaptation. Complementary approach to CausalVLA — tackles robustness at inference time rather than during training."
+  },
+  {
+    num: 24, cat: "vla",
+    title: "RIPT-VLA: Reinforced Imitation Pretraining for Vision-Language-Action Models",
+    authors: "Yunfan Jiang et al.", year: 2025, venue: "arXiv 2025",
+    arxiv: "2505.17016", pdf: "ript_vla.pdf",
+    tags: ["vla"],
+    summary: "Combines reinforcement learning with imitation pretraining for VLA fine-tuning. Represents the post-training paradigm for improving VLA performance beyond standard supervised fine-tuning."
+  },
+  {
+    num: 25, cat: "flow",
+    title: "Action Chunking with Transformers (ACT)",
+    authors: "Tony Z. Zhao et al.", year: 2023, venue: "RSS 2023",
+    arxiv: "2304.13705", pdf: "act.pdf",
+    tags: ["flow", "vla"],
+    summary: "Introduces action chunking — predicting sequences of future actions rather than single steps. CausalVLA/SmolVLA use chunk_size=50 following this paradigm for temporally coherent control."
+  },
+  {
+    num: 26, cat: "domain-rand",
+    title: "DART: Noise Injection for Robust Imitation Learning",
+    authors: "Michael Laskey et al.", year: 2017, venue: "CoRL 2017",
+    arxiv: "1703.09327", pdf: "dart.pdf",
+    tags: ["domain-rand", "augmentation"],
+    summary: "Injects noise during data collection to improve imitation learning robustness. Early work on the idea that training-time perturbations improve policy generalization — a precursor to domain randomization approaches."
+  },
 ];
 
 let currentFilter = "all";
@@ -382,8 +443,9 @@ function render() {
               <div class="paper-tags">${tagsHtml}</div>
               <div class="paper-summary">${p.summary}</div>
               <div class="paper-links">
-                <a class="pdf-link" href="${p.pdf}" target="_blank">PDF</a>
-                <a class="arxiv-link" href="https://arxiv.org/abs/${p.arxiv}" target="_blank">arXiv: ${p.arxiv}</a>
+                ${p.pdf ? `<a class="pdf-link" href="${p.pdf}" target="_blank">PDF</a>` : ""}
+                ${p.arxiv ? `<a class="arxiv-link" href="https://arxiv.org/abs/${p.arxiv}" target="_blank">arXiv: ${p.arxiv}</a>` : ""}
+                ${p.link ? `<a class="arxiv-link" href="${p.link}" target="_blank">OpenReview</a>` : ""}
               </div>
             </div>
           </div>

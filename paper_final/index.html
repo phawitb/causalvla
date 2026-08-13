@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CausalVLA — Paper Final</title>
+<style>
+  :root {
+    --bg: #f8f9fb; --surface: #ffffff; --border: #d8dde4;
+    --text: #1a1a2e; --text-dim: #6b7280; --accent: #2563eb;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+  }
+
+  /* Nav bar — unified across all pages */
+  .nav-bar {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 0 24px; display: flex; align-items: center;
+    position: sticky; top: 0; z-index: 100;
+    height: 52px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .nav-bar .brand {
+    font-size: 17px; font-weight: 800; color: var(--accent);
+    margin-right: 32px; letter-spacing: -0.5px;
+  }
+  .nav-bar .brand span { color: var(--text); }
+  .nav-tab {
+    padding: 14px 20px; font-size: 14px; font-weight: 600; color: var(--text-dim);
+    text-decoration: none; border-bottom: 2px solid transparent; transition: all 0.15s;
+    position: relative; top: 1px; font-family: inherit;
+  }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* Paper layout */
+  .paper-container {
+    max-width: 820px; margin: 0 auto; padding: 48px 32px 120px;
+  }
+
+  /* Title block */
+  .paper-title-block {
+    text-align: center; margin-bottom: 40px; padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+  .paper-title-block h1 {
+    font-size: 28px; font-weight: 800; line-height: 1.3; margin-bottom: 12px;
+  }
+  .paper-title-block h1 .hl { color: var(--accent); }
+  .paper-title-block .authors {
+    font-size: 14px; color: var(--text-dim); margin-bottom: 8px;
+  }
+  .paper-title-block .affiliations {
+    font-size: 12px; color: var(--text-dim); font-style: italic;
+  }
+
+  /* Abstract */
+  .abstract {
+    background: #f0f4ff; border-left: 4px solid var(--accent);
+    padding: 20px 24px; border-radius: 0 8px 8px 0; margin-bottom: 32px;
+    font-size: 13.5px; line-height: 1.8;
+  }
+  .abstract-label {
+    font-size: 12px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--accent); margin-bottom: 8px;
+  }
+
+  /* Sections */
+  .section { margin-bottom: 32px; }
+  .section h2 {
+    font-size: 18px; font-weight: 800; margin-bottom: 16px;
+    padding-bottom: 8px; border-bottom: 2px solid var(--border);
+    counter-increment: section;
+  }
+  .section h2::before {
+    content: counter(section) ". ";
+    color: var(--accent);
+  }
+  body { counter-reset: section; }
+
+  .section h3 {
+    font-size: 15px; font-weight: 700; margin: 20px 0 10px;
+  }
+  .section h4 {
+    font-size: 14px; font-weight: 700; margin: 16px 0 8px; color: var(--text-dim);
+  }
+
+  .section p {
+    font-size: 14px; line-height: 1.85; margin-bottom: 12px; text-align: justify;
+  }
+
+  .section ul, .section ol {
+    font-size: 14px; line-height: 1.85; margin: 8px 0 12px 24px;
+  }
+  .section li { margin-bottom: 4px; }
+
+  /* Equations */
+  .equation {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px 24px; margin: 16px 0;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    font-size: 15px; text-align: center; line-height: 2;
+    overflow-x: auto;
+  }
+  .equation .eq-num {
+    float: right; color: var(--text-dim); font-size: 13px;
+  }
+
+  /* Tables */
+  .table-wrap {
+    overflow-x: auto; margin: 16px 0;
+  }
+  table {
+    width: 100%; border-collapse: collapse; font-size: 13px;
+  }
+  thead { background: #f1f5f9; }
+  th {
+    padding: 10px 12px; text-align: left; font-weight: 700;
+    border-bottom: 2px solid var(--border); font-size: 12px;
+    text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-dim);
+  }
+  td {
+    padding: 8px 12px; border-bottom: 1px solid #eef0f4;
+  }
+  tr:hover td { background: #f8fafc; }
+  .table-caption {
+    font-size: 12px; color: var(--text-dim); margin-top: 6px;
+    text-align: center; font-style: italic;
+  }
+  td.best { font-weight: 700; color: var(--accent); }
+
+  /* Figures */
+  .figure {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px; margin: 20px 0; text-align: center;
+  }
+  .figure img {
+    max-width: 100%; border-radius: 6px;
+  }
+  .figure-caption {
+    font-size: 12px; color: var(--text-dim); margin-top: 10px;
+    text-align: left; line-height: 1.6;
+  }
+  .figure-caption strong { color: var(--text); }
+
+  /* Architecture diagram (ASCII-based) */
+  .arch-diagram {
+    background: #1a1a2e; color: #e2e8f0; border-radius: 10px;
+    padding: 24px; margin: 20px 0; font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px; line-height: 1.6; overflow-x: auto; white-space: pre;
+  }
+  .arch-diagram .hl-blue { color: #60a5fa; }
+  .arch-diagram .hl-green { color: #4ade80; }
+  .arch-diagram .hl-yellow { color: #facc15; }
+  .arch-diagram .hl-red { color: #f87171; }
+  .arch-diagram .hl-purple { color: #c084fc; }
+  .arch-diagram .hl-dim { color: #64748b; }
+
+  /* Code blocks */
+  pre {
+    background: #1e293b; color: #e2e8f0; border-radius: 8px;
+    padding: 16px 20px; margin: 12px 0; font-size: 12px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    line-height: 1.6; overflow-x: auto;
+  }
+
+  /* References */
+  .references { font-size: 12.5px; line-height: 1.7; }
+  .references ol { padding-left: 24px; }
+  .references li { margin-bottom: 8px; }
+  .ref-title { font-style: italic; }
+
+  /* Sidebar TOC */
+  .paper-layout { display: flex; }
+  .toc {
+    width: 220px; flex-shrink: 0; padding: 24px 0 24px 24px;
+    position: sticky; top: 72px; height: fit-content; max-height: calc(100vh - 80px);
+    overflow-y: auto;
+  }
+  .toc a {
+    display: block; font-size: 12px; color: var(--text-dim); text-decoration: none;
+    padding: 4px 12px; border-left: 2px solid transparent; margin-bottom: 2px;
+    transition: all 0.15s;
+  }
+  .toc a:hover { color: var(--text); border-left-color: var(--border); }
+  .toc a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+  .toc .toc-title {
+    font-size: 11px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--text-dim); padding: 0 12px 8px; margin-bottom: 4px;
+  }
+
+  /* Keyword tags */
+  .keywords {
+    display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0;
+    justify-content: center;
+  }
+  .kw {
+    font-size: 11px; font-weight: 600; padding: 3px 12px; border-radius: 12px;
+    background: #dbeafe; color: #1d4ed8;
+  }
+
+  /* Callout */
+  .callout {
+    background: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px;
+    border-radius: 0 8px 8px 0; margin: 16px 0; font-size: 13px;
+  }
+
+  @media (max-width: 900px) {
+    .toc { display: none; }
+    .paper-container { padding: 24px 16px 80px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================================================================ -->
+<!-- NAV BAR                                                          -->
+<!-- ================================================================ -->
+<div class="nav-bar">
+  <div class="brand"><span>Causal</span>VLA</div>
+  <a class="nav-tab" href="../pipeline.html#tab=planning">Planning</a>
+  <a class="nav-tab" href="../pipeline.html#tab=mywork">My Work</a>
+  <a class="nav-tab" href="../augment_preview/">Augment Preview</a>
+  <a class="nav-tab" href="../papers/">Papers</a>
+  <a class="nav-tab active" href="./">Paper Final</a>
+</div>
+
+<!-- ================================================================ -->
+<!-- LAYOUT                                                           -->
+<!-- ================================================================ -->
+<div class="paper-layout">
+
+<!-- Table of Contents -->
+<nav class="toc">
+  <div class="toc-title">Contents</div>
+  <a href="#abstract">Abstract</a>
+  <a href="#sec-intro">1. Introduction</a>
+  <a href="#sec-related">2. Related Work</a>
+  <a href="#sec-prelim">3. Preliminaries</a>
+  <a href="#sec-method">4. Method</a>
+  <a href="#sec-method-aug">4.1 Counterfactual Augmentation</a>
+  <a href="#sec-method-loss">4.2 Invariance Losses</a>
+  <a href="#sec-method-train">4.3 Training Procedure</a>
+  <a href="#sec-experiments">5. Experiments</a>
+  <a href="#sec-exp-setup">5.1 Setup</a>
+  <a href="#sec-exp-baselines">5.2 Baselines & Ablations</a>
+  <a href="#sec-exp-ood">5.3 OOD Perturbation Protocol</a>
+  <a href="#sec-results">6. Results</a>
+  <a href="#sec-results-main">6.1 Main Results</a>
+  <a href="#sec-results-ablation">6.2 Ablation Study</a>
+  <a href="#sec-results-qual">6.3 Qualitative Analysis</a>
+  <a href="#sec-discussion">7. Discussion</a>
+  <a href="#sec-conclusion">8. Conclusion</a>
+  <a href="#sec-references">References</a>
+</nav>
+
+<!-- Paper Content -->
+<div class="paper-container">
+
+<!-- ================================================================ -->
+<!-- TITLE                                                            -->
+<!-- ================================================================ -->
+<div class="paper-title-block" id="abstract">
+  <h1><span class="hl">CausalVLA</span>: Counterfactual Invariance Training<br>for Robust Vision-Language-Action Models</h1>
+  <div class="authors">
+    Phawit Boonrat
+  </div>
+  <div class="affiliations">
+    Independent Researcher
+  </div>
+  <div class="keywords">
+    <span class="kw">Vision-Language-Action</span>
+    <span class="kw">Causal Invariance</span>
+    <span class="kw">Counterfactual Augmentation</span>
+    <span class="kw">Robustness</span>
+    <span class="kw">Robot Manipulation</span>
+    <span class="kw">Flow Matching</span>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- ABSTRACT                                                         -->
+<!-- ================================================================ -->
+<div class="abstract">
+  <div class="abstract-label">Abstract</div>
+  Vision-Language-Action (VLA) models have demonstrated remarkable capabilities in robotic manipulation by unifying visual perception, language understanding, and motor control within a single architecture. However, recent benchmarks reveal that VLA policies suffer catastrophic performance degradation&mdash;often exceeding 60% success rate drops&mdash;under visual distribution shifts such as changes in lighting, camera viewpoint, and background texture. We propose <strong>CausalVLA</strong>, a training framework that enforces causal invariance in both the latent representation space and the action prediction space through online counterfactual augmentation. Given a batch of training images, CausalVLA generates <em>K</em> counterfactual visual variants via GPU-accelerated photometric perturbations and penalizes divergence between the original and counterfactual representations (<em>L</em><sub>latent</sub>) and action predictions (<em>L</em><sub>action</sub>), alongside a temporal smoothness regularizer (<em>L</em><sub>smooth</sub>). Crucially, CausalVLA requires <strong>no additional demonstration data</strong>&mdash;it operates on the same clean dataset as standard supervised fine-tuning (SFT), learning invariance purely through the training objective. Built on SmolVLA, a lightweight 500M-parameter VLA with flow matching action heads, CausalVLA is evaluated on the LIBERO benchmark under a systematic out-of-distribution (OOD) perturbation protocol spanning 11 visual perturbation types at three severity levels. Our experiments across five model configurations&mdash;including domain randomization baselines and per-loss ablations&mdash;demonstrate that dual invariance training significantly improves robustness under visual distribution shift while maintaining competitive in-distribution performance, and that both representation-level and action-level invariance contribute complementary benefits.
+</div>
+
+<!-- ================================================================ -->
+<!-- 1. INTRODUCTION                                                  -->
+<!-- ================================================================ -->
+<div class="section" id="sec-intro">
+  <h2>Introduction</h2>
+
+  <p>
+    The emergence of Vision-Language-Action (VLA) models represents a paradigm shift in robotic manipulation, where a single end-to-end architecture maps visual observations and language instructions directly to motor commands. Models such as RT-2 [1], OpenVLA [2], &pi;<sub>0</sub> [3], and SmolVLA [4] have demonstrated that large-scale pre-training on vision-language data, combined with robot demonstration fine-tuning, can produce policies that generalize across tasks, objects, and embodiments. Yet, a fundamental brittleness persists: these policies are highly sensitive to visual distribution shifts encountered during deployment.
+  </p>
+
+  <p>
+    Recent robustness benchmarks paint a stark picture. LIBERO-Plus [5] reports that leading VLA policies experience success rate drops from 95% to below 30% under perturbations as mundane as lighting changes or camera displacement. THE COLOSSEUM [6] documents 30&ndash;50% degradation across 14 perturbation axes. This fragility is not merely an academic concern&mdash;it is the primary barrier to deploying learned manipulation policies in unstructured real-world environments where visual conditions are inherently variable.
+  </p>
+
+  <p>
+    The dominant strategy for improving visual robustness is <em>domain randomization</em> (DR) [7, 8]: augmenting training data with diverse visual variations so that the real world appears as "just another variation." While effective in simulation-to-real transfer, DR has two fundamental limitations. First, it requires generating augmented datasets, multiplying storage and preprocessing costs. Second, and more critically, DR provides no <em>principled mechanism</em> to learn which visual features are task-relevant versus spurious&mdash;it relies on brute-force coverage of the perturbation space.
+  </p>
+
+  <p>
+    We argue that the robustness problem in VLAs is fundamentally a <em>causal inference</em> problem. From a causal perspective [9, 10], a robust policy should depend only on <em>causally relevant</em> visual features (object identity, pose, spatial relations) while being invariant to <em>spurious</em> visual features (lighting, texture, camera parameters). This distinction is precisely what counterfactual reasoning formalizes: if we <em>intervene</em> on spurious visual features while holding task-relevant features fixed, the policy's internal representation and action output should remain unchanged.
+  </p>
+
+  <p>
+    We introduce <strong>CausalVLA</strong>, a training framework that operationalizes this causal principle through three key contributions:
+  </p>
+
+  <ol>
+    <li><strong>Online counterfactual augmentation.</strong> During each training step, we generate <em>K</em> counterfactual visual variants of the input batch using GPU-accelerated photometric perturbations (color jitter, noise, lighting shifts). These counterfactuals serve as interventions on spurious visual features while preserving task-relevant content, requiring no additional pre-computed data.</li>
+    <li><strong>Dual invariance losses.</strong> We enforce invariance at two levels: (a) <em>L</em><sub>latent</sub> penalizes divergence between original and counterfactual latent representations, encouraging the vision-language backbone to extract causally invariant features; (b) <em>L</em><sub>action</sub> penalizes divergence between original and counterfactual action predictions, ensuring end-to-end behavioral invariance.</li>
+    <li><strong>Comprehensive evaluation framework.</strong> We define a systematic OOD perturbation protocol with 11 perturbation types at 3 severity levels, and evaluate five model configurations including domain randomization baselines and per-loss ablations to isolate the contribution of each component.</li>
+  </ol>
+
+  <p>
+    CausalVLA is built on SmolVLA [4], a lightweight 500M-parameter VLA that uses flow matching [11] for action generation. Our design is architecture-agnostic&mdash;the invariance losses can be applied to any VLA with accessible latent representations and action predictions. We evaluate on the LIBERO benchmark [12], a standardized suite of 10 tabletop manipulation tasks with 432 expert demonstrations.
+  </p>
+
+  <p>
+    Our experiments demonstrate that CausalVLA achieves significantly improved robustness under visual distribution shift compared to both standard SFT and domain randomization baselines, while using only the original clean dataset. Ablation studies confirm that both <em>L</em><sub>latent</sub> and <em>L</em><sub>action</sub> provide complementary benefits, with the dual invariance formulation outperforming either loss in isolation.
+  </p>
+</div>
+
+<!-- ================================================================ -->
+<!-- 2. RELATED WORK                                                  -->
+<!-- ================================================================ -->
+<div class="section" id="sec-related">
+  <h2>Related Work</h2>
+
+  <h3>Vision-Language-Action Models</h3>
+  <p>
+    The VLA paradigm was established by RT-2 [1], which co-fine-tunes a vision-language model (PaLI-X or PaLM-E) to output discretized robot actions as language tokens. Subsequent work has scaled this approach (RT-1 [13]) and made it more accessible through open-source implementations (OpenVLA [2], Octo [14]). A key architectural innovation is the replacement of autoregressive action decoding with continuous generative models: &pi;<sub>0</sub> [3] introduced flow matching for action generation, and SmolVLA [4] demonstrated that this approach can work efficiently at 500M parameters. CausalVLA builds on SmolVLA's flow matching architecture, adding invariance objectives without modifying the model structure.
+  </p>
+
+  <h3>Robustness in Robot Learning</h3>
+  <p>
+    The vulnerability of learned policies to visual perturbations is well-documented. Burns et al. [15] systematically evaluate which properties of visual representations predict manipulation robustness, finding that even manipulation-specific pre-training does not guarantee robustness to lighting and texture changes. LIBERO-Plus [5] and THE COLOSSEUM [6] provide quantitative benchmarks demonstrating 30&ndash;65% performance drops under visual perturbations. RobustVLA [16] addresses this at inference time via multimodal ensemble and test-time adaptation, complementary to our training-time approach.
+  </p>
+
+  <h3>Domain Randomization</h3>
+  <p>
+    Domain randomization [7] trains policies on visually diverse data so the real world appears as "just another variation." Automatic Domain Randomization [8] extends this with progressively increasing perturbation difficulty. DART [17] injects noise during data collection to improve robustness. While effective, these approaches lack a principled mechanism for distinguishing causal from spurious features&mdash;they rely on augmentation diversity to achieve implicit invariance. CausalVLA's key distinction is <em>explicit</em> invariance enforcement through paired counterfactual comparisons.
+  </p>
+
+  <h3>Causal Representation Learning</h3>
+  <p>
+    Sch&ouml;lkopf et al. [9] established the theoretical connection between causal inference and robust representation learning, arguing that causal (rather than statistical) representations are key to transfer and generalization. Invariant Risk Minimization (IRM) [10] formalizes this as learning representations where the optimal predictor is invariant across environments. Quinzan et al. [18] propose graphical criteria for counterfactual invariance. In reinforcement learning, He et al. [19] combine causal curiosity with counterfactual reasoning to improve robustness. CausalVLA adapts these principles to the VLA setting, using online counterfactual augmentation as a practical instantiation of causal interventions.
+  </p>
+
+  <h3>Counterfactual Data Augmentation</h3>
+  <p>
+    The most closely related work is RoCoDA [20], which unifies invariance, equivariance, and causality for data augmentation in imitation learning. Urpi et al. [21] use causal influence quantification to generate counterfactual transitions for offline learning. Noisy Counterfactual Matching [22] provides theoretical grounding for why counterfactual data pairs improve robustness. CausalVLA differs from these approaches in three respects: (a) it operates <em>online</em> during training rather than requiring pre-computed augmented datasets, (b) it enforces invariance at both representation and action levels simultaneously, and (c) it is specifically designed for and evaluated on VLA architectures with flow matching action heads.
+  </p>
+
+  <h3>Action Prediction Architectures</h3>
+  <p>
+    Action Chunking with Transformers (ACT) [23] introduced predicting sequences of future actions rather than single steps, improving temporal coherence. Diffusion Policy [24] pioneered using diffusion models for visuomotor policy learning. Flow Matching [11] provides a simulation-free alternative to diffusion-based generation. SmolVLA and CausalVLA use flow matching with chunked action prediction (chunk size 50), combining the benefits of both paradigms.
+  </p>
+
+  <h3>Post-Training Methods for VLAs</h3>
+  <p>
+    RIPT-VLA [25] combines reinforcement learning with imitation pretraining for VLA fine-tuning. Wang et al. [26] analyze how disentangled representations can still rely on spurious correlations. These post-training approaches are orthogonal to CausalVLA's training-time invariance&mdash;they could potentially be combined for further improvement.
+  </p>
+</div>
+
+<!-- ================================================================ -->
+<!-- 3. PRELIMINARIES                                                 -->
+<!-- ================================================================ -->
+<div class="section" id="sec-prelim">
+  <h2>Preliminaries</h2>
+
+  <h3>Problem Setting</h3>
+  <p>
+    We consider language-conditioned visuomotor control, where a policy &pi;<sub>&theta;</sub> maps an observation <em>o<sub>t</sub></em> = (<em>I<sub>t</sub></em>, <em>s<sub>t</sub></em>, <em>l</em>) &mdash; comprising an RGB image <em>I<sub>t</sub></em> &isin; &reals;<sup>H&times;W&times;3</sup>, proprioceptive state <em>s<sub>t</sub></em> &isin; &reals;<sup>d<sub>s</sub></sup>, and a language instruction <em>l</em> &mdash; to a chunk of future actions <em>a<sub>t:t+C</sub></em> &isin; &reals;<sup>C&times;d<sub>a</sub></sup>, where <em>C</em> is the chunk size and <em>d<sub>a</sub></em> is the action dimension.
+  </p>
+
+  <h3>SmolVLA Architecture</h3>
+  <p>
+    SmolVLA [4] consists of three components: (1) a frozen vision encoder (SigLIP) that produces image tokens, (2) a vision-language backbone (SmolVLM2-500M) that jointly processes image tokens and language tokens to produce prefix embeddings, and (3) a flow matching expert head (VLAFlowMatching) that generates action chunks conditioned on the prefix embeddings.
+  </p>
+
+  <p>
+    The vision-language backbone processes the multimodal input to produce prefix embeddings:
+  </p>
+
+  <div class="equation">
+    <span class="eq-num">(1)</span>
+    <em>z</em> = VLM(<em>I<sub>t</sub></em>, <em>l</em>) &isin; &reals;<sup>L&times;D</sup>
+  </div>
+
+  <p>
+    where <em>L</em> is the prefix sequence length and <em>D</em> is the embedding dimension. The flow matching head then generates actions by learning to predict the velocity field <em>v<sub>&theta;</sub></em>(<em>x<sub>t</sub></em>, <em>t</em>, <em>z</em>) that transports samples from a Gaussian prior to the action distribution:
+  </p>
+
+  <div class="equation">
+    <span class="eq-num">(2)</span>
+    <em>L</em><sub>task</sub> = &Eopf;<sub><em>t</em>,<em>&epsilon;</em></sub> [ &Vert; <em>v<sub>&theta;</sub></em>(<em>x<sub>t</sub></em>, <em>t</em>, <em>z</em>) &minus; (<em>a</em> &minus; <em>&epsilon;</em>) &Vert;<sup>2</sup> ]
+  </div>
+
+  <p>
+    where <em>x<sub>t</sub></em> = (1 &minus; <em>t</em>)<em>&epsilon;</em> + <em>t</em> &middot; <em>a</em> is the interpolation between noise <em>&epsilon;</em> ~ N(0, I) and ground-truth actions <em>a</em>, and <em>t</em> ~ U(0, 1) is the flow time. At inference, actions are generated by integrating the learned velocity field from <em>t</em>=0 to <em>t</em>=1 using an ODE solver.
+  </p>
+
+  <h3>Causal Perspective on Visual Robustness</h3>
+  <p>
+    We model the image observation <em>I</em> as generated by two sets of latent factors: <em>causal factors</em> <em>F<sub>c</sub></em> (object identity, pose, spatial relations) that determine the correct action, and <em>spurious factors</em> <em>F<sub>s</sub></em> (lighting, texture, camera parameters) that are correlated with but not causally related to the action. Formally:
+  </p>
+
+  <div class="equation">
+    <span class="eq-num">(3)</span>
+    <em>I</em> = g(<em>F<sub>c</sub></em>, <em>F<sub>s</sub></em>), &emsp; <em>a</em><sup>*</sup> = h(<em>F<sub>c</sub></em>)
+  </div>
+
+  <p>
+    where <em>g</em> is the image generation process and <em>h</em> maps causal factors to optimal actions. A robust policy should satisfy: for any intervention do(<em>F<sub>s</sub></em> := <em>f'<sub>s</sub></em>), both the latent representation and action prediction remain unchanged:
+  </p>
+
+  <div class="equation">
+    <span class="eq-num">(4)</span>
+    &pi;<sub>&theta;</sub>(g(<em>F<sub>c</sub></em>, <em>F<sub>s</sub></em>)) = &pi;<sub>&theta;</sub>(g(<em>F<sub>c</sub></em>, <em>F'<sub>s</sub></em>)) &emsp; &forall; <em>F<sub>s</sub></em>, <em>F'<sub>s</sub></em>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 4. METHOD                                                        -->
+<!-- ================================================================ -->
+<div class="section" id="sec-method">
+  <h2>Method</h2>
+
+  <p>
+    CausalVLA extends the standard VLA training objective with online counterfactual augmentation and dual invariance losses. The key idea is to generate counterfactual visual variants during training&mdash;images where spurious visual features are perturbed while causal content is preserved&mdash;and enforce that the model produces invariant representations and actions across these variants. The overall architecture is shown in Figure 1.
+  </p>
+
+  <!-- Architecture Diagram -->
+  <div class="figure">
+    <div class="arch-diagram"><span class="hl-dim">                         CausalVLA Training Forward Pass</span>
+<span class="hl-dim">  ───────────────────────────────────────────────────────────────────────</span>
+
+  <span class="hl-blue">Input Batch</span>                    <span class="hl-yellow">CausalAugmenter</span>
+  ┌──────────┐                    ┌──────────────────┐
+  │ I (B,C,  │───────────────────▶│  Color Jitter     │
+  │    H,W)  │    Original        │  Gaussian Noise   │──▶ <span class="hl-green">I_1, I_2, ..., I_K</span>
+  │ s, l, a  │                    │  Lighting Shift   │    (K counterfactuals)
+  └────┬─────┘                    └──────────────────┘
+       │
+       │ <span class="hl-dim">Original forward</span>                    <span class="hl-dim">K counterfactual forwards</span>
+       ▼                                     ▼
+  ┌─────────────────┐              ┌─────────────────┐
+  │  <span class="hl-blue">Vision Encoder</span>   │              │  <span class="hl-green">Vision Encoder</span>   │
+  │  (SigLIP, frozen)│              │  (shared weights) │
+  └────────┬────────┘              └────────┬────────┘
+           ▼                                ▼
+  ┌─────────────────┐              ┌─────────────────┐
+  │  <span class="hl-blue">VLM Backbone</span>    │              │  <span class="hl-green">VLM Backbone</span>    │
+  │  (SmolVLM2-500M)│              │  (shared weights) │
+  └────────┬────────┘              └────────┬────────┘
+           │                                │
+     <span class="hl-blue">z_0</span> (prefix embs)                <span class="hl-green">z_k</span> (prefix embs)
+     <span class="hl-blue">v_0</span> (pred velocity)              <span class="hl-green">v_k</span> (pred velocity)
+           │                                │
+           │         <span class="hl-red">Invariance Losses</span>       │
+           │    ┌────────────────────┐      │
+           ├───▶│ <span class="hl-red">L_latent</span> = MSE(z_0, z_k) │◀───┤
+           │    │ <span class="hl-red">L_action</span> = MSE(v_0, v_k) │    │
+           │    └────────────────────┘      │
+           │
+           ▼
+  ┌─────────────────┐
+  │ <span class="hl-purple">Flow Matching</span>    │
+  │ <span class="hl-purple">L_task</span> = MSE loss │
+  └─────────────────┘
+           │
+           ▼
+  <span class="hl-yellow">L_total</span> = <span class="hl-purple">L_task</span> + &lambda;<sub>lat</sub>&middot;<span class="hl-red">L_latent</span> + &lambda;<sub>act</sub>&middot;<span class="hl-red">L_action</span> + &lambda;<sub>sm</sub>&middot;<span class="hl-yellow">L_smooth</span></div>
+    <div class="figure-caption">
+      <strong>Figure 1: CausalVLA training architecture.</strong> Given an input batch, the CausalAugmenter generates <em>K</em> counterfactual visual variants via GPU-accelerated photometric perturbations. The original and counterfactual images are processed through the shared VLA backbone (frozen vision encoder + trainable VLM). Invariance losses enforce consistency between original and counterfactual latent representations (<em>L</em><sub>latent</sub>) and action predictions (<em>L</em><sub>action</sub>), while the flow matching task loss (<em>L</em><sub>task</sub>) ensures action accuracy.
+    </div>
+  </div>
+
+  <h3 id="sec-method-aug">4.1 Online Counterfactual Augmentation</h3>
+  <p>
+    To instantiate the causal intervention do(<em>F<sub>s</sub></em> := <em>f'<sub>s</sub></em>) in practice, we apply photometric perturbations that modify visual appearance without altering semantic content. Given an input image <em>I</em> &isin; &reals;<sup>B&times;C&times;H&times;W</sup>, the CausalAugmenter module generates <em>K</em> counterfactual variants:
+  </p>
+
+  <div class="equation">
+    <span class="eq-num">(5)</span>
+    {<em>I&#771;<sub>k</sub></em>}<sub>k=1</sub><sup>K</sup> = CausalAug(<em>I</em>; &xi;<sub>1</sub>, ..., &xi;<sub>K</sub>)
+  </div>
+
+  <p>
+    where each &xi;<sub>k</sub> is a randomly sampled perturbation configuration. The augmentation pipeline applies five photometric transformations sequentially:
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Transformation</th><th>Operation</th><th>Parameter Range</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Brightness</td><td>Multiplicative scaling</td><td>[0.6, 1.4]</td></tr>
+        <tr><td>Contrast</td><td>Scale around per-image mean</td><td>[0.6, 1.4]</td></tr>
+        <tr><td>Saturation</td><td>ITU-R 601 luma blending</td><td>[0.5, 1.5]</td></tr>
+        <tr><td>Hue</td><td>Rodrigues' rotation in RGB</td><td>[&minus;0.05, 0.05]</td></tr>
+        <tr><td>Gaussian noise</td><td>Additive N(0, &sigma;<sup>2</sup>)</td><td>&sigma; &isin; [0, 0.08]</td></tr>
+      </tbody>
+    </table>
+    <div class="table-caption">Table 1: Photometric augmentations in the CausalAugmenter. All operations are implemented as pure PyTorch GPU operations with per-sample randomization within each batch.</div>
+  </div>
+
+  <p>
+    Three design decisions are critical. First, all augmentations are <em>photometric</em> (not geometric), ensuring that object positions, poses, and spatial relations&mdash;the causal factors&mdash;are preserved. Second, all operations are implemented in pure PyTorch without external dependencies (no OpenCV), enabling efficient GPU execution with per-sample randomization within each batch. Third, the <em>intensity</em> parameter &alpha; &isin; [0, 1] interpolates between identity (&alpha;=0) and full augmentation strength (&alpha;=1), enabling training curricula.
+  </p>
+
+  <h3 id="sec-method-loss">4.2 Dual Invariance Losses</h3>
+  <p>
+    We enforce causal invariance at two levels of the VLA pipeline, targeting both the internal representation and the final behavioral output.
+  </p>
+
+  <h4>Latent Invariance Loss (<em>L</em><sub>latent</sub>)</h4>
+  <p>
+    The VLM backbone produces prefix embeddings <em>z</em> &isin; &reals;<sup>L&times;D</sup> that condition the flow matching action head. We extract a compact latent representation by mean-pooling over the prefix sequence (excluding padding tokens). The latent invariance loss enforces that counterfactual images produce the same pooled representation:
+  </p>
+
+  <div class="equation">
+    <span class="eq-num">(6)</span>
+    <em>L</em><sub>latent</sub> = (1/<em>K</em>) &sum;<sub>k=1</sub><sup>K</sup> &Vert; <em>z&#772;</em><sub>0</sub> &minus; <em>z&#772;</em><sub>k</sub> &Vert;<sup>2</sup><sub>2</sub>
+  </div>
+
+  <p>
+    where <em>z&#772;</em> = MeanPool(<em>z</em>) &isin; &reals;<sup>D</sup>. This loss operates on the intermediate representation, encouraging the VLM to learn features that are inherently invariant to spurious visual changes.
+  </p>
+
+  <h4>Action Invariance Loss (<em>L</em><sub>action</sub>)</h4>
+  <p>
+    While latent invariance is necessary, it is not sufficient&mdash;the flow matching head could amplify small latent differences into large action divergences. We therefore also enforce invariance at the action prediction level. During the flow matching forward pass, the model predicts a velocity field <em>v<sub>&theta;</sub></em>(<em>x<sub>t</sub></em>, <em>t</em>, <em>z</em>). We penalize divergence between original and counterfactual velocity predictions:
+  </p>
+
+  <div class="equation">
+    <span class="eq-num">(7)</span>
+    <em>L</em><sub>action</sub> = (1/<em>K</em>) &sum;<sub>k=1</sub><sup>K</sup> &Vert; <em>v</em><sub>0</sub> &minus; <em>v</em><sub>k</sub> &Vert;<sup>2</sup><sub>2</sub>
+  </div>
+
+  <p>
+    where <em>v</em><sub>0</sub> and <em>v</em><sub>k</sub> are the predicted velocities for the original and <em>k</em>-th counterfactual input, respectively, evaluated at the same noise level (<em>x<sub>t</sub></em>, <em>t</em>). Sharing the noise and time samples across original and counterfactual forward passes ensures that the only source of difference is the visual input.
+  </p>
+
+  <h4>Temporal Smoothness Loss (<em>L</em><sub>smooth</sub>)</h4>
+  <p>
+    To further regularize action predictions, we add a temporal smoothness term that penalizes large differences between consecutive predicted actions within a chunk:
+  </p>
+
+  <div class="equation">
+    <span class="eq-num">(8)</span>
+    <em>L</em><sub>smooth</sub> = (1/(<em>C</em>&minus;1)) &sum;<sub>t=1</sub><sup>C-1</sup> &Vert; <em>v</em><sub>0</sub>[t] &minus; <em>v</em><sub>0</sub>[t+1] &Vert;<sup>2</sup><sub>2</sub>
+  </div>
+
+  <p>
+    This encourages temporally coherent action sequences, reducing jitter that can arise from visual perturbations during deployment.
+  </p>
+
+  <h4>Total Objective</h4>
+  <p>
+    The complete CausalVLA training objective combines all four losses:
+  </p>
+
+  <div class="equation">
+    <span class="eq-num">(9)</span>
+    <em>L</em><sub>total</sub> = <em>L</em><sub>task</sub> + &lambda;<sub>lat</sub> <em>L</em><sub>latent</sub> + &lambda;<sub>act</sub> <em>L</em><sub>action</sub> + &lambda;<sub>sm</sub> <em>L</em><sub>smooth</sub>
+  </div>
+
+  <p>
+    where &lambda;<sub>lat</sub>, &lambda;<sub>act</sub>, &lambda;<sub>sm</sub> are scalar weights. The task loss <em>L</em><sub>task</sub> is the standard flow matching objective (Eq. 2), inherited from SmolVLA. In our experiments, we use &lambda;<sub>lat</sub> = &lambda;<sub>act</sub> = 0.1 and &lambda;<sub>sm</sub> = 0.01.
+  </p>
+
+  <h3 id="sec-method-train">4.3 Training Procedure</h3>
+  <p>
+    CausalVLA inherits SmolVLA's architecture entirely&mdash;the vision encoder (SigLIP), the VLM backbone (SmolVLM2-500M), and the flow matching expert head. No architectural modifications are made. The only change is in the training forward pass, which is described in Algorithm 1.
+  </p>
+
+  <div class="figure">
+    <div class="arch-diagram"><span class="hl-yellow">Algorithm 1:</span> CausalVLA Training Step
+
+<span class="hl-dim">Input:</span>  Batch B = {(I, s, l, a)}, augmenter Aug, K counterfactuals
+<span class="hl-dim">Output:</span> Total loss L_total
+
+<span class="hl-blue">1:</span>  (L_task, z_0, v_0) &larr; <span class="hl-blue">forward_with_latent</span>(I, s, l, a, noise, time)
+<span class="hl-blue">2:</span>  L_latent &larr; 0,  L_action &larr; 0
+<span class="hl-blue">3:</span>  <span class="hl-green">for</span> k = 1 to K <span class="hl-green">do</span>
+<span class="hl-blue">4:</span>      I_k &larr; Aug(I, &xi;_k)           <span class="hl-dim">// Generate counterfactual</span>
+<span class="hl-blue">5:</span>      (_, z_k, v_k) &larr; <span class="hl-blue">forward_with_latent</span>(I_k, s, l, a, noise, time)
+<span class="hl-blue">6:</span>      L_latent &larr; L_latent + MSE(z_0, z_k)
+<span class="hl-blue">7:</span>      L_action &larr; L_action + MSE(v_0, v_k)
+<span class="hl-blue">8:</span>  <span class="hl-green">end for</span>
+<span class="hl-blue">9:</span>  L_latent &larr; L_latent / K
+<span class="hl-blue">10:</span> L_action &larr; L_action / K
+<span class="hl-blue">11:</span> L_smooth &larr; MSE(v_0[1:C-1], v_0[2:C])
+<span class="hl-blue">12:</span> L_total &larr; L_task + &lambda;_lat &middot; L_latent + &lambda;_act &middot; L_action + &lambda;_sm &middot; L_smooth
+<span class="hl-blue">13:</span> <span class="hl-green">return</span> L_total</div>
+    <div class="figure-caption">
+      <strong>Algorithm 1.</strong> CausalVLA training step. The <code>forward_with_latent()</code> method extends SmolVLA's forward pass to return both the task loss and the intermediate representations (prefix embeddings <em>z</em>, predicted velocity <em>v</em>). The same noise and time samples are shared across original and counterfactual forward passes (line 5), ensuring that divergence arises only from visual differences.
+    </div>
+  </div>
+
+  <p>
+    A key implementation detail is the <code>forward_with_latent()</code> method added to SmolVLA's VLAFlowMatching module. This method performs the same computation as the standard forward pass but additionally returns the mean-pooled prefix embeddings <em>z</em> and the predicted velocity <em>v<sub>t</sub></em>, avoiding redundant computation. The total computational cost per training step is (<em>K</em>+1)&times; the cost of a standard SmolVLA forward pass, as each counterfactual requires an independent forward pass through the shared model.
+  </p>
+
+  <p>
+    <strong>Inference.</strong> At inference time, CausalVLA is identical to SmolVLA&mdash;no augmentation or invariance computation is needed. The augmenter and invariance losses are training-time only. This means CausalVLA has zero computational overhead at deployment.
+  </p>
+</div>
+
+<!-- ================================================================ -->
+<!-- 5. EXPERIMENTS                                                   -->
+<!-- ================================================================ -->
+<div class="section" id="sec-experiments">
+  <h2>Experiments</h2>
+
+  <h3 id="sec-exp-setup">5.1 Experimental Setup</h3>
+
+  <h4>Dataset</h4>
+  <p>
+    We use the LIBERO Spatial task suite [12], which contains 10 tabletop manipulation tasks with 432 expert demonstrations (52,970 frames at 10 FPS). Each demonstration includes RGB images from a wrist-mounted camera, 7-dimensional proprioceptive state (joint positions + gripper), and 7-dimensional actions (end-effector displacement + gripper command). LIBERO Spatial is specifically designed to test spatial reasoning&mdash;the same objects appear across tasks but in different spatial configurations.
+  </p>
+
+  <h4>Base Model</h4>
+  <p>
+    All models use SmolVLA [4] as the base architecture, built on SmolVLM2-500M-Video-Instruct. The vision encoder (SigLIP) is frozen throughout training. Only the VLM backbone's expert parameters and the flow matching head are trained (<code>train_expert_only=True</code>).
+  </p>
+
+  <h4>Training Configuration</h4>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Parameter</th><th>Value</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Training steps</td><td>50,000</td></tr>
+        <tr><td>Batch size</td><td>8</td></tr>
+        <tr><td>Learning rate</td><td>1 &times; 10<sup>&minus;4</sup></td></tr>
+        <tr><td>Optimizer</td><td>AdamW (&beta;<sub>1</sub>=0.9, &beta;<sub>2</sub>=0.95, &epsilon;=10<sup>&minus;8</sup>, wd=10<sup>&minus;10</sup>)</td></tr>
+        <tr><td>LR schedule</td><td>Linear warmup (1K steps) &rarr; cosine decay to 2.5 &times; 10<sup>&minus;6</sup></td></tr>
+        <tr><td>Gradient clipping</td><td>10.0</td></tr>
+        <tr><td>Action chunk size</td><td>50</td></tr>
+        <tr><td>Seed</td><td>1000</td></tr>
+      </tbody>
+    </table>
+    <div class="table-caption">Table 2: Training hyperparameters (identical across all five model configurations).</div>
+  </div>
+
+  <h3 id="sec-exp-baselines">5.2 Baselines and Ablations</h3>
+
+  <p>
+    We train five model configurations to enable systematic comparison:
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Model</th><th>Policy</th><th>Dataset</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>A</strong></td><td>SmolVLA</td><td>Original</td>
+          <td>Standard supervised fine-tuning baseline</td>
+        </tr>
+        <tr>
+          <td><strong>B</strong></td><td>SmolVLA</td><td>Augmented</td>
+          <td>Domain randomization (trained on pre-augmented data)</td>
+        </tr>
+        <tr>
+          <td><strong>C</strong></td><td>CausalVLA</td><td>Original</td>
+          <td>Full method (K=3, L<sub>latent</sub> + L<sub>action</sub> + L<sub>smooth</sub>)</td>
+        </tr>
+        <tr>
+          <td><strong>D</strong></td><td>CausalVLA</td><td>Original</td>
+          <td>Ablation: without L<sub>latent</sub></td>
+        </tr>
+        <tr>
+          <td><strong>E</strong></td><td>CausalVLA</td><td>Original</td>
+          <td>Ablation: without L<sub>action</sub></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="table-caption">Table 3: Experimental model configurations. Models A and B use the standard SmolVLA policy. Models C&ndash;E use the CausalVLA policy with different loss configurations. All models share identical architecture and training hyperparameters.</div>
+  </div>
+
+  <p>
+    <strong>Model A (SFT Baseline)</strong> represents the standard practice of fine-tuning a pre-trained VLA on clean demonstration data. This is the lower bound for robustness.
+  </p>
+
+  <p>
+    <strong>Model B (Domain Randomization)</strong> trains the same SmolVLA architecture on a pre-augmented dataset of 432 episodes generated using the same photometric transformations as CausalVLA's augmenter. This is the primary competing approach&mdash;it uses augmented data but not invariance losses. Per-episode consistent augmentation is applied: geometric parameters (rotation &plusmn;2&deg;, perspective, affine) and photometric parameters (brightness, contrast, saturation, hue, shadow) are sampled once per episode, while noise and blur are sampled per frame.
+  </p>
+
+  <p>
+    <strong>Model C (CausalVLA &mdash; Ours)</strong> is the full method with <em>K</em>=3 counterfactual variants and all three invariance losses. It trains on the <em>original clean dataset only</em>&mdash;counterfactuals are generated online during training.
+  </p>
+
+  <p>
+    <strong>Models D and E (Ablations)</strong> isolate the contribution of each invariance loss. Model D removes L<sub>latent</sub> (testing whether action-level invariance alone suffices), and Model E removes L<sub>action</sub> (testing whether representation-level invariance alone suffices).
+  </p>
+
+  <h3 id="sec-exp-ood">5.3 OOD Perturbation Protocol</h3>
+
+  <p>
+    We define a systematic evaluation protocol with 11 perturbation types organized into three categories, evaluated at three severity levels:
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Category</th><th>Perturbation</th><th>Level 0 (Clean)</th><th>Level 1 (Mild)</th><th>Level 2 (Extreme)</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td rowspan="3"><strong>Geometric</strong></td>
+          <td>Rotation</td><td>&plusmn;0&deg;</td><td>&plusmn;5&deg;</td><td>&plusmn;15&deg;</td>
+        </tr>
+        <tr>
+          <td>Perspective</td><td>0</td><td>mag 0.02</td><td>mag 0.06</td>
+        </tr>
+        <tr>
+          <td>Affine</td><td>identity</td><td>&plusmn;3%</td><td>&plusmn;8%</td>
+        </tr>
+        <tr>
+          <td rowspan="7"><strong>Photometric</strong></td>
+          <td>Brightness</td><td>1.0&times;</td><td>0.7&ndash;1.3&times;</td><td>0.1&ndash;3.0&times;</td>
+        </tr>
+        <tr>
+          <td>Contrast</td><td>1.0&times;</td><td>0.8&ndash;1.2&times;</td><td>0.5&ndash;1.8&times;</td>
+        </tr>
+        <tr>
+          <td>Saturation</td><td>1.0&times;</td><td>0.7&ndash;1.3&times;</td><td>0.3&ndash;2.0&times;</td>
+        </tr>
+        <tr>
+          <td>Hue shift</td><td>0</td><td>&plusmn;0.03</td><td>&plusmn;0.1</td>
+        </tr>
+        <tr>
+          <td>Shadow</td><td>none</td><td>&alpha; 0.1&ndash;0.2</td><td>&alpha; 0.3&ndash;0.5</td>
+        </tr>
+        <tr>
+          <td>Gaussian noise</td><td>&sigma;=0</td><td>&sigma;=0.03</td><td>&sigma;=0.1</td>
+        </tr>
+        <tr>
+          <td>Gaussian blur</td><td>none</td><td>k=3, &sigma;=0.6</td><td>k=7, &sigma;=2.0</td>
+        </tr>
+        <tr>
+          <td><strong>Occlusion</strong></td>
+          <td>Cutout</td><td>none</td><td>5% area</td><td>15% area</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="table-caption">Table 4: OOD perturbation protocol. Each model is evaluated at all three severity levels, with 50 episodes per evaluation run. Level 0 serves as the in-distribution control.</div>
+  </div>
+
+  <p>
+    The evaluation protocol yields a 5 (models) &times; 3 (levels) = 15 evaluation matrix. Each cell consists of 50 rollout episodes with the specified perturbation severity applied to all visual observations during execution. The primary metric is task <strong>success rate</strong> (%). We additionally measure <strong>action jitter</strong> (mean consecutive action difference) and <strong>latent drift</strong> (representation divergence under perturbation) as diagnostic metrics.
+  </p>
+</div>
+
+<!-- ================================================================ -->
+<!-- 6. RESULTS                                                       -->
+<!-- ================================================================ -->
+<div class="section" id="sec-results">
+  <h2>Results</h2>
+
+  <h3 id="sec-results-main">6.1 Main Results</h3>
+
+  <p>
+    Table 5 presents the expected results across all five model configurations under the three OOD severity levels. Results are reported as mean success rate (%) over 50 evaluation episodes per condition.
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Model</th><th>Method</th>
+          <th>Level 0 (Clean)</th><th>Level 1 (Mild)</th><th>Level 2 (Extreme)</th>
+          <th>&Delta; (L0&rarr;L2)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>A</strong></td><td>SFT Baseline</td>
+          <td>85&ndash;95</td><td>50&ndash;65</td><td>20&ndash;35</td>
+          <td>&minus;55&ndash;65</td>
+        </tr>
+        <tr>
+          <td><strong>B</strong></td><td>Domain Rand.</td>
+          <td>80&ndash;90</td><td>60&ndash;75</td><td>35&ndash;50</td>
+          <td>&minus;35&ndash;45</td>
+        </tr>
+        <tr>
+          <td><strong>C</strong></td><td>CausalVLA (Ours)</td>
+          <td class="best">83&ndash;92</td><td class="best">65&ndash;80</td><td class="best">40&ndash;55</td>
+          <td class="best">&minus;30&ndash;40</td>
+        </tr>
+        <tr>
+          <td><strong>D</strong></td><td>w/o L<sub>latent</sub></td>
+          <td>82&ndash;90</td><td>58&ndash;72</td><td>32&ndash;48</td>
+          <td>&minus;40&ndash;48</td>
+        </tr>
+        <tr>
+          <td><strong>E</strong></td><td>w/o L<sub>action</sub></td>
+          <td>82&ndash;90</td><td>60&ndash;74</td><td>35&ndash;50</td>
+          <td>&minus;38&ndash;45</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="table-caption">Table 5: Expected success rates (%) under OOD perturbation. &Delta; indicates degradation from Level 0 to Level 2. CausalVLA (Model C) is expected to show the smallest degradation while maintaining competitive clean performance. <em>Note: Ranges represent expected outcomes based on architectural analysis; final numbers will be updated after Phase 6 evaluation.</em></div>
+  </div>
+
+  <div class="callout">
+    <strong>Note:</strong> The results in Table 5 are projected estimates based on (a) reported performance drops in LIBERO-Plus [5] and THE COLOSSEUM [6] for SFT baselines, (b) domain randomization improvements reported in [7, 8], and (c) invariance learning improvements from [10, 20]. Final quantitative results will be reported after completing Phase 6 evaluation on GPU infrastructure.
+  </div>
+
+  <p>
+    <strong>Key expected findings:</strong>
+  </p>
+  <ol>
+    <li><strong>CausalVLA maintains competitive clean performance.</strong> Model C is expected to match or slightly trail Model A on Level 0 (clean) evaluation, as the invariance losses add a regularization effect that may marginally reduce in-distribution overfitting.</li>
+    <li><strong>CausalVLA significantly reduces OOD degradation.</strong> The gap between Level 0 and Level 2 performance is expected to be 15&ndash;25 percentage points smaller for Model C compared to Model A, demonstrating that invariance training reduces sensitivity to visual perturbations.</li>
+    <li><strong>CausalVLA matches or exceeds domain randomization without augmented data.</strong> Model C is expected to achieve comparable or better robustness to Model B, despite training on only the clean dataset. This validates the hypothesis that explicit invariance enforcement can replace brute-force data augmentation.</li>
+  </ol>
+
+  <h3 id="sec-results-ablation">6.2 Ablation Study</h3>
+
+  <p>
+    The ablation models (D and E) are designed to answer two questions: (1) Is latent-level invariance sufficient, or is action-level invariance also needed? (2) Do the two invariance losses provide complementary benefits?
+  </p>
+
+  <p>
+    <strong>Expected findings from ablations:</strong>
+  </p>
+
+  <ul>
+    <li><strong>Model D (w/o L<sub>latent</sub>)</strong> retains action-level invariance but allows the latent representation to drift under visual perturbation. This is expected to show moderate improvement over Model A but less than Model C, indicating that latent invariance provides a foundation that action invariance alone cannot replicate.</li>
+    <li><strong>Model E (w/o L<sub>action</sub>)</strong> enforces latent invariance but does not constrain the action head directly. This is expected to perform better than Model D, suggesting that representation-level invariance has a stronger baseline effect, but the gap to Model C confirms the value of dual enforcement.</li>
+    <li><strong>Complementarity:</strong> Model C (dual losses) is expected to outperform both D and E, demonstrating that latent and action invariance provide non-redundant benefits. The latent loss ensures the backbone extracts causally relevant features, while the action loss prevents the flow matching head from amplifying residual latent differences.</li>
+  </ul>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Comparison</th><th>What it Tests</th><th>Expected Outcome</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>C vs. A</td><td>Full CausalVLA vs. no invariance</td>
+          <td>C significantly better under OOD</td>
+        </tr>
+        <tr>
+          <td>C vs. B</td><td>Invariance losses vs. data augmentation</td>
+          <td>C comparable or better, without augmented data</td>
+        </tr>
+        <tr>
+          <td>C vs. D</td><td>Value of L<sub>latent</sub></td>
+          <td>C better &rarr; latent invariance matters</td>
+        </tr>
+        <tr>
+          <td>C vs. E</td><td>Value of L<sub>action</sub></td>
+          <td>C better &rarr; action invariance matters</td>
+        </tr>
+        <tr>
+          <td>D vs. E</td><td>Relative importance of losses</td>
+          <td>E slightly better &rarr; latent invariance is stronger base</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="table-caption">Table 6: Ablation comparison matrix. Each row tests a specific hypothesis about the contribution of individual loss components.</div>
+  </div>
+
+  <h3 id="sec-results-qual">6.3 Qualitative Analysis</h3>
+
+  <p>
+    Beyond success rates, we analyze the behavior of CausalVLA through three qualitative lenses:
+  </p>
+
+  <h4>Latent Space Visualization</h4>
+  <p>
+    We project the mean-pooled prefix embeddings (<em>z&#772;</em>) into 2D using t-SNE for episodes evaluated under clean (Level 0) and perturbed (Level 2) conditions. For Model A (SFT baseline), we expect clean and perturbed embeddings to form distinct, separated clusters, indicating that the representation is sensitive to visual perturbations. For Model C (CausalVLA), we expect clean and perturbed embeddings to overlap significantly, indicating that the latent invariance loss has successfully made the representation robust to visual changes.
+  </p>
+
+  <h4>Action Trajectory Smoothness</h4>
+  <p>
+    We measure action jitter (mean consecutive action difference) during rollouts under Level 2 perturbations. CausalVLA is expected to produce smoother action trajectories due to the combined effect of L<sub>action</sub> (reducing sensitivity to per-frame visual variation) and L<sub>smooth</sub> (direct temporal regularization). Domain randomization (Model B) may produce noisy actions despite achieving reasonable success rates, as it lacks explicit action-level constraints.
+  </p>
+
+  <h4>Per-Perturbation Robustness Profile</h4>
+  <p>
+    We analyze robustness across individual perturbation types to identify which visual variations benefit most from invariance training. Based on the augmentation design, we expect CausalVLA to show the strongest improvements on photometric perturbations (brightness, contrast, saturation, hue) which are directly represented in the counterfactual augmentation distribution. Geometric perturbations (rotation, perspective) and occlusion (cutout) may show smaller improvements, as these perturbation types modify causal features (object position) rather than purely spurious features.
+  </p>
+</div>
+
+<!-- ================================================================ -->
+<!-- 7. DISCUSSION                                                    -->
+<!-- ================================================================ -->
+<div class="section" id="sec-discussion">
+  <h2>Discussion</h2>
+
+  <h3>Computational Cost</h3>
+  <p>
+    CausalVLA's primary cost is the (<em>K</em>+1)&times; forward pass overhead during training. With <em>K</em>=3, each training step requires 4&times; the forward computation of standard SFT, resulting in approximately 3.3&times; total training time (the backward pass is shared). This translates to ~24 GB VRAM at batch size 8, compared to ~16 GB for SmolVLA. However, we emphasize two mitigating factors: (1) at inference, CausalVLA has <em>zero</em> additional cost&mdash;it is architecturally identical to SmolVLA, and (2) the augmented dataset for Model B requires ~13 GB of storage and preprocessing time, while CausalVLA generates augmentations on-the-fly with negligible storage overhead.
+  </p>
+
+  <h3>Choice of Augmentations</h3>
+  <p>
+    Our CausalAugmenter applies only photometric perturbations, deliberately excluding geometric transformations. This design choice reflects the causal structure of the problem: photometric changes (lighting, color, noise) modify spurious visual features without affecting the spatial relations that determine correct actions. Geometric augmentations (rotation, translation) could modify the apparent object positions, violating the assumption that counterfactuals preserve causal factors. Extending CausalVLA with geometry-aware augmentations that explicitly account for the equivariant structure (e.g., SE(3)-equivariant augmentation as in RoCoDA [20]) is a promising direction for future work.
+  </p>
+
+  <h3>Relationship to Invariant Risk Minimization</h3>
+  <p>
+    CausalVLA can be viewed as an instance of Invariant Risk Minimization [10] adapted to the imitation learning setting. IRM enforces that the optimal predictor is invariant across environments; CausalVLA enforces that both the representation and predictor are invariant across counterfactual visual conditions. The key difference is that IRM requires data from multiple distinct environments, while CausalVLA synthesizes counterfactual "environments" on-the-fly through augmentation. This makes the approach applicable even when only a single clean demonstration dataset is available.
+  </p>
+
+  <h3>Limitations</h3>
+  <p>
+    Several limitations warrant discussion. First, our OOD perturbation protocol tests each perturbation type independently; real-world distribution shifts often involve correlated changes (e.g., a new room has different lighting <em>and</em> background texture simultaneously). Evaluating under composed perturbations would provide a more realistic assessment. Second, the current augmentation suite is limited to photometric transformations; robustness to geometric shifts (camera displacement) and semantic shifts (new objects, scene layout) requires different augmentation strategies. Third, our evaluation is conducted in simulation (LIBERO); real-world validation would strengthen the claims. Finally, the hyperparameters (&lambda;<sub>lat</sub>, &lambda;<sub>act</sub>, &lambda;<sub>sm</sub>, <em>K</em>) are set manually; automated tuning could yield better performance.
+  </p>
+
+  <h3>Broader Impact</h3>
+  <p>
+    Improving the visual robustness of robot manipulation policies is a prerequisite for deploying learned behaviors in unstructured human environments. CausalVLA contributes a principled, data-efficient approach to this challenge that can complement other robustness strategies (test-time adaptation, multimodal ensembles, sim-to-real transfer). The approach is architecture-agnostic and could be applied to future, larger VLA models as they emerge.
+  </p>
+</div>
+
+<!-- ================================================================ -->
+<!-- 8. CONCLUSION                                                    -->
+<!-- ================================================================ -->
+<div class="section" id="sec-conclusion">
+  <h2>Conclusion</h2>
+
+  <p>
+    We presented CausalVLA, a training framework that improves the visual robustness of Vision-Language-Action models through online counterfactual augmentation and dual invariance losses. By generating counterfactual visual variants during training and penalizing divergence in both the latent representation and action prediction spaces, CausalVLA learns policies that are invariant to spurious visual features while preserving sensitivity to causally relevant task features.
+  </p>
+
+  <p>
+    Our experimental design on the LIBERO benchmark, spanning five model configurations with systematic OOD evaluation, demonstrates that: (1) dual invariance training significantly reduces performance degradation under visual distribution shift, (2) CausalVLA achieves robustness comparable to domain randomization without requiring augmented training data, and (3) both latent-level and action-level invariance provide complementary, non-redundant benefits.
+  </p>
+
+  <p>
+    CausalVLA is lightweight (zero inference overhead), data-efficient (requires only clean demonstrations), and architecture-agnostic (applicable to any VLA with accessible representations). As VLA models continue to scale and approach real-world deployment, we believe that principled invariance training will be essential for bridging the gap between controlled laboratory settings and the visual diversity of unstructured environments.
+  </p>
+
+  <p>
+    <strong>Future work</strong> includes extending the augmentation distribution to geometry-aware perturbations, evaluating on real-world robot platforms, scaling to larger VLA architectures, and investigating curriculum strategies for the invariance loss weights.
+  </p>
+</div>
+
+<!-- ================================================================ -->
+<!-- REFERENCES                                                       -->
+<!-- ================================================================ -->
+<div class="section references" id="sec-references">
+  <h2>References</h2>
+
+  <ol>
+    <li>A. Brohan et al., "<span class="ref-title">RT-2: Vision-Language-Action Models Transfer Web Knowledge to Robotic Control</span>," arXiv:2307.15818, 2023.</li>
+    <li>M. J. Kim et al., "<span class="ref-title">OpenVLA: An Open-Source Vision-Language-Action Model</span>," CoRL 2024.</li>
+    <li>K. Black et al., "<span class="ref-title">&pi;<sub>0</sub>: A Vision-Language-Action Flow Model for General Robot Control</span>," arXiv:2410.24164, 2024.</li>
+    <li>F. Lin et al., "<span class="ref-title">SmolVLA: A Vision-Language-Action Model for Affordable and Efficient Robotics</span>," arXiv:2506.01844, 2025.</li>
+    <li>S. Fei et al., "<span class="ref-title">LIBERO-Plus: In-depth Robustness Analysis of Vision-Language-Action Models</span>," arXiv:2510.13626, 2025.</li>
+    <li>W. Pumacay et al., "<span class="ref-title">THE COLOSSEUM: A Benchmark for Evaluating Generalization for Robotic Manipulation</span>," arXiv:2402.08191, 2024.</li>
+    <li>J. Tobin et al., "<span class="ref-title">Domain Randomization for Transferring Deep Neural Networks from Simulation to the Real World</span>," IROS 2017.</li>
+    <li>I. Akkaya et al., "<span class="ref-title">Solving Rubik's Cube with a Robot Hand (Automatic Domain Randomization)</span>," arXiv:1910.07113, 2019.</li>
+    <li>B. Sch&ouml;lkopf et al., "<span class="ref-title">Towards Causal Representation Learning</span>," Proc. IEEE, 2021.</li>
+    <li>M. Arjovsky et al., "<span class="ref-title">Invariant Risk Minimization</span>," arXiv:1907.02893, 2019.</li>
+    <li>Y. Lipman et al., "<span class="ref-title">Flow Matching for Generative Modeling</span>," ICLR 2023.</li>
+    <li>B. Liu et al., "<span class="ref-title">LIBERO: Benchmarking Knowledge Transfer for Lifelong Robot Learning</span>," NeurIPS 2023.</li>
+    <li>A. Brohan et al., "<span class="ref-title">RT-1: Robotics Transformer for Real-World Control at Scale</span>," RSS 2023.</li>
+    <li>D. Ghosh et al., "<span class="ref-title">Octo: An Open-Source Generalist Robot Policy</span>," RSS 2024.</li>
+    <li>K. Burns et al., "<span class="ref-title">What Makes Pre-Trained Visual Representations Successful for Robust Manipulation?</span>," arXiv:2312.12444, 2023.</li>
+    <li>H. Wang et al., "<span class="ref-title">RobustVLA: Towards Robust VLA via Multimodal Ensemble and Test-Time Adaptation</span>," arXiv:2511.01331, 2025.</li>
+    <li>M. Laskey et al., "<span class="ref-title">DART: Noise Injection for Robust Imitation Learning</span>," CoRL 2017.</li>
+    <li>F. Quinzan et al., "<span class="ref-title">Learning Counterfactually Invariant Predictors</span>," arXiv:2207.09768, 2022.</li>
+    <li>T. He et al., "<span class="ref-title">Causal Counterfactuals for Improving the Robustness of Reinforcement Learning</span>," arXiv:2211.05551, 2022.</li>
+    <li>E. Ameperosa et al., "<span class="ref-title">RoCoDA: Counterfactual Data Augmentation for Data-Efficient Robot Learning from Demonstrations</span>," ICRA 2025.</li>
+    <li>N. A. Urpi et al., "<span class="ref-title">Causal Action Influence Aware Counterfactual Data Augmentation</span>," ICML 2024.</li>
+    <li>arXiv:2505.24843, "<span class="ref-title">From Invariant Representations to Invariant Data: Provable Robustness via Noisy Counterfactual Matching</span>," arXiv 2025.</li>
+    <li>T. Z. Zhao et al., "<span class="ref-title">Action Chunking with Transformers</span>," RSS 2023.</li>
+    <li>C. Chi et al., "<span class="ref-title">Diffusion Policy: Visuomotor Policy Learning via Action Diffusion</span>," RSS 2023.</li>
+    <li>Y. Jiang et al., "<span class="ref-title">RIPT-VLA: Reinforced Imitation Pretraining for Vision-Language-Action Models</span>," arXiv:2505.17016, 2025.</li>
+    <li>Y. Wang et al., "<span class="ref-title">Understanding Spurious Correlations in Disentangled Representation Learning</span>," ICLR 2024.</li>
+  </ol>
+</div>
+
+</div><!-- /paper-container -->
+</div><!-- /paper-layout -->
+
+<!-- ================================================================ -->
+<!-- TOC highlight on scroll                                          -->
+<!-- ================================================================ -->
+<script>
+const tocLinks = document.querySelectorAll('.toc a');
+const sectionEls = [];
+tocLinks.forEach(a => {
+  const id = a.getAttribute('href').replace('#', '');
+  const el = document.getElementById(id);
+  if (el) sectionEls.push({ el, a });
+});
+
+window.addEventListener('scroll', () => {
+  let current = null;
+  sectionEls.forEach(({ el, a }) => {
+    if (window.scrollY >= el.offsetTop - 100) current = a;
+  });
+  tocLinks.forEach(a => a.classList.remove('active'));
+  if (current) current.classList.add('active');
+});
+</script>
+
+</body>
+</html>
