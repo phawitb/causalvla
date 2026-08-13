@@ -15,8 +15,8 @@ class CausalVLAConfig(SmolVLAConfig):
     aug_intensity: float = 1.0       # Augmentation strength (0.0 = none, 1.0 = full)
 
     # Loss weights
-    lambda_latent: float = 5.0      # Weight for L_latent (counterfactual latent invariance)
-    lambda_action: float = 1.0      # Weight for L_action (action consistency)
+    lambda_latent: float = 0.1      # Weight for L_latent (counterfactual latent invariance)
+    lambda_action: float = 0.1      # Weight for L_action (action consistency)
     lambda_smooth: float = 0.01     # Weight for L_smooth (temporal action smoothing)
 
     # Ablation switches
