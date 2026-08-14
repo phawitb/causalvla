@@ -225,6 +225,38 @@ lerobot-train \
   --env_eval_freq=0
 ```
 
+## RAPID-Lite Full Training Result
+
+Full training seed 1000 เสร็จครบ 25,000 steps บน RTX 4090 ใน `4:11:54`.
+Final metrics ที่ step 25K:
+
+```text
+loss=0.405
+gradient_norm=1.637
+augmented_fraction=0.506
+curriculum/shadow:0.75=0.194
+curriculum/brightness:0.5=0.166
+curriculum/geometry:1.0=0.146
+GPU memory=4.28 GB
+```
+
+ผลรวม curriculum fractions เท่ากับ augmented fraction โดยประมาณ และสัดส่วน
+conditional เมื่อหารด้วย `0.506` คือ `38.3%, 32.8%, 28.9%` ซึ่งใกล้กับ effective
+target `37.4%, 34.2%, 28.4%`. Training จบด้วย `End of training`, checkpoint step
+25,000 ผ่าน config validation และ push ไปที่:
+
+```text
+Repo: phawitbinabik/causalvla-rapid-lite
+Revision: bad76c163d35e3254d976985f1f8a1f148672a2c
+Files: 69
+```
+
+### Primary Evaluation Protocol
+
+ประเมิน clean/mild/extreme ที่ 10 episodes/task และ eval seeds 1000/2000/3000
+ก่อน. เทียบ RAPID-Lite กับ Model F และ V2 ภายใต้ protocol เดียวกัน. ใช้ revision
+ที่ pin ไว้และไม่เลือก checkpoint จากผล eval
+
 ## Scientific Caveats
 
 - action sensitivity เป็น diagnostic ของ policy ภายใต้ shared stochastic variables
