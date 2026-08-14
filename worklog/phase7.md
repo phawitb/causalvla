@@ -388,3 +388,31 @@ Model F ชนะค่าเฉลี่ย clean `+6.0 pp`, เสมอ mild 
 ผล seed 2000 ยืนยันว่า F ไม่ได้ชนะทุก level ทุก seed (V2 ชนะ mild 2 pp)
 แต่ภาพรวมยังไม่พบหลักฐานว่า paired supervision ให้ประโยชน์เหนือ single-forward
 online DR. หากต้องการสรุปเชิงสถิติควรรัน seed 3000 เพิ่มตามแผน
+
+### Final Multi-seed Results — Seeds 1000, 2000, 3000
+
+| Seed | Model | Clean | Mild OOD | Extreme OOD |
+|---:|---|---:|---:|---:|
+| 1000 | V2 | 63.0% | 60.0% | 45.0% |
+| 1000 | F | 64.0% | 62.0% | 49.0% |
+| 2000 | V2 | 57.0% | 57.0% | 45.0% |
+| 2000 | F | 68.0% | 55.0% | 48.0% |
+| 3000 | V2 | 60.0% | 56.0% | 43.0% |
+| 3000 | F | 64.0% | 59.0% | 51.0% |
+
+Aggregate mean ± sample standard deviation:
+
+| Model | Clean | Mild OOD | Extreme OOD |
+|---|---:|---:|---:|
+| V2 | 60.0 ± 3.0% | 57.7 ± 2.1% | 44.3 ± 1.2% |
+| **F — Online DR** | **65.3 ± 2.3%** | **58.7 ± 3.5%** | **49.3 ± 1.5%** |
+
+จาก 300 episodes/level ต่อโมเดล Model F ต่างจาก V2 โดยเฉลี่ย `+5.3 pp`
+clean, `+1.0 pp` mild และ `+5.0 pp` extreme. F ชนะ clean และ extreme ครบ
+ทั้งสาม eval seeds และชนะ mild สองในสาม seeds. อย่างไรก็ตามจำนวน training seed
+ยังมีเพียงหนึ่ง seed และการเปรียบเทียบ success proportions แบบไม่ใช้ paired
+episode outcomes ยังไม่เพียงพอสำหรับ claim statistical significance
+
+ข้อสรุป Phase 7 ปัจจุบัน: online augmentation เป็นคำอธิบายที่แข็งแรงกว่า
+counterfactual pairing สำหรับ performance gain ที่สังเกตได้ และ Model F เป็น
+โมเดลหลักที่เรียบง่ายกว่า เร็วกว่าในการ train ต่อ step และให้ผลเฉลี่ยสูงกว่า V2
