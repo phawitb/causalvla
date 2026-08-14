@@ -11,13 +11,14 @@ from .ood_wrapper import _affine, _gaussian_blur, _perspective, _rotation, _shad
 
 INTERVENTION_FAMILIES = ("brightness", "color", "noise", "blur", "shadow", "geometry", "composed")
 
-# Phase 8 pilot candidates that passed the semantic guard for every sampled batch.
-# Scores are shared-noise action sensitivities and remain explicit so checkpoints
-# record the exact static curriculum used by RAPID-Lite.
+# Phase 8 multi-seed candidates selected from 256 samples at seeds
+# 1000/2000/3000 with >=95% mean semantic-guard pass rate. Scores are robust
+# risks (mean shared-noise action sensitivity minus one standard deviation).
+# They remain explicit so checkpoints record the exact static curriculum.
 RAPID_LITE_CANDIDATES = (
-    ("shadow", 0.75, 0.03100669989362359),
-    ("composed", 0.25, 0.025695251766592264),
-    ("geometry", 1.0, 0.023547721095383167),
+    ("shadow", 0.75, 0.023396),
+    ("brightness", 0.50, 0.021158),
+    ("geometry", 1.00, 0.017234),
 )
 
 

@@ -112,8 +112,8 @@ RAPID-Lite เป็น static risk-weighted ablation ที่ยังคง�
 - ใช้ VLA forward เพียงครั้งเดียวต่อ batch
 - augmentation ทำเฉพาะ training path; inference เหมือน SmolVLA
 - `aug_probability=0.5` เท่ากับ Model F เพื่อควบคุม augmentation exposure
-- เลือกเฉพาะ candidate ที่ pilot ผ่าน semantic guard ทุก batch ได้แก่
-  `shadow:0.75`, `composed:0.25`, `geometry:1.0`
+- candidate เริ่มต้นจาก pilot ถูกแทนที่ด้วยผล profiling 3 seeds × 256 samples
+  หลังผ่าน profiling gate
 - sampling probability สร้างจาก softmax ของ log risk พร้อม
   `exploration_floor=0.10`; ไม่มี candidate ใดถูกตัดเป็นศูนย์
 - checkpoint บันทึก `profile_revision`, `risk_temperature` และ
@@ -136,7 +136,7 @@ type=rapid_lite
 aug_probability=0.5
 risk_temperature=1.0
 exploration_floor=0.1
-profile_revision=phase8-pilot-seed1000-samples8
+profile_revision=phase8-3seed-256samples-robust-risk-v1
 ```
 
 Unit tests ของ intervention bank, sampler และ multi-seed aggregator ผ่าน `23 tests`.
@@ -178,6 +178,22 @@ guard อย่างสม่ำเสมอ และ ranking ต้องไ�
 
 aggregator ใช้ robust risk `mean sensitivity − 1×standard deviation` เพื่อไม่ให้
 intervention ที่คะแนนสูงจาก seed เดียวครอง curriculum และคัด guard ก่อนจัดอันดับ
+
+### Multi-Seed Profiling Result
+
+GPU profiling ครบ seeds `1000, 2000, 3000`, seed ละ 256 samples แล้ว. Candidates
+ที่ผ่าน `mean guard ≥ 95%` และมี robust risk สูงสุดคือ:
+
+| Rank | Family | Intensity | Robust risk | Raw risk weight | Mean guard |
+|---:|---|---:|---:|---:|---:|
+| 1 | shadow | 0.75 | 0.023396 | 0.379 | 100.0% |
+| 2 | brightness | 0.50 | 0.021158 | 0.342 | 99.0% |
+| 3 | geometry | 1.00 | 0.017234 | 0.279 | 100.0% |
+
+ค่าชุดนี้ถูกตรึงเป็น `RAPID_LITE_CANDIDATES` และ revision
+`phase8-3seed-256samples-robust-risk-v1`. ระหว่าง training sampler จะผสม raw
+risk distribution กับ uniform distribution 10% ตาม `exploration_floor=0.10`;
+ดังนั้น effective probabilities โดยประมาณคือ `0.374, 0.341, 0.285` ตามลำดับ
 
 ### Provisional Full-Training Command
 

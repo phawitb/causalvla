@@ -13,7 +13,7 @@ class RapidLiteConfig(SmolVLAConfig):
     aug_probability: float = 0.5
     risk_temperature: float = 1.0
     exploration_floor: float = 0.10
-    profile_revision: str = "phase8-pilot-seed1000-samples8"
+    profile_revision: str = "phase8-3seed-256samples-robust-risk-v1"
 
     def __post_init__(self):
         super().__post_init__()
