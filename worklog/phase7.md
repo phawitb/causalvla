@@ -296,6 +296,23 @@ forward loss, backward, optimizer/scheduler update และ checkpoint serializ
 
 ### GPU Full Training Command
 
+หลัง `git pull origin main` ให้ติดตั้ง Model F เข้า active conda environment และ
+ตรวจ registration:
+
+```bash
+python scripts/install_policy_patches.py online_dr
+
+python - <<'PY'
+from lerobot.policies.factory import get_policy_class, make_policy_config
+
+cfg = make_policy_config("online_dr")
+assert cfg.type == "online_dr"
+assert cfg.aug_probability == 0.5
+assert get_policy_class("online_dr").__name__ == "OnlineDRPolicy"
+print("Model F Online DR install: PASS")
+PY
+```
+
 ```bash
 lerobot-train \
   --policy.type=online_dr \
