@@ -37,7 +37,9 @@ from lerobot.configs import parser
 from lerobot.configs.eval import EvalPipelineConfig
 from lerobot.envs.factory import make_env, make_env_pre_post_processors
 from lerobot.policies import make_policy, make_pre_post_processors
+from lerobot.configs import PipelineFeatureType, PolicyFeature
 from lerobot.processor import PolicyProcessorPipeline
+from lerobot.processor.pipeline import ObservationProcessorStep
 from lerobot.scripts.lerobot_eval import close_envs, eval_policy_all
 from lerobot.utils.random_utils import set_seed
 from lerobot.utils.device_utils import get_safe_torch_device
@@ -45,7 +47,7 @@ from lerobot.utils.device_utils import get_safe_torch_device
 logger = logging.getLogger(__name__)
 
 
-class OODProcessorStep:
+class OODProcessorStep(ObservationProcessorStep):
     """Processor step that applies OOD perturbation to image observations.
 
     Inserted into the env_preprocessor pipeline so perturbations happen
@@ -59,11 +61,17 @@ class OODProcessorStep:
         self.perturbation = OODPerturbation(level=ood_level, seed=seed)
         self.ood_level = ood_level
 
-    def __call__(self, observation: dict) -> dict:
+    def observation(self, observation: dict) -> dict:
         for key in list(observation.keys()):
             if "image" in key and isinstance(observation[key], torch.Tensor):
                 observation[key] = self.perturbation(observation[key])
         return observation
+
+    def transform_features(
+        self, features: dict[PipelineFeatureType, dict[str, PolicyFeature]]
+    ) -> dict[PipelineFeatureType, dict[str, PolicyFeature]]:
+        """OOD perturbations preserve observation keys, shapes and feature types."""
+        return {feature_type: bucket.copy() for feature_type, bucket in features.items()}
 
     def __repr__(self) -> str:
         return f"OODProcessorStep(level={self.ood_level})"

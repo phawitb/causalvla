@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ $# -lt 3 || $# -gt 4 ]]; then
-  echo "Usage: $0 <model_id:a|b|c|d|e> <level_0|level_1|level_2> <seed> [episodes_per_task]"
+  echo "Usage: $0 <model_id:a|b|c|d|e|v2> <level_0|level_1|level_2> <seed> [episodes_per_task]"
   exit 2
 fi
 
@@ -22,6 +22,7 @@ case "$model_id" in
   c) repo_id="phawitbinabik/causalvla-model-c-ours"; revision="82d1d7338d2b150061dd0a82a016c652c94ec45b" ;;
   d) repo_id="phawitbinabik/causalvla-model-d-no-latent"; revision="ec27cb968af93239da74188ffce7c6ebeec0b05c" ;;
   e) repo_id="phawitbinabik/causalvla-model-e-no-action"; revision="f506bfa3a5d9b678b49497f0af95d15855d8614d" ;;
+  v2) repo_id="phawitbinabik/causalvla-model-v2"; revision="6fc4104176b08ba7f9592583a8431c2e30b035ab" ;;
   *) echo "Unknown model: $model_id"; exit 2 ;;
 esac
 
@@ -44,7 +45,7 @@ mkdir -p "$project_dir/logs/eval" "$output_dir"
 
 export PYTHONUNBUFFERED=1
 export PYTHONNOUSERSITE=1
-export PYTHONPATH="$project_dir/lerobot/src:$project_dir/causal_aug/src"
+export PYTHONPATH="$project_dir/lerobot/src:$project_dir/causal_aug"
 export PYTORCH_ENABLE_MPS_FALLBACK=1
 export MUJOCO_GL=glfw
 export CUBLAS_WORKSPACE_CONFIG=:4096:8
@@ -52,15 +53,11 @@ export CUBLAS_WORKSPACE_CONFIG=:4096:8
 /opt/miniconda3/envs/causalvla/bin/python "$project_dir/scripts/eval_ood.py" \
   --policy.path="$repo_id" \
   --policy.pretrained_revision="$revision" \
-  --policy.backbone_revision=7b375e1b73b11138ff12fe22c8f2822d8fe03467 \
   --policy.device=mps \
   --env.type=libero \
   --env.task=libero_spatial \
   '--rename_map={"observation.images.image2":"observation.images.wrist_image"}' \
   --ood_level="$ood_level" \
-  --ood_temporal_mode=static \
-  --perturbation_seed="$seed" \
-  --policy_seed="$seed" \
   --eval.n_episodes="$episodes" \
   --eval.batch_size=2 \
   --eval.use_async_envs=false \

@@ -211,3 +211,35 @@ loss_task
 4. Train 25,000 steps ด้วย sample budget เดิม 400,000 samples
 5. Evaluate clean/mild/extreme OOD ด้วย seed และ episode budgetเดียวกับ Model B
 6. เป้าหมาย: clean >61.8%, mild >53.2%, extreme >30.2%
+
+## Pilot Evaluation — 10 Episodes per Task
+
+วันที่ 2026-08-14 ประเมิน checkpoint เต็มจาก
+`phawitbinabik/causalvla-model-v2` revision
+`6fc4104176b08ba7f9592583a8431c2e30b035ab` บน Mac M2/MPS โดยใช้
+LIBERO Spatial 10 tasks, 10 episodes/task, seed 1000 รวม 100 episodes ต่อระดับ
+
+| OOD level | CausalVLA-v2 | Model B (Phase 6) | Difference |
+|---|---:|---:|---:|
+| Clean (`level_0`) | 63.0% (63/100) | 61.8% | +1.2 pp |
+| Mild (`level_1`) | 60.0% (60/100) | 53.2% | +6.8 pp |
+| Extreme (`level_2`) | 45.0% (45/100) | 30.2% | +14.8 pp |
+
+Per-task success rates (task 0–9):
+
+| OOD level | Task success rates |
+|---|---|
+| Clean | 90, 50, 70, 70, 80, 20, 90, 90, 40, 30% |
+| Mild | 90, 50, 80, 70, 60, 30, 60, 80, 40, 40% |
+| Extreme | 50, 50, 60, 60, 20, 0, 60, 40, 60, 50% |
+
+Evaluation time: clean 848.1 s, mild 1209.4 s, extreme 1567.4 s.
+
+ผล pilot ชนะ Model B ทั้งสามระดับ แต่ clean ต่างเพียง 1.2 percentage points
+และการทดลองนี้มีเพียง 100 episodes/level จึงยังไม่ควรถือเป็นข้อสรุปสุดท้าย
+ขั้นต่อไปคือรัน protocol เต็ม 50 episodes/task ด้วย seed เดียวกับ Phase 6
+เพื่อเปรียบเทียบแบบ 500 episodes/level
+
+ระหว่างเตรียม eval ได้แก้ compatibility ของ evaluator ให้
+`OODProcessorStep` ใช้ `ObservationProcessorStep` API ของ LeRobot ปัจจุบัน
+และเพิ่ม model id `v2` พร้อม pin revision ใน `scripts/run_eval_mps.sh`
