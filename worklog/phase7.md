@@ -365,3 +365,26 @@ randomization ใน protocol ปัจจุบัน และชี้ว่�
 และเป็น stronger, simpler baseline. ขั้นต่อไปไม่ควร claim ว่า V2 pairing ชนะ
 จนกว่าจะมี controlled experiment อื่นรองรับ เช่น fixed visual-sample budget,
 unseen-intervention holdout หรือ multi-seed evaluation
+
+### Multi-seed Validation — Seed 2000
+
+รันเพิ่มด้วย protocol เดิม 10 tasks × 10 episodes/task ทั้ง V2 และ Model F:
+
+| Seed | Model | Clean | Mild OOD | Extreme OOD |
+|---:|---|---:|---:|---:|
+| 1000 | V2 | 63.0% | 60.0% | 45.0% |
+| 1000 | F | 64.0% | 62.0% | 49.0% |
+| 2000 | V2 | 57.0% | 57.0% | 45.0% |
+| 2000 | F | 68.0% | 55.0% | 48.0% |
+
+ผลรวมสอง eval seeds (mean ± sample standard deviation):
+
+| Model | Clean | Mild OOD | Extreme OOD |
+|---|---:|---:|---:|
+| V2 | 60.0 ± 4.2% | 58.5 ± 2.1% | 45.0 ± 0.0% |
+| F — Online DR | **66.0 ± 2.8%** | **58.5 ± 4.9%** | **48.5 ± 0.7%** |
+
+Model F ชนะค่าเฉลี่ย clean `+6.0 pp`, เสมอ mild และชนะ extreme `+3.5 pp`.
+ผล seed 2000 ยืนยันว่า F ไม่ได้ชนะทุก level ทุก seed (V2 ชนะ mild 2 pp)
+แต่ภาพรวมยังไม่พบหลักฐานว่า paired supervision ให้ประโยชน์เหนือ single-forward
+online DR. หากต้องการสรุปเชิงสถิติควรรัน seed 3000 เพิ่มตามแผน
