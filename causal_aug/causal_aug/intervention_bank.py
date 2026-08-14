@@ -11,6 +11,15 @@ from .ood_wrapper import _affine, _gaussian_blur, _perspective, _rotation, _shad
 
 INTERVENTION_FAMILIES = ("brightness", "color", "noise", "blur", "shadow", "geometry", "composed")
 
+# Phase 8 pilot candidates that passed the semantic guard for every sampled batch.
+# Scores are shared-noise action sensitivities and remain explicit so checkpoints
+# record the exact static curriculum used by RAPID-Lite.
+RAPID_LITE_CANDIDATES = (
+    ("shadow", 0.75, 0.03100669989362359),
+    ("composed", 0.25, 0.025695251766592264),
+    ("geometry", 1.0, 0.023547721095383167),
+)
+
 
 class InterventionBank:
     """Apply one coherent intervention family to all camera views in a sample."""

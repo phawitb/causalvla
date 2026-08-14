@@ -105,6 +105,110 @@ sample/seed มากขึ้นก่อนตรึง sampling distribution
 - STOP หรือ redesign ถ้า ranking เปลี่ยนมากตาม seed, semantic guard ตัด high-risk
   transforms เกือบทั้งหมด หรือ static sampler ไม่ชนะ uniform Online DR
 
+## RAPID-Lite Implementation
+
+RAPID-Lite เป็น static risk-weighted ablation ที่ยังคงข้อดีของ Model F:
+
+- ใช้ VLA forward เพียงครั้งเดียวต่อ batch
+- augmentation ทำเฉพาะ training path; inference เหมือน SmolVLA
+- `aug_probability=0.5` เท่ากับ Model F เพื่อควบคุม augmentation exposure
+- เลือกเฉพาะ candidate ที่ pilot ผ่าน semantic guard ทุก batch ได้แก่
+  `shadow:0.75`, `composed:0.25`, `geometry:1.0`
+- sampling probability สร้างจาก softmax ของ log risk พร้อม
+  `exploration_floor=0.10`; ไม่มี candidate ใดถูกตัดเป็นศูนย์
+- checkpoint บันทึก `profile_revision`, `risk_temperature` และ
+  `exploration_floor` เพื่อ audit curriculum ได้
+
+ไฟล์หลัก:
+
+- `causal_aug/causal_aug/risk_sampler.py`
+- `lerobot_patches/rapid_lite/configuration_rapid_lite.py`
+- `lerobot_patches/rapid_lite/modeling_rapid_lite.py`
+- `lerobot_patches/rapid_lite/processor_rapid_lite.py`
+
+### MPS Training Smoke Test
+
+รัน training จริง 2 steps บน Apple M2/MPS สำเร็จ และ checkpoint ที่ step 2 มี
+model weights, optimizer, scheduler และ RNG state ครบ. Serialized config ผ่าน:
+
+```text
+type=rapid_lite
+aug_probability=0.5
+risk_temperature=1.0
+exploration_floor=0.1
+profile_revision=phase8-pilot-seed1000-samples8
+```
+
+Unit tests ของ intervention bank, sampler และ multi-seed aggregator ผ่าน `23 tests`.
+
+## GPU Profiling Gate Before Full Training
+
+ห้ามใช้ pilot 8 samples เป็น final curriculum สำหรับ paper. บน GPU server ให้ดึง
+commit ล่าสุด ติดตั้ง policy และสร้าง profiles อย่างน้อย 3 seeds ก่อน:
+
+```bash
+cd ~/projects/causalvla
+git pull origin main
+
+python scripts/install_policy_patches.py rapid_lite
+
+for SEED in 1000 2000 3000; do
+  PYTHONPATH="$PWD/lerobot/src:$PWD/causal_aug" python scripts/profile_interventions.py \
+    --device cuda \
+    --samples 256 \
+    --batch-size 8 \
+    --seed "$SEED" \
+    --intensities 0.25 0.5 0.75 1.0 \
+    --output-dir "outputs/phase8/profiles/seed_${SEED}"
+done
+
+python scripts/aggregate_intervention_profiles.py \
+  outputs/phase8/profiles/seed_1000/summary.json \
+  outputs/phase8/profiles/seed_2000/summary.json \
+  outputs/phase8/profiles/seed_3000/summary.json \
+  --min-guard-rate 0.95 \
+  --uncertainty-penalty 1.0 \
+  --top-k 3 \
+  --output outputs/phase8/rapid_lite_profile.json
+```
+
+หลังรวม ranking ข้าม seeds แล้วจึงอัปเดต `RAPID_LITE_CANDIDATES` และ
+`profile_revision` ก่อน full training. เกณฑ์ขั้นต่ำคือ candidate ต้องผ่าน semantic
+guard อย่างสม่ำเสมอ และ ranking ต้องไม่กลับทิศอย่างรุนแรงระหว่าง seeds
+
+aggregator ใช้ robust risk `mean sensitivity − 1×standard deviation` เพื่อไม่ให้
+intervention ที่คะแนนสูงจาก seed เดียวครอง curriculum และคัด guard ก่อนจัดอันดับ
+
+### Provisional Full-Training Command
+
+คำสั่งนี้ใช้หลังผ่าน profiling gate และ commit candidate revision ใหม่แล้ว:
+
+```bash
+lerobot-train \
+  --policy.type=rapid_lite \
+  --policy.device=cuda \
+  --policy.push_to_hub=true \
+  --policy.repo_id=phawitbinabik/causalvla-rapid-lite \
+  --policy.private=true \
+  --policy.aug_probability=0.5 \
+  --policy.risk_temperature=1.0 \
+  --policy.exploration_floor=0.1 \
+  --policy.scheduler_warmup_steps=500 \
+  --policy.scheduler_decay_steps=15000 \
+  --dataset.repo_id=lerobot/libero_spatial_image \
+  --output_dir=outputs/final/rapid_lite \
+  --job_name=rapid_lite \
+  --batch_size=16 \
+  --steps=25000 \
+  --seed=1000 \
+  --save_freq=5000 \
+  --save_checkpoint_to_hub=true \
+  --log_freq=100 \
+  --num_workers=4 \
+  --persistent_workers=true \
+  --env_eval_freq=0
+```
+
 ## Scientific Caveats
 
 - action sensitivity เป็น diagnostic ของ policy ภายใต้ shared stochastic variables
