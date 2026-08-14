@@ -11,7 +11,7 @@ from pathlib import Path
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 RESULTS_DIR = PROJECT_DIR / "outputs" / "eval" / "full"
 REPORT_DIR = PROJECT_DIR / "outputs" / "eval" / "reports"
-MODELS = "abcde"
+MODELS = ("a", "b", "c", "d", "e", "f", "v2")
 LEVELS = ("level_0", "level_1", "level_2")
 SEED = 1000
 
@@ -75,7 +75,8 @@ def main() -> None:
         "| Model | Clean (level 0) | Mild OOD (level 1) | Strong OOD (level 2) | Status |",
         "|---|---:|---:|---:|---|",
     ]
-    for model in MODELS.upper():
+    for model_id in MODELS:
+        model = model_id.upper()
         values = []
         complete = True
         for level in LEVELS:
@@ -86,10 +87,10 @@ def main() -> None:
                 values.append("—")
                 complete = False
         lines.append(f"| {model} | {' | '.join(values)} | {'COMPLETE' if complete else 'RUNNING/PENDING'} |")
-    lines.extend(["", f"Completed runs: **{len(rows)}/15**", ""])
+    lines.extend(["", f"Completed runs: **{len(rows)}/{len(MODELS) * len(LEVELS)}**", ""])
     (REPORT_DIR / "eval_summary.md").write_text("\n".join(lines))
 
-    print(f"Completed runs: {len(rows)}/15")
+    print(f"Completed runs: {len(rows)}/{len(MODELS) * len(LEVELS)}")
     for row in rows:
         print(
             f'Model {row["model"]} {row["level"]}: '
