@@ -339,3 +339,29 @@ lerobot-train \
 หลัง full training ให้ eval ด้วย 10 episodes/task เป็น protocol หลักทั้ง clean,
 mild และ extreme OOD. ถ้า Model F ใกล้ V2 แสดงว่าผลหลักมาจาก online
 augmentation; ถ้า V2 ชนะ F จะสนับสนุนประโยชน์ของ paired supervision
+
+### Model F Full Training and Evaluation Results
+
+Full training จบครบ 25,000 steps และ upload ไปที่
+`phawitbinabik/causalvla-model-f-online-dr` revision
+`997d94a9325bc359422cd3cf54bd74b0a4c9be98`. Final checkpoint ผ่าน config
+validation: `type=online_dr`, `aug_probability=0.5`, `aug_intensity=1.0`
+
+ประเมินบน LIBERO Spatial ด้วย seed 1000, 10 tasks และ 10 episodes/task:
+
+| Model | Clean | Mild OOD | Extreme OOD |
+|---|---:|---:|---:|
+| B — Offline DR | 61.8% | 53.2% | 30.2% |
+| V2 — Paired supervision | 63.0% | 60.0% | 45.0% |
+| **F — Online DR** | **64.0%** | **62.0%** | **49.0%** |
+
+Model F ต่างจาก V2 `+1 pp` clean, `+2 pp` mild และ `+4 pp` extreme โดยใช้
+policy forward เพียงครั้งเดียวต่อ sample เทียบกับ V2 ที่ใช้สองครั้ง ผลนี้ไม่
+สนับสนุนสมมติฐานว่า paired supervision ของ V2 ให้ประโยชน์เหนือ online domain
+randomization ใน protocol ปัจจุบัน และชี้ว่า improvement จาก B ไป V2 น่าจะ
+อธิบายได้มากจาก online augmentation และ augmentation diversity
+
+ข้อสรุปเชิง paper ต้องรายงานผลนี้ตรงไปตรงมา: Model F เป็น current best model
+และเป็น stronger, simpler baseline. ขั้นต่อไปไม่ควร claim ว่า V2 pairing ชนะ
+จนกว่าจะมี controlled experiment อื่นรองรับ เช่น fixed visual-sample budget,
+unseen-intervention holdout หรือ multi-seed evaluation
