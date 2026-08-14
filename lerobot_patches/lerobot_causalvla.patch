@@ -9,6 +9,7 @@ index a95d23b9..a23a01cd 100644
 +from .causal_vla.configuration_causal_vla import CausalVLAConfig as CausalVLAConfig
 +from .online_dr.configuration_online_dr import OnlineDRConfig as OnlineDRConfig
 +from .rapid_lite.configuration_rapid_lite import RapidLiteConfig as RapidLiteConfig
++from .rapid_mix.configuration_rapid_mix import RapidMixConfig as RapidMixConfig
  from .diffusion.configuration_diffusion import DiffusionConfig as DiffusionConfig
  from .eo1.configuration_eo1 import EO1Config as EO1Config
  from .evo1.configuration_evo1 import Evo1Config as Evo1Config
@@ -19,6 +20,7 @@ index a95d23b9..a23a01cd 100644
 +    "CausalVLAConfig",
 +    "OnlineDRConfig",
 +    "RapidLiteConfig",
++    "RapidMixConfig",
      "DiffusionConfig",
      "EO1Config",
      "FastWAMConfig",

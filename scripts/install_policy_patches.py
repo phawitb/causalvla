@@ -16,6 +16,7 @@ POLICIES = {
     "causal_vla": "CausalVLAConfig",
     "online_dr": "OnlineDRConfig",
     "rapid_lite": "RapidLiteConfig",
+    "rapid_mix": "RapidMixConfig",
 }
 
 

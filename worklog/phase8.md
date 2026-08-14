@@ -267,3 +267,93 @@ Files: 69
   independently generated OOD suites จึงเป็น evaluation บังคับ
 - Phase 7 มีหลาย eval seeds แต่ยังมี training seed เดียว จึงยังไม่ควร claim
   statistical significance หรือ Q1 readiness
+
+## Model H — RAPID-Mix
+
+RAPID-Lite seed 1000 ให้ผลเบื้องต้น clean `65%`, mild `39%`, extreme `9%`
+เทียบ Model F ที่ `64%`, `62%`, `49%`. Risk-only curriculum จึงรักษา clean แต่
+สูญเสีย OOD coverage อย่างรุนแรง โดยเฉพาะเมื่อ profiler ให้ noise risk ต่ำและไม่ได้
+เลือกเข้าชุด candidate
+
+Model H ทดสอบสมมติฐานว่า policy risk ยังมีประโยชน์เมื่อไม่ทิ้ง broad coverage:
+
+| Training branch | Probability | Operation |
+|---|---:|---|
+| Clean | 0.50 | original observation |
+| Broad DR | 0.25 | augmentation distribution เดียวกับ Model F |
+| Risk-guided | 0.25 | guarded RAPID candidates ตาม robust-risk weights |
+
+ทุก sample เข้า SmolVLA forward เพียงครั้งเดียว และ inference ไม่มี augmentation
+หรือ overhead เพิ่ม. ค่า branch probability รวมกันถูก validate ใน config และ training
+logs รายงาน `branch/clean`, `branch/broad`, `branch/risk` รวมถึง risk-arm fractions
+
+### Verification Before GPU Training
+
+- existing unit suite: `23 passed`
+- policy/config/processor registration: PASS
+- branch sampling smoke (512 samples): PASS
+- multi-camera shape, finite values และ normalized range: PASS
+- full 2-step MPS training smoke ถูกเลื่อนไว้เพื่อไม่แย่ง MPS จาก RAPID-Lite eval;
+  ให้ทำ 2-step CUDA smoke บน GPU server ก่อน full run
+
+### GPU Server Smoke Test
+
+```bash
+cd ~/projects/causalvla
+git pull origin main
+python scripts/install_policy_patches.py rapid_mix
+
+PYTHONPATH="$PWD/causal_aug${PYTHONPATH:+:$PYTHONPATH}" lerobot-train \
+  --policy.type=rapid_mix \
+  --policy.device=cuda \
+  --policy.push_to_hub=false \
+  --policy.broad_probability=0.25 \
+  --policy.risk_probability=0.25 \
+  --policy.broad_intensity=1.0 \
+  --policy.risk_temperature=1.0 \
+  --policy.exploration_floor=0.1 \
+  --dataset.repo_id=lerobot/libero_spatial_image \
+  --output_dir=outputs/smoke/rapid_mix \
+  --job_name=rapid_mix_smoke \
+  --batch_size=2 \
+  --steps=2 \
+  --seed=1000 \
+  --save_freq=2 \
+  --log_freq=1 \
+  --num_workers=0 \
+  --env_eval_freq=0
+```
+
+### Full Training Command After Smoke PASS
+
+```bash
+PYTHONPATH="$PWD/causal_aug${PYTHONPATH:+:$PYTHONPATH}" lerobot-train \
+  --policy.type=rapid_mix \
+  --policy.device=cuda \
+  --policy.push_to_hub=true \
+  --policy.repo_id=phawitbinabik/causalvla-rapid-mix \
+  --policy.private=true \
+  --policy.broad_probability=0.25 \
+  --policy.risk_probability=0.25 \
+  --policy.broad_intensity=1.0 \
+  --policy.risk_temperature=1.0 \
+  --policy.exploration_floor=0.1 \
+  --policy.scheduler_warmup_steps=500 \
+  --policy.scheduler_decay_steps=15000 \
+  --dataset.repo_id=lerobot/libero_spatial_image \
+  --output_dir=outputs/final/rapid_mix \
+  --job_name=rapid_mix \
+  --batch_size=16 \
+  --steps=25000 \
+  --seed=1000 \
+  --save_freq=5000 \
+  --save_checkpoint_to_hub=true \
+  --log_freq=100 \
+  --num_workers=4 \
+  --persistent_workers=true \
+  --env_eval_freq=0 \
+  2>&1 | tee logs/rapid_mix.log
+```
+
+GO gate หลัง training seed 1000: clean `>=62%`, mild `>=58%`, extreme `>=49%`
+ที่ 10 episodes/task. ถ้าไม่ผ่าน extreme เทียบ Model F ให้หยุดก่อน multi-seed training
