@@ -243,3 +243,82 @@ Evaluation time: clean 848.1 s, mild 1209.4 s, extreme 1567.4 s.
 ระหว่างเตรียม eval ได้แก้ compatibility ของ evaluator ให้
 `OODProcessorStep` ใช้ `ObservationProcessorStep` API ของ LeRobot ปัจจุบัน
 และเพิ่ม model id `v2` พร้อม pin revision ใน `scripts/run_eval_mps.sh`
+
+## Model F — Online Domain Randomization Baseline
+
+เพิ่ม baseline สำหรับแยกผลของ online augmentation ออกจากผลของ
+counterfactual pairing ใน V2:
+
+```text
+Original clean dataset
+        ↓
+สุ่มต่อ sample: clean 50% / online-augmented 50%
+        ↓
+SmolVLA forward 1 ครั้ง
+        ↓
+Supervised task loss
+```
+
+Model F ใช้ `CausalAugmenter` และ augmentation ranges ชุดเดียวกับ V2 แต่ไม่มี
+clean/counterfactual pair, shared flow target หรือ consistency loss และใช้เพียง
+หนึ่ง policy forward ต่อ sample. ตอน inference ไม่มี augmentationและเหมือน
+SmolVLA ปกติ
+
+ไฟล์ implementation:
+
+- `lerobot_patches/online_dr/configuration_online_dr.py`
+- `lerobot_patches/online_dr/modeling_online_dr.py`
+- `lerobot_patches/online_dr/processor_online_dr.py`
+
+Default configuration:
+
+```text
+type             = online_dr
+aug_probability  = 0.5
+aug_intensity    = 1.0
+```
+
+### MPS Smoke Test
+
+รันด้วย original `lerobot/libero_spatial_image`, batch size 2, seed 1000 และ
+2 optimizer steps บน Mac M2/MPS สำเร็จครบ:
+
+```text
+step 1: loss=2.072, grad_norm=28.632, augmented_fraction=0.500
+step 2: loss=13.101, grad_norm=91.488, augmented_fraction=0.500
+End of training
+```
+
+ตรวจผ่าน policy registration, dataset loading, online augmentation, single
+forward loss, backward, optimizer/scheduler update และ checkpoint serialization
+โดย checkpoint มี `type=online_dr`, `aug_probability=0.5` และ
+`aug_intensity=1.0`
+
+### GPU Full Training Command
+
+```bash
+lerobot-train \
+  --policy.type=online_dr \
+  --policy.device=cuda \
+  --policy.push_to_hub=true \
+  --policy.repo_id=phawitbinabik/causalvla-model-f-online-dr \
+  --policy.private=true \
+  --policy.aug_probability=0.5 \
+  --policy.aug_intensity=1.0 \
+  --dataset.repo_id=lerobot/libero_spatial_image \
+  --output_dir=outputs/final/model_f_online_dr \
+  --job_name=model_f_online_dr \
+  --batch_size=16 \
+  --steps=25000 \
+  --seed=1000 \
+  --save_freq=5000 \
+  --save_checkpoint_to_hub=true \
+  --log_freq=100 \
+  --num_workers=4 \
+  --persistent_workers=true \
+  --env_eval_freq=0
+```
+
+หลัง full training ให้ eval ด้วย 10 episodes/task เป็น protocol หลักทั้ง clean,
+mild และ extreme OOD. ถ้า Model F ใกล้ V2 แสดงว่าผลหลักมาจาก online
+augmentation; ถ้า V2 ชนะ F จะสนับสนุนประโยชน์ของ paired supervision
