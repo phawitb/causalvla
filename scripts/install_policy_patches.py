@@ -17,6 +17,7 @@ POLICIES = {
     "online_dr": "OnlineDRConfig",
     "rapid_lite": "RapidLiteConfig",
     "rapid_mix": "RapidMixConfig",
+    "residual_rapid": "ResidualRapidConfig",
 }
 
 
