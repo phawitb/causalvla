@@ -358,6 +358,19 @@ PYTHONPATH="$PWD/causal_aug${PYTHONPATH:+:$PYTHONPATH}" lerobot-train \
 GO gate หลัง training seed 1000: clean `>=62%`, mild `>=58%`, extreme `>=49%`
 ที่ 10 episodes/task. ถ้าไม่ผ่าน extreme เทียบ Model F ให้หยุดก่อน multi-seed training
 
+### RAPID-Mix Full Checkpoint
+
+Full checkpoint step 25,000 ผ่าน serialized config validation และอัปโหลดสำเร็จ:
+
+```text
+Repo: phawitbinabik/causalvla-rapid-mix
+Revision: 7eee1dc506df47ddd1dad367f72293013dc35d6d
+Files: 69
+```
+
+Evaluation ใช้ revision นี้แบบ pinned ที่ 10 episodes/task, seeds
+`1000, 2000, 3000` และ clean/mild/extreme modes
+
 ## RAPID-Lite Complete Evaluation — Negative Ablation
 
 Primary protocol เสร็จครบ `3 seeds × 3 modes × 10 tasks × 10 episodes/task`

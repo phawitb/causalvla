@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ $# -lt 3 || $# -gt 4 ]]; then
-  echo "Usage: $0 <model_id:f|v2|rapid> <level_0|level_1|level_2> <seed> [episodes_per_task]"
+  echo "Usage: $0 <model_id:f|v2|rapid|rapid_mix> <level_0|level_1|level_2> <seed> [episodes_per_task]"
   exit 2
 fi
 
@@ -20,6 +20,7 @@ case "$model_id" in
   f) repo_id="phawitbinabik/causalvla-model-f-online-dr"; revision="997d94a9325bc359422cd3cf54bd74b0a4c9be98" ;;
   v2) repo_id="phawitbinabik/causalvla-model-v2"; revision="6fc4104176b08ba7f9592583a8431c2e30b035ab" ;;
   rapid) repo_id="phawitbinabik/causalvla-rapid-lite"; revision="bad76c163d35e3254d976985f1f8a1f148672a2c" ;;
+  rapid_mix) repo_id="phawitbinabik/causalvla-rapid-mix"; revision="7eee1dc506df47ddd1dad367f72293013dc35d6d" ;;
   *) echo "Unknown model: $model_id"; exit 2 ;;
 esac
 
