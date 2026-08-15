@@ -371,6 +371,31 @@ Files: 69
 Evaluation ใช้ revision นี้แบบ pinned ที่ 10 episodes/task, seeds
 `1000, 2000, 3000` และ clean/mild/extreme modes
 
+### RAPID-Mix Complete Evaluation
+
+Evaluation เสร็จครบ 900 episodes:
+
+| Seed | Clean | Mild OOD | Extreme OOD |
+|---:|---:|---:|---:|
+| 1000 | 54% | 53% | 45% |
+| 2000 | 60% | 54% | 51% |
+| 3000 | 58% | 52% | 43% |
+
+Aggregate mean ± sample standard deviation:
+
+| Model | Clean | Mild OOD | Extreme OOD |
+|---|---:|---:|---:|
+| V2 | 60.0 ± 3.0% | 57.7 ± 2.1% | 44.3 ± 1.2% |
+| Model F | **65.3 ± 2.3%** | **58.7 ± 3.5%** | **49.3 ± 1.5%** |
+| RAPID-Lite | 61.3 ± 4.0% | 41.3 ± 6.8% | 12.3 ± 4.2% |
+| RAPID-Mix | 57.3 ± 3.1% | 53.0 ± 1.0% | 46.3 ± 4.2% |
+
+RAPID-Mix กู้ mild `+11.7 pp` และ extreme `+34.0 pp` จาก RAPID-Lite แต่ยังแพ้
+Model F `−8.0 pp` clean, `−5.7 pp` mild และ `−3.0 pp` extreme. จึงไม่ผ่าน GO
+gate และไม่ควรขยายไป multi-training-seed. ผลสนับสนุนว่าการคง broad coverage
+เพียง 25% ยังไม่พอ; การทดลองถัดไปต้องรักษา Model F broad branch 50% เต็ม แล้วใช้
+risk signal เป็น residual overlay เท่านั้น
+
 ## RAPID-Lite Complete Evaluation — Negative Ablation
 
 Primary protocol เสร็จครบ `3 seeds × 3 modes × 10 tasks × 10 episodes/task`
