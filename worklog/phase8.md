@@ -421,3 +421,121 @@ RAPID-Lite เทียบ Model F ลดลง `−4.0 pp` clean, `−17.3 pp` 
 distributional coverage. RAPID-Lite ถูกลดสถานะเป็น negative ablation; Model H
 RAPID-Mix เป็นการทดลองหลักถัดไปเพื่อแยกประโยชน์ของ risk targeting ออกจาก broad
 coverage
+
+## Model I — Residual RAPID
+
+Residual RAPID รักษา Model F broad coverage เต็ม 50% และใช้ risk signal เป็น
+overlay เท่านั้น:
+
+| Branch | Expected fraction | Input |
+|---|---:|---|
+| Clean | 0.500 | clean observation |
+| Broad | 0.375 | Model F broad DR |
+| Residual | 0.125 | Model F broad DR + risk overlay |
+
+Config ใช้ `augmentation_probability=0.5` และ
+`risk_overlay_probability=0.25` แบบ conditional ภายใน augmented samples.
+ทุก sample เข้า SmolVLA forward ครั้งเดียวและ inference เหมือน SmolVLA เดิม
+
+### Local Verification
+
+- isolated branch: `codex/residual-rapid`
+- augmentation/policy tests: `41 passed`
+- Python compilation: PASS
+- policy registration: PASS
+- serialized defaults and invalid-value checks: PASS
+- source contract: exactly one standard `self.model.forward`
+- normalized image range, finite values, clean identity และ residual composition: PASS
+
+### GPU Server Installation and CUDA Smoke
+
+```bash
+cd ~/projects/causalvla
+git pull origin main
+python scripts/install_policy_patches.py residual_rapid
+
+PYTHONPATH="$PWD/causal_aug${PYTHONPATH:+:$PYTHONPATH}" lerobot-train \
+  --policy.type=residual_rapid \
+  --policy.device=cuda \
+  --policy.push_to_hub=false \
+  --policy.augmentation_probability=0.5 \
+  --policy.risk_overlay_probability=0.25 \
+  --policy.broad_intensity=1.0 \
+  --policy.risk_temperature=1.0 \
+  --policy.exploration_floor=0.1 \
+  --dataset.repo_id=lerobot/libero_spatial_image \
+  --output_dir=outputs/smoke/residual_rapid \
+  --job_name=residual_rapid_smoke \
+  --batch_size=2 \
+  --steps=2 \
+  --seed=1000 \
+  --save_freq=2 \
+  --log_freq=1 \
+  --num_workers=0 \
+  --env_eval_freq=0
+```
+
+ตรวจ serialized smoke checkpoint:
+
+```bash
+python - <<'PY'
+import json
+from pathlib import Path
+
+path = Path(
+    "outputs/smoke/residual_rapid/checkpoints/000002/"
+    "pretrained_model/config.json"
+)
+cfg = json.loads(path.read_text())
+expected = {
+    "type": "residual_rapid",
+    "augmentation_probability": 0.5,
+    "risk_overlay_probability": 0.25,
+    "broad_intensity": 1.0,
+    "risk_temperature": 1.0,
+    "exploration_floor": 0.1,
+    "profile_revision": "phase8-3seed-256samples-robust-risk-v1",
+}
+assert all(cfg.get(key) == value for key, value in expected.items())
+print("Residual RAPID CUDA smoke: PASS")
+PY
+```
+
+### Full Training After Smoke PASS
+
+```bash
+mkdir -p logs
+PYTHONPATH="$PWD/causal_aug${PYTHONPATH:+:$PYTHONPATH}" lerobot-train \
+  --policy.type=residual_rapid \
+  --policy.device=cuda \
+  --policy.push_to_hub=true \
+  --policy.repo_id=phawitbinabik/causalvla-residual-rapid \
+  --policy.private=true \
+  --policy.augmentation_probability=0.5 \
+  --policy.risk_overlay_probability=0.25 \
+  --policy.broad_intensity=1.0 \
+  --policy.risk_temperature=1.0 \
+  --policy.exploration_floor=0.1 \
+  --policy.scheduler_warmup_steps=500 \
+  --policy.scheduler_decay_steps=15000 \
+  --dataset.repo_id=lerobot/libero_spatial_image \
+  --output_dir=outputs/final/residual_rapid \
+  --job_name=residual_rapid \
+  --batch_size=16 \
+  --steps=25000 \
+  --seed=1000 \
+  --save_freq=5000 \
+  --save_checkpoint_to_hub=true \
+  --log_freq=100 \
+  --num_workers=4 \
+  --persistent_workers=true \
+  --env_eval_freq=0 \
+  2>&1 | tee logs/residual_rapid.log
+```
+
+Long-run metrics ควรเข้าใกล้ `branch/clean=0.500`, `branch/broad=0.375`,
+`branch/residual=0.125`. Residual arms แบบ unconditional ควรประมาณ shadow
+`0.0468`, brightness `0.0427`, geometry `0.0355` และรวมเป็น 0.125
+
+GO gate หลัง training seed 1000 ที่ 10 episodes/task: clean `>=64%`, mild
+`>=62%`, extreme `>=49%`. ต้องผ่านทั้งสามก่อนขยาย eval seeds หรือ training seeds
