@@ -5,6 +5,7 @@ augment_preview/*.mp4
 augment_preview/*.json
 augment_preview/*.png
 outputs/
+.worktrees/
 
 # LeRobot is a submodule / cloned separately
 lerobot/
