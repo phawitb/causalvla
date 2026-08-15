@@ -357,3 +357,29 @@ PYTHONPATH="$PWD/causal_aug${PYTHONPATH:+:$PYTHONPATH}" lerobot-train \
 
 GO gate หลัง training seed 1000: clean `>=62%`, mild `>=58%`, extreme `>=49%`
 ที่ 10 episodes/task. ถ้าไม่ผ่าน extreme เทียบ Model F ให้หยุดก่อน multi-seed training
+
+## RAPID-Lite Complete Evaluation — Negative Ablation
+
+Primary protocol เสร็จครบ `3 seeds × 3 modes × 10 tasks × 10 episodes/task`
+(900 episodes). Success rates:
+
+| Seed | Clean | Mild OOD | Extreme OOD |
+|---:|---:|---:|---:|
+| 1000 | 65% | 39% | 9% |
+| 2000 | 57% | 49% | 11% |
+| 3000 | 62% | 36% | 17% |
+
+Aggregate mean ± sample standard deviation:
+
+| Model | Clean | Mild OOD | Extreme OOD |
+|---|---:|---:|---:|
+| V2 | 60.0 ± 3.0% | 57.7 ± 2.1% | 44.3 ± 1.2% |
+| Model F | **65.3 ± 2.3%** | **58.7 ± 3.5%** | **49.3 ± 1.5%** |
+| RAPID-Lite | 61.3 ± 4.0% | 41.3 ± 6.8% | 12.3 ± 4.2% |
+
+RAPID-Lite เทียบ Model F ลดลง `−4.0 pp` clean, `−17.3 pp` mild และ
+`−37.0 pp` extreme. ผลลบเกิดครบทุก OOD seeds จึงสนับสนุน failure mechanism
+อย่างชัดเจน: action sensitivity อย่างเดียวเลือก vulnerability ได้ แต่ไม่รักษา
+distributional coverage. RAPID-Lite ถูกลดสถานะเป็น negative ablation; Model H
+RAPID-Mix เป็นการทดลองหลักถัดไปเพื่อแยกประโยชน์ของ risk targeting ออกจาก broad
+coverage
