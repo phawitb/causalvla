@@ -5,6 +5,7 @@ from __future__ import annotations
 import torch
 from torch import Tensor, nn
 
+from .intervention_bank import RAPID_LITE_CANDIDATES
 from .risk_sampler import RiskWeightedInterventionSampler
 
 
@@ -42,3 +43,32 @@ class ResidualBranchSampler(nn.Module):
             self.risk_sampler.probabilities(device), batch_size, replacement=True
         )
         return branch, choices
+
+    def compose(
+        self, images: list[Tensor], broad_images: list[Tensor]
+    ) -> tuple[list[Tensor], Tensor, Tensor]:
+        if not images or not broad_images:
+            raise ValueError("camera views must not be empty")
+        if len(images) != len(broad_images):
+            raise ValueError("camera view counts must match")
+        for clean, broad in zip(images, broad_images, strict=True):
+            if clean.shape != broad.shape:
+                raise ValueError("clean and broad camera shapes must match")
+
+        branch, choices = self.sample(images[0].shape[0], images[0].device)
+        broad_mask = (branch >= 1)[:, None, None, None]
+        mixed = [
+            torch.where(broad_mask, broad, clean).clone()
+            for clean, broad in zip(images, broad_images, strict=True)
+        ]
+        for index, (family, intensity, _) in enumerate(RAPID_LITE_CANDIDATES):
+            mask = (branch == 2) & (choices == index)
+            if not mask.any():
+                continue
+            overlaid = self.risk_sampler.bank.apply(broad_images, family, intensity)
+            broadcast = mask[:, None, None, None]
+            mixed = [
+                torch.where(broadcast, overlay, current)
+                for current, overlay in zip(mixed, overlaid, strict=True)
+            ]
+        return mixed, branch, choices

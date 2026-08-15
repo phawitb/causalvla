@@ -72,6 +72,10 @@ The policy adds no trainable modules, auxiliary loss, paired branch, latent
 loss, action consistency loss, or second VLA forward. Inference remains the
 standard SmolVLA path and has no augmentation or additional cost.
 
+The compositor method is named `compose(images, broad_images)`; it deliberately
+does not use `apply`, which is reserved by `torch.nn.Module` for recursive module
+transforms.
+
 ## Configuration
 
 `ResidualRapidConfig` exposes and serializes:

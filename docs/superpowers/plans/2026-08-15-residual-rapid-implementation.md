@@ -121,7 +121,7 @@ git commit -m "feat: add Residual RAPID branch sampler"
 - Modify: `causal_aug/causal_aug/residual_sampler.py`
 
 **Interfaces:**
-- Produces: `ResidualBranchSampler.apply(images: list[Tensor], broad_images: list[Tensor]) -> tuple[list[Tensor], Tensor, Tensor]`
+- Produces: `ResidualBranchSampler.compose(images: list[Tensor], broad_images: list[Tensor]) -> tuple[list[Tensor], Tensor, Tensor]`
 - Consumes: normalized camera tensors and broad-augmented camera tensors with matching shapes.
 
 - [ ] **Step 1: Write a failing real-image behavior test**
@@ -144,7 +144,7 @@ transformations.
 - [ ] **Step 2: Verify RED**
 
 Run the new test directly. Expected failure: `ResidualBranchSampler` has no
-`apply` method.
+`compose` method.
 
 - [ ] **Step 3: Implement minimal composition**
 
