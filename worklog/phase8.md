@@ -539,3 +539,31 @@ Long-run metrics ควรเข้าใกล้ `branch/clean=0.500`, `branch
 
 GO gate หลัง training seed 1000 ที่ 10 episodes/task: clean `>=64%`, mild
 `>=62%`, extreme `>=49%`. ต้องผ่านทั้งสามก่อนขยาย eval seeds หรือ training seeds
+
+### Residual RAPID Training and Seed-1000 Gate Result
+
+Full training seed 1000 เสร็จครบ 25,000 steps ใน `4:26:02`, final loss `0.419`,
+gradient norm `1.638` และ GPU memory `4.28 GB`. Final branch fractions
+`clean=0.505`, `broad=0.380`, `residual=0.115`; residual arms รวมเป็น 0.115 ตรงกับ
+residual branch. Checkpoint ผ่าน config validation และถูกอัปโหลดที่:
+
+```text
+Repo: phawitbinabik/causalvla-residual-rapid
+Revision: c9eabbf372bbf0ff31d32e86b6bcd69441665911
+Files: 69
+```
+
+Seed-1000 evaluation, 10 episodes/task:
+
+| Model | Clean | Mild OOD | Extreme OOD |
+|---|---:|---:|---:|
+| Model F | 64% | **62%** | 49% |
+| Residual RAPID | **74%** | 50% | **56%** |
+| Difference | +10 pp | −12 pp | +7 pp |
+
+Residual RAPID ผ่าน clean และ extreme gates แต่ไม่ผ่าน mild gate จึงไม่ขยายไป
+eval seeds 2000/3000 ตาม preregistered decision rule. ผลนี้ไม่ใช่ overall win แต่
+เป็นหลักฐานว่า residual design รักษา broad coverage และสามารถเพิ่ม extreme
+robustness ได้ ขณะที่ mild regression บ่งชี้ว่า overlay strength/distribution ยัง
+ไม่ calibrated. การทดลองถัดไปต้องอธิบาย mild-specific failure ก่อนเปลี่ยน
+hyperparameter ไม่ควรเลือกค่าจาก extreme result เพียงอย่างเดียว
