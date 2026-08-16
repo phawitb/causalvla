@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from causal_aug import COVER_GROUPS, CoverageController
+from causal_aug import COVER_GROUPS, CoverCleanController, CoverageController
 
 
 def test_cover_groups_are_stable():
@@ -134,3 +134,84 @@ def test_rejects_invalid_batch_inputs():
         controller.update(torch.ones(1), torch.tensor([8]))
     with pytest.raises(ValueError, match="batch_size"):
         controller.sample(0, "cpu")
+
+
+def test_cover_clean_controller_decays_and_recovers_strength():
+    controller = CoverCleanController(warmup_steps=0, strength_decay=0.9, recovery=0.01)
+    controller.fast_ema.fill_(2.0)
+    controller.slow_ema.fill_(1.0)
+    controller.initialized.fill_(True)
+
+    strength, triggered = controller.update(torch.tensor(2.0))
+
+    assert triggered.item() is True
+    assert strength.item() == pytest.approx(0.9)
+    controller.fast_ema.fill_(1.0)
+    controller.slow_ema.fill_(1.0)
+    strength, triggered = controller.update(torch.tensor(1.0))
+    assert triggered.item() is False
+    assert strength.item() == pytest.approx(0.91)
+
+
+def test_cover_clean_controller_holds_full_strength_during_warmup():
+    controller = CoverCleanController(warmup_steps=2, strength_decay=0.5)
+    first, first_trigger = controller.update(torch.tensor(1.0))
+    controller.fast_ema.fill_(10.0)
+    controller.slow_ema.fill_(1.0)
+    second, second_trigger = controller.update(torch.tensor(10.0))
+
+    assert first.item() == pytest.approx(1.0)
+    assert second.item() == pytest.approx(1.0)
+    assert not first_trigger and not second_trigger
+
+
+def test_cover_clean_controller_respects_minimum_strength():
+    controller = CoverCleanController(warmup_steps=0, minimum_strength=0.25, strength_decay=0.5)
+    for _ in range(20):
+        controller.fast_ema.fill_(10.0)
+        controller.slow_ema.fill_(1.0)
+        controller.initialized.fill_(True)
+        controller.update(torch.tensor(10.0))
+    assert controller.robust_strength.item() == pytest.approx(0.25)
+
+
+def test_cover_clean_controller_ignores_nonfinite_loss():
+    controller = CoverCleanController(warmup_steps=0)
+    before = {key: value.clone() for key, value in controller.state_dict().items()}
+
+    _, triggered = controller.update(torch.tensor(float("nan")))
+
+    assert not triggered
+    for key, value in controller.state_dict().items():
+        assert torch.equal(value, before[key])
+
+
+def test_robust_strength_interpolates_only_adaptive_mass():
+    controller = CoverageController(warmup_steps=0)
+    controller.loss_ema.copy_(torch.tensor([1., 1., 1., 1., 1., 1., 1., 5.]))
+    controller.initialized.fill_(True)
+
+    uniform = controller.target_mass(0.0)
+    robust = controller.target_mass(1.0)
+
+    assert uniform[0].item() == robust[0].item() == pytest.approx(0.5)
+    assert torch.all(uniform[1:7] >= 0.025)
+    assert robust[7] > uniform[7]
+    assert uniform.sum().item() == pytest.approx(1.0)
+    assert robust.sum().item() == pytest.approx(1.0)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"fast_decay": -0.1}, {"fast_decay": 1.0},
+        {"slow_decay": -0.1}, {"slow_decay": 1.0},
+        {"tolerance": -0.1}, {"minimum_strength": -0.1},
+        {"minimum_strength": 1.1}, {"strength_decay": 0.0},
+        {"strength_decay": 1.1}, {"recovery": -0.1},
+        {"recovery": 1.1}, {"warmup_steps": -1},
+    ],
+)
+def test_cover_clean_controller_rejects_invalid_configuration(kwargs):
+    with pytest.raises(ValueError):
+        CoverCleanController(**kwargs)

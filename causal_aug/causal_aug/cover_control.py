@@ -22,6 +22,72 @@ _FLOORS = torch.tensor([0.50] + [0.025] * 6 + [0.15])
 _ADAPTIVE_MASS = 0.20
 
 
+class CoverCleanController(nn.Module):
+    """Protect clean learning while retaining every augmentation floor."""
+
+    def __init__(
+        self,
+        fast_decay: float = 0.90,
+        slow_decay: float = 0.99,
+        tolerance: float = 0.05,
+        minimum_strength: float = 0.25,
+        strength_decay: float = 0.90,
+        recovery: float = 0.01,
+        warmup_steps: int = 1000,
+    ) -> None:
+        super().__init__()
+        if not 0.0 <= fast_decay < 1.0:
+            raise ValueError("fast_decay must be in [0, 1)")
+        if not 0.0 <= slow_decay < 1.0:
+            raise ValueError("slow_decay must be in [0, 1)")
+        if tolerance < 0.0:
+            raise ValueError("tolerance must be non-negative")
+        if not 0.0 <= minimum_strength <= 1.0:
+            raise ValueError("minimum_strength must be in [0, 1]")
+        if not 0.0 < strength_decay <= 1.0:
+            raise ValueError("strength_decay must be in (0, 1]")
+        if not 0.0 <= recovery <= 1.0:
+            raise ValueError("recovery must be in [0, 1]")
+        if warmup_steps < 0:
+            raise ValueError("warmup_steps must be non-negative")
+
+        self.fast_decay = fast_decay
+        self.slow_decay = slow_decay
+        self.tolerance = tolerance
+        self.minimum_strength = minimum_strength
+        self.strength_decay = strength_decay
+        self.recovery = recovery
+        self.warmup_steps = warmup_steps
+        self.register_buffer("fast_ema", torch.zeros(()))
+        self.register_buffer("slow_ema", torch.zeros(()))
+        self.register_buffer("initialized", torch.zeros((), dtype=torch.bool))
+        self.register_buffer("step", torch.zeros((), dtype=torch.long))
+        self.register_buffer("robust_strength", torch.ones(()))
+
+    @torch.no_grad()
+    def update(self, clean_loss: Tensor) -> tuple[Tensor, Tensor]:
+        value = clean_loss.detach().mean().to(self.fast_ema.device)
+        if not bool(torch.isfinite(value)):
+            return self.robust_strength.clone(), torch.zeros((), dtype=torch.bool, device=value.device)
+        if not self.initialized:
+            self.fast_ema.copy_(value)
+            self.slow_ema.copy_(value)
+            self.initialized.fill_(True)
+        else:
+            self.fast_ema.mul_(self.fast_decay).add_(value * (1.0 - self.fast_decay))
+            self.slow_ema.mul_(self.slow_decay).add_(value * (1.0 - self.slow_decay))
+        self.step.add_(1)
+        if self.step.item() <= self.warmup_steps:
+            return self.robust_strength.clone(), torch.zeros((), dtype=torch.bool, device=value.device)
+
+        triggered = self.fast_ema > self.slow_ema * (1.0 + self.tolerance)
+        if triggered:
+            self.robust_strength.mul_(self.strength_decay).clamp_(min=self.minimum_strength)
+        else:
+            self.robust_strength.add_(self.recovery).clamp_(max=1.0)
+        return self.robust_strength.clone(), triggered.clone()
+
+
 class CoverageController(nn.Module):
     """Track per-group loss and allocate robust mass without losing coverage."""
 

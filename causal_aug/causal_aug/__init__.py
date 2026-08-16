@@ -9,7 +9,7 @@ from .intervention_bank import (
 )
 from .risk_sampler import RiskWeightedInterventionSampler
 from .residual_sampler import ResidualBranchSampler
-from .cover_control import COVER_GROUPS, CoverageController
+from .cover_control import COVER_GROUPS, CoverCleanController, CoverageController
 from .ood_wrapper import OOD_LEVELS, OODPerturbation
 
 __all__ = [
@@ -25,6 +25,7 @@ __all__ = [
     "ResidualBranchSampler",
     "COVER_GROUPS",
     "CoverageController",
+    "CoverCleanController",
     "OODPerturbation",
     "OOD_LEVELS",
 ]
