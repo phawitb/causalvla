@@ -28,6 +28,15 @@ def test_eval_requires_exact_revision_and_uses_fair_protocol():
     assert "eval_info.json" in source
 
 
+def test_eval_routes_pilot_names_to_pilot_repositories():
+    source = (ROOT / "scripts" / "run_eval_cover.sh").read_text()
+
+    assert "cover_base_pilot" in source
+    assert "phawitbinabik/causalvla-cover-base-pilot" in source
+    assert "cover_safe_pilot" in source
+    assert "phawitbinabik/causalvla-cover-safe-pilot" in source
+
+
 def test_phase10_documents_pilot_and_full_training_commands():
     source = (ROOT / "worklog" / "phase10.md").read_text()
 

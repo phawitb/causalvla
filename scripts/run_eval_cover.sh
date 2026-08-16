@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ $# -lt 3 || $# -gt 4 ]]; then
-  echo "Usage: $0 <cover_base|cover_safe> <level_0|level_1|level_2> <seed> [episodes_per_task]" >&2
+  echo "Usage: $0 <cover_base|cover_safe|cover_base_pilot|cover_safe_pilot> <level_0|level_1|level_2> <seed> [episodes_per_task]" >&2
   exit 2
 fi
 
@@ -16,6 +16,8 @@ revision_file="$project_dir/outputs/phase10/${policy}_revision.txt"
 case "$policy" in
   cover_base) repo="phawitbinabik/causalvla-cover-base" ;;
   cover_safe) repo="phawitbinabik/causalvla-cover-safe" ;;
+  cover_base_pilot) repo="phawitbinabik/causalvla-cover-base-pilot" ;;
+  cover_safe_pilot) repo="phawitbinabik/causalvla-cover-safe-pilot" ;;
   *) echo "Unknown policy: $policy" >&2; exit 2 ;;
 esac
 case "$ood_level" in

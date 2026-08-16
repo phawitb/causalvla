@@ -35,6 +35,23 @@
 - [ ] Selected 25K full training
 - [ ] Preregistered final evaluation
 
+## 5K Pilot Training Result
+
+Both pilots completed 5,000 steps at seed 1000 with batch size 16 and no
+traceback, RuntimeError, CUDA OOM, or NaN. Each used 4.37 GB GPU memory and
+logged `cover/forward_count:1.000` throughout. Final checkpoints passed the
+preregistered configuration assertions.
+
+| Variant | Final loss | Robust strength | Hub revision |
+|---|---:|---:|---|
+| COVER-Base | 0.519 | 1.000 | `798142720b2bedfcb2e396e0ed9359e351d7b554` |
+| COVER-Safe | 0.510 | 0.809 | `a178d53a895eb74207926da0fb8f9427f7036440` |
+
+At step 5K all target masses remained above their floors, fallback was zero,
+and the Safe controller was active (`safety_trigger=0.170`). These training
+metrics are diagnostics only; variant selection uses the preregistered
+5-episodes/task evaluation.
+
 ## CUDA Smoke Result
 
 ทั้ง `cover_base` และ `cover_safe` ผ่าน CUDA training smoke 2 steps บน RTX 4090
