@@ -1,7 +1,7 @@
 # Phase 9 — PACER-VLA
 
 > Started: 2026-08-16  
-> Status: DESIGN REVIEW  
+> Status: IMPLEMENTATION PLANNED
 > Primary baseline: Model F — Online DR
 
 ## Goal
@@ -104,9 +104,8 @@ safety controller ภายใต้งบสอง forwards
 - [x] Select Model J then conditional Model K sequence
 - [x] Lock Model J to two forwards/sample
 - [x] Write PACER-VLA design and preregister gates
-- [ ] Review and approve written design
-- [ ] Write implementation plan
+- [x] Review and approve written design
+- [x] Write implementation plan
 - [ ] Implement Model J with TDD
 - [ ] Run Mac unit tests and MPS smoke
 - [ ] Commit and push GPU-server workflow
-
