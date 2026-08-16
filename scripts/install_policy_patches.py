@@ -14,6 +14,8 @@ import lerobot.policies.smolvla.modeling_smolvla as smolvla
 
 POLICIES = {
     "causal_vla": "CausalVLAConfig",
+    "cover_base": "CoverBaseConfig",
+    "cover_safe": "CoverSafeConfig",
     "online_dr": "OnlineDRConfig",
     "pacer_lite": "PacerLiteConfig",
     "rapid_lite": "RapidLiteConfig",
