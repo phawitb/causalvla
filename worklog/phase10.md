@@ -1,7 +1,7 @@
 # Phase 10 — COVER-VLA
 
 > Started: 2026-08-16  
-> Status: CUDA SMOKE PASSED; 5K PILOTS READY
+> Status: 5K PILOT EVALUATION COMPLETED — NO-GO
 
 ## Goal
 
@@ -30,8 +30,8 @@
 - [x] Implement with tests
 - [ ] Mac MPS smoke
 - [x] CUDA smoke
-- [ ] L1/L2 5K pilots
-- [ ] Pilot evaluation and variant selection
+- [x] L1/L2 5K pilots
+- [x] Pilot evaluation and variant selection (NO-GO; neither survived)
 - [ ] Selected 25K full training
 - [ ] Preregistered final evaluation
 
@@ -51,6 +51,24 @@ At step 5K all target masses remained above their floors, fallback was zero,
 and the Safe controller was active (`safety_trigger=0.170`). These training
 metrics are diagnostics only; variant selection uses the preregistered
 5-episodes/task evaluation.
+
+## 5K Pilot Evaluation Result
+
+Both pinned pilot checkpoints were evaluated at seed 1000 on 10 LIBERO Spatial
+tasks with 5 episodes/task per mode (50 episodes/mode/model).
+
+| Variant | Clean | Mild | Extreme | Three-mode mean |
+|---|---:|---:|---:|---:|
+| COVER-Base | **46%** | **40%** | **18%** | **34.7%** |
+| COVER-Safe | 44% | 36% | 12% | 30.7% |
+
+COVER-Base outperformed COVER-Safe in every mode, but both failed the
+preregistered Clean survival gate of 60%. Therefore neither variant is selected
+for the 25K full run and Phase 10 is a NO-GO under the approved rule. The result
+does not by itself distinguish a method failure from insufficient 5K
+optimization because no matched Model-F 5K checkpoint was evaluated; any
+learning-curve study must be registered as a separate experiment rather than
+overriding this gate after seeing the pilot result.
 
 ## CUDA Smoke Result
 
