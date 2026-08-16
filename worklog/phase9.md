@@ -1,7 +1,7 @@
 # Phase 9 — PACER-VLA
 
 > Started: 2026-08-16  
-> Status: IMPLEMENTATION PLANNED
+> Status: MODEL J READY FOR CUDA SMOKE
 > Primary baseline: Model F — Online DR
 
 ## Goal
@@ -109,7 +109,7 @@ safety controller ภายใต้งบสอง forwards
 - [x] Implement Model J with TDD
 - [x] Run Mac unit tests and MPS smoke
 - [x] Commit GPU-server workflow
-- [ ] Push verified implementation to `main`
+- [x] Push verified implementation to `main` (`2c9fe18`)
 
 ## Model J Implementation and Mac MPS Smoke
 
