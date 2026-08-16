@@ -1,7 +1,7 @@
 # Phase 9 — PACER-VLA
 
 > Started: 2026-08-16  
-> Status: MODEL J READY FOR CUDA SMOKE
+> Status: MODEL J SEED-1000 GATE COMPLETED — NO-GO
 > Primary baseline: Model F — Online DR
 
 ## Goal
@@ -110,6 +110,27 @@ safety controller ภายใต้งบสอง forwards
 - [x] Run Mac unit tests and MPS smoke
 - [x] Commit GPU-server workflow
 - [x] Push verified implementation to `main` (`2c9fe18`)
+- [x] Complete Model J full 25K GPU training
+- [x] Verify final PACER-Lite checkpoint configuration
+- [x] Pin Hugging Face revision `d055395e8c89468ad3b5f967f27508a36f787a83`
+- [x] Evaluate preregistered seed-1000 Clean/Mild/Extreme gate (NO-GO)
+
+## Model J Seed-1000 Gate Result
+
+PACER-Lite was evaluated on the pinned Hugging Face revision
+`d055395e8c89468ad3b5f967f27508a36f787a83` with 10 LIBERO Spatial tasks,
+10 episodes/task, synchronous environments, and evaluation seed 1000.
+
+| Model | Clean | Mild | Extreme | Three-mode mean |
+|---|---:|---:|---:|---:|
+| Model F — Online DR | 64% | **62%** | **49%** | **58.3%** |
+| PACER-Lite | **67%** | 57% | 41% | 55.0% |
+
+PACER-Lite passed only the Clean gate (`67 >= 61`). It failed Mild
+(`57 < 59`), Extreme (`41 < 46`), and aggregate (`55.0 < 58.3`) gates.
+Relative to Model F at the same seed it gained 3 pp Clean but lost 5 pp Mild,
+8 pp Extreme, and 3.3 pp overall. Under the preregistered decision rule, do not
+expand PACER-Lite to seeds 2000/3000 and do not start Model K from this result.
 
 ## Model J Implementation and Mac MPS Smoke
 
