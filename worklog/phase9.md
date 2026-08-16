@@ -106,6 +106,41 @@ safety controller ภายใต้งบสอง forwards
 - [x] Write PACER-VLA design and preregister gates
 - [x] Review and approve written design
 - [x] Write implementation plan
-- [ ] Implement Model J with TDD
-- [ ] Run Mac unit tests and MPS smoke
+- [x] Implement Model J with TDD
+- [x] Run Mac unit tests and MPS smoke
 - [ ] Commit and push GPU-server workflow
+
+## Model J Implementation and Mac MPS Smoke
+
+PACER-Lite implementation ใช้ policy type `pacer_lite` และผ่าน behavioral
+contract ที่ยืนยัน clean/augmented `forward_with_latent` สองครั้งโดย reuse
+noise/time tensor ชุดเดียวกัน. Adaptive state ของ contextual bandit และ
+clean-safety controller เป็น registered buffers และ inference สืบทอดจาก SmolVLA
+โดยไม่ override
+
+Local regression suite หลัง implementation:
+
+```text
+111 passed in 4.59s
+Python compileall: PASS
+```
+
+Mac M2 MPS smoke ใช้ batch size 2, training seed 1000 และ 2 steps:
+
+| Metric | Step 1 | Step 2 |
+|---|---:|---:|
+| loss | 2.188 | 13.853 |
+| clean task loss | 2.158 | 14.273 |
+| augmented task loss | 2.218 | 13.433 |
+| augmented weight | 0.500 | 0.500 |
+| action disagreement | 0.072 | 0.112 |
+| loss ratio | 1.029 | 0.934 |
+| rejected updates | 0 | 0 |
+
+Step 1 เลือก brightness/color อย่างละ 50%; step 2 เลือก blur/shadow อย่างละ
+50%. Context fractions เป็น easy 50%, medium 50%, hard 0% ตาม batch size 2.
+Checkpoint `outputs/smoke/pacer_lite_mps/checkpoints/000002/pretrained_model`
+มี `model.safetensors` และ serialized config ตรง preregistered defaults ทุกค่า
+Log มี `End of training`, ไม่พบ traceback, runtime error หรือ NaN
+
+**Mac MPS smoke: PASS**
