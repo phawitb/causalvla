@@ -1,7 +1,7 @@
 # Phase 10 — COVER-VLA
 
 > Started: 2026-08-16  
-> Status: IMPLEMENTATION IN PROGRESS
+> Status: CUDA SMOKE PASSED; 5K PILOTS READY
 
 ## Goal
 
@@ -27,13 +27,26 @@
 - [x] Approve two-pilot, one-full-run experiment budget
 - [x] Write COVER-VLA design
 - [x] Write implementation plan
-- [ ] Implement with tests (controller/policies complete; workflow verification pending)
+- [x] Implement with tests
 - [ ] Mac MPS smoke
-- [ ] CUDA smoke
+- [x] CUDA smoke
 - [ ] L1/L2 5K pilots
 - [ ] Pilot evaluation and variant selection
 - [ ] Selected 25K full training
 - [ ] Preregistered final evaluation
+
+## CUDA Smoke Result
+
+ทั้ง `cover_base` และ `cover_safe` ผ่าน CUDA training smoke 2 steps บน RTX 4090
+ด้วย batch size 2, seed 1000 และใช้ GPU memory 1.95 GB. ทั้งสอง log มี
+`cover/forward_count:1.000` และ `End of training`; ไม่พบ traceback,
+RuntimeError, CUDA OOM หรือ NaN.
+
+Checkpoint `000002` ผ่าน config assertions ทุกค่า. `cover_base` มี 506 tensors
+และ coverage controller buffers ครบ 6 ตัวโดยไม่มี clean-controller state.
+`cover_safe` มี 511 tensors, coverage buffers ครบ และ clean-controller buffers
+5 ตัว. ผลนี้ยืนยัน one-forward compute contract และ controller state
+serialization บน CUDA.
 
 ## GPU Pilot Workflow
 
