@@ -1,7 +1,7 @@
 # Phase 11 — Matched-Budget Learning-Curve Audit
 
 > Started: 2026-08-16  
-> Status: MODEL F 5K EVALUATION RUNNING
+> Status: MODEL F 5K EVALUATION COMPLETED — BORDERLINE NO-GO
 
 ## Question
 
@@ -38,3 +38,24 @@ under any outcome because it lost to COVER-Base in every pilot mode.
 
 Any continuation is a new learning-curve experiment and does not override the
 recorded Phase-10 NO-GO decision.
+
+## Matched 5K Result
+
+| Model | Clean | Mild | Extreme | Mean |
+|---|---:|---:|---:|---:|
+| Model F 5K | 16% | 22% | **24%** | 20.7% |
+| COVER-Base 5K | **46%** | **40%** | 18% | **34.7%** |
+| COVER minus F | +30 | +18 | -6 | +14.0 |
+
+COVER-Base passed the aggregate diagnostic by a wide margin but failed the
+per-mode rule on Extreme by one percentage point (`18 < 24 - 5`). Phase 11 is
+therefore a borderline NO-GO under the preregistered rule and COVER is not
+resumed automatically. With 50 episodes/mode, scores move in 2-point increments;
+the six-point Extreme difference represents three episodes and should be
+reported with uncertainty rather than used to claim equivalence.
+
+Scientifically, the audit rejects the explanation that COVER's low absolute 5K
+Clean score alone demonstrates slow learning: COVER substantially outperformed
+matched-budget Model F on Clean, Mild, and overall mean. A continuation would
+require a separately preregistered decision based on a larger evaluation budget
+or matched 10K checkpoints, not a post-hoc relaxation of this gate.
