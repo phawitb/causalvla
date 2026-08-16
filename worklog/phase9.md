@@ -108,7 +108,8 @@ safety controller ภายใต้งบสอง forwards
 - [x] Write implementation plan
 - [x] Implement Model J with TDD
 - [x] Run Mac unit tests and MPS smoke
-- [ ] Commit and push GPU-server workflow
+- [x] Commit GPU-server workflow
+- [ ] Push verified implementation to `main`
 
 ## Model J Implementation and Mac MPS Smoke
 
@@ -144,3 +145,107 @@ Checkpoint `outputs/smoke/pacer_lite_mps/checkpoints/000002/pretrained_model`
 Log มี `End of training`, ไม่พบ traceback, runtime error หรือ NaN
 
 **Mac MPS smoke: PASS**
+
+## GPU Server Workflow
+
+### Install Phase 9 policy
+
+```bash
+cd ~/projects/causalvla
+git pull origin main
+conda activate causalvla
+python -m pip install -e causal_aug
+python scripts/install_policy_patches.py pacer_lite
+```
+
+### CUDA smoke
+
+```bash
+PYTHONPATH="$PWD/causal_aug${PYTHONPATH:+:$PYTHONPATH}" lerobot-train \
+  --policy.type=pacer_lite \
+  --policy.device=cuda \
+  --policy.push_to_hub=false \
+  --policy.aug_intensity=1.0 \
+  --policy.bandit_temperature=1.0 \
+  --policy.exploration_floor=0.2 \
+  --policy.bandit_ema_decay=0.95 \
+  --policy.bandit_warmup_steps=1000 \
+  --policy.max_loss_ratio=2.0 \
+  --policy.overhard_penalty=2.0 \
+  --policy.disagreement_clip=1.0 \
+  --policy.max_augmented_weight=0.5 \
+  --policy.min_augmented_weight=0.1 \
+  --policy.clean_tolerance=0.05 \
+  --policy.clean_weight_decay=0.9 \
+  --policy.clean_weight_recovery=0.01 \
+  --dataset.repo_id=lerobot/libero_spatial_image \
+  --output_dir=outputs/smoke/pacer_lite \
+  --job_name=pacer_lite_cuda_smoke \
+  --batch_size=2 \
+  --steps=2 \
+  --seed=1000 \
+  --save_freq=2 \
+  --log_freq=1 \
+  --num_workers=0 \
+  --env_eval_freq=0
+```
+
+CUDA smoke ผ่านเมื่อ log มี PACER metrics ครบ, augmented weight อยู่ใน
+`[0.10,0.50]`, `pacer/rejected_updates=0`, checkpoint config ตรงค่าข้างต้น และ
+ไม่มี traceback, NaN หรือ OOM
+
+### Full 25K training
+
+เริ่ม batch size 8 เนื่องจาก PACER ใช้สอง forwards. เพิ่มเป็น 16 ได้เฉพาะเมื่อ
+CUDA smoke/short pilot ยืนยัน memory headroom และต้องบันทึกการเปลี่ยนแปลงก่อน
+ดูผล evaluation
+
+```bash
+mkdir -p logs
+PYTHONPATH="$PWD/causal_aug${PYTHONPATH:+:$PYTHONPATH}" lerobot-train \
+  --policy.type=pacer_lite \
+  --policy.device=cuda \
+  --policy.push_to_hub=true \
+  --policy.repo_id=phawitbinabik/causalvla-pacer-lite \
+  --policy.private=true \
+  --policy.aug_intensity=1.0 \
+  --policy.bandit_temperature=1.0 \
+  --policy.exploration_floor=0.2 \
+  --policy.bandit_ema_decay=0.95 \
+  --policy.bandit_warmup_steps=1000 \
+  --policy.max_loss_ratio=2.0 \
+  --policy.overhard_penalty=2.0 \
+  --policy.disagreement_clip=1.0 \
+  --policy.max_augmented_weight=0.5 \
+  --policy.min_augmented_weight=0.1 \
+  --policy.clean_tolerance=0.05 \
+  --policy.clean_weight_decay=0.9 \
+  --policy.clean_weight_recovery=0.01 \
+  --policy.scheduler_warmup_steps=500 \
+  --policy.scheduler_decay_steps=15000 \
+  --dataset.repo_id=lerobot/libero_spatial_image \
+  --output_dir=outputs/final/pacer_lite \
+  --job_name=pacer_lite \
+  --batch_size=8 \
+  --steps=25000 \
+  --seed=1000 \
+  --save_freq=5000 \
+  --save_checkpoint_to_hub=true \
+  --log_freq=100 \
+  --num_workers=4 \
+  --persistent_workers=true \
+  --env_eval_freq=0 \
+  2>&1 | tee logs/pacer_lite.log
+```
+
+หลัง upload ให้บันทึก Hugging Face revision แบบ exact 40-character SHA ที่
+`outputs/phase9/pacer_lite_revision.txt`. `scripts/run_eval_pacer.sh` ปฏิเสธการ
+eval หากไม่มี revision นี้ เพื่อป้องกัน checkpoint drift
+
+Seed-1000 evaluation:
+
+```bash
+./scripts/run_eval_pacer.sh level_0 1000 10
+./scripts/run_eval_pacer.sh level_1 1000 10
+./scripts/run_eval_pacer.sh level_2 1000 10
+```
