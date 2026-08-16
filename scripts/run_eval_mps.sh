@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ $# -lt 3 || $# -gt 4 ]]; then
-  echo "Usage: $0 <model_id:a|b|c|d|e|f|v2|rapid|rapid_mix> <level_0|level_1|level_2> <seed> [episodes_per_task]"
+  echo "Usage: $0 <model_id:a|b|c|d|e|f|f5k|v2|rapid|rapid_mix> <level_0|level_1|level_2> <seed> [episodes_per_task]"
   exit 2
 fi
 
@@ -23,6 +23,7 @@ case "$model_id" in
   d) repo_id="phawitbinabik/causalvla-model-d-no-latent"; revision="ec27cb968af93239da74188ffce7c6ebeec0b05c" ;;
   e) repo_id="phawitbinabik/causalvla-model-e-no-action"; revision="f506bfa3a5d9b678b49497f0af95d15855d8614d" ;;
   f) repo_id="phawitbinabik/causalvla-model-f-online-dr"; revision="997d94a9325bc359422cd3cf54bd74b0a4c9be98" ;;
+  f5k) repo_id="phawitbinabik/causalvla-model-f-online-dr-5k"; revision="05a56ee5ec79d2879ab1d0cc877946074d151904" ;;
   v2) repo_id="phawitbinabik/causalvla-model-v2"; revision="6fc4104176b08ba7f9592583a8431c2e30b035ab" ;;
   rapid) repo_id="phawitbinabik/causalvla-rapid-lite"; revision="bad76c163d35e3254d976985f1f8a1f148672a2c" ;;
   rapid_mix) repo_id="phawitbinabik/causalvla-rapid-mix"; revision="7eee1dc506df47ddd1dad367f72293013dc35d6d" ;;
