@@ -44,6 +44,13 @@ def test_eval_routes_20k_name_to_public_checkpoint_repository():
     assert "phawitbinabik/causalvla-cover-base-20k" in source
 
 
+def test_eval_routes_25k_name_to_public_checkpoint_repository():
+    source = (ROOT / "scripts" / "run_eval_cover.sh").read_text()
+
+    assert "cover_base_25k" in source
+    assert "phawitbinabik/causalvla-cover-base-25k" in source
+
+
 def test_phase10_documents_pilot_and_full_training_commands():
     source = (ROOT / "worklog" / "phase10.md").read_text()
 
