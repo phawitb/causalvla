@@ -51,6 +51,8 @@ case "$model" in
 esac
 
 mkdir -p "$project_dir/logs/phase12"
+export PYTHONNOUSERSITE=1
+export PYTHONPATH="$project_dir/causal_aug${PYTHONPATH:+:$PYTHONPATH}"
 cd "$project_dir"
 
 lerobot-train \

@@ -14,6 +14,7 @@ def test_object_training_uses_pinned_dataset_and_matched_budget():
     assert "--seed=1000" in source
     assert "online_dr" in source
     assert "causal_vla" in source
+    assert 'export PYTHONPATH="$project_dir/causal_aug' in source
 
 
 def test_object_smoke_does_not_push_or_share_full_output():

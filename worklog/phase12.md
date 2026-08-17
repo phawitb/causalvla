@@ -96,6 +96,7 @@ alone.
 - [x] Training workflow implemented
 - [x] Evaluation workflow implemented
 - [x] Three-seed matrix implemented
+- [x] Force the repository's editable \`causal_aug\` package on \`PYTHONPATH\`
 - [ ] CUDA smoke: Model F
 - [ ] CUDA smoke: CausalVLA-v2
 - [ ] Full training: Model F
