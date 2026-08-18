@@ -23,6 +23,8 @@ def test_installer_registers_both_cover_variants():
 def test_cover_does_not_request_forward_with_latent_patch():
     source = (Path(__file__).resolve().parents[2] / "scripts" / "install_policy_patches.py").read_text()
 
-    patch_condition = source.split('if {"causal_vla", "pacer_lite"}', 1)[1].split(":", 1)[0]
+    patch_condition = source.split(
+        'if {"causal_vla", "causal_vla_warm", "pacer_lite"}', 1
+    )[1].split(":", 1)[0]
     assert "cover_base" not in patch_condition
     assert "cover_safe" not in patch_condition

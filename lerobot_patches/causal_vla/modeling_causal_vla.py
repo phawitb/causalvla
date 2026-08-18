@@ -68,6 +68,13 @@ class CausalVLAPolicy(SmolVLAPolicy):
         denominator = (valid.sum() * losses.shape[-1]).clamp_min(1)
         return (losses * valid.unsqueeze(-1)).sum() / denominator
 
+    def _action_consistency_weight(self) -> float:
+        """Return the action-consistency weight for the current training step."""
+        return self.config.lambda_action
+
+    def _after_training_forward(self) -> None:
+        """Hook for policies that maintain training-step state."""
+
     def forward(
         self, batch: dict[str, Tensor], noise=None, time=None, reduction: str = "mean"
     ) -> tuple[Tensor, dict]:
@@ -142,8 +149,10 @@ class CausalVLAPolicy(SmolVLAPolicy):
 
         if self.config.use_action_loss and action_losses:
             loss_action = sum(action_losses) / len(action_losses)
-            total_loss = total_loss + self.config.lambda_action * loss_action
+            action_weight = self._action_consistency_weight()
+            total_loss = total_loss + action_weight * loss_action
             loss_dict["loss_action"] = loss_action.item()
+            loss_dict["lambda_action_current"] = action_weight
 
         # --- 6. Temporal smoothness loss ---
         if self.config.lambda_smooth > 0:
@@ -152,6 +161,7 @@ class CausalVLAPolicy(SmolVLAPolicy):
             loss_dict["loss_smooth"] = loss_smooth.item()
 
         loss_dict["loss"] = total_loss.item()
+        self._after_training_forward()
 
         if reduction == "none":
             # Per-sample loss for RA-BC weighting (use task loss component)

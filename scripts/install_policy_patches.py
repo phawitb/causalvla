@@ -14,6 +14,7 @@ import lerobot.policies.smolvla.modeling_smolvla as smolvla
 
 POLICIES = {
     "causal_vla": "CausalVLAConfig",
+    "causal_vla_warm": "CausalVLAWarmConfig",
     "cover_base": "CoverBaseConfig",
     "cover_safe": "CoverSafeConfig",
     "online_dr": "OnlineDRConfig",
@@ -69,7 +70,7 @@ def main() -> None:
 
     init_file.write_text(init_source)
 
-    if {"causal_vla", "pacer_lite"}.intersection(args.policies):
+    if {"causal_vla", "causal_vla_warm", "pacer_lite"}.intersection(args.policies):
         model_file = Path(inspect.getfile(smolvla)).resolve()
         model_source = model_file.read_text()
         if "def forward_with_latent(" not in model_source:
