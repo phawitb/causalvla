@@ -70,7 +70,7 @@ augmentation intensity 1.0 and Hub repository
 - [x] CUDA smoke
 - [x] Full 25K training
 - [x] Seed-1000 Clean/Mild/Extreme evaluation
-- [ ] Three-seed Clean/Mild/Extreme evaluation
+- [x] Three-seed Clean/Mild/Extreme evaluation
 
 ## Local MPS Smoke Result
 
@@ -110,5 +110,30 @@ tasks, 10 episodes/task, synchronous environments and seed 1000.
 V2-Warm exceeded V2 by `+9`, `+7` and `+8` percentage points on Clean, Mild
 and Extreme. It exceeded Model F by `+8`, `+5` and `+4` points. Evaluation
 times were 756.7 s, 1095.0 s and 1392.3 s respectively. This is a positive
-seed-1000 result but not yet a multi-seed claim; seeds 2000 and 3000 remain
-required to measure robustness to evaluation initial states.
+seed-1000 result; the evaluation-initial-state check is completed below.
+
+## Three-Seed Evaluation Result
+
+The same pinned checkpoint was evaluated with seeds 1000, 2000 and 3000. Each
+cell contains 100 episodes (10 tasks, 10 episodes/task).
+
+| Evaluation seed | Clean | Mild OOD | Extreme OOD | Three-mode mean |
+|---:|---:|---:|---:|---:|
+| 1000 | 72% | 67% | 53% | 64.0% |
+| 2000 | 68% | 63% | 60% | 63.7% |
+| 3000 | 59% | 63% | 53% | 58.3% |
+| **Mean +/- sample SD** | **66.3 +/- 6.7%** | **64.3 +/- 2.3%** | **55.3 +/- 4.0%** | **62.0%** |
+
+Comparison against the existing three-seed evaluations:
+
+| Model | Clean | Mild OOD | Extreme OOD | Mean across all modes/seeds |
+|---|---:|---:|---:|---:|
+| CausalVLA-v2 | 60.0 +/- 3.0% | 57.7 +/- 2.1% | 44.3 +/- 1.2% | 54.0% |
+| Model F — Online DR | 65.3 +/- 2.3% | 58.7 +/- 3.5% | 49.3 +/- 1.5% | 57.8% |
+| **V2-Warm** | **66.3 +/- 6.7%** | **64.3 +/- 2.3%** | **55.3 +/- 4.0%** | **62.0%** |
+
+V2-Warm exceeded Model F by `+1.0`, `+5.6` and `+6.0` percentage points on
+the three per-level means, and exceeded CausalVLA-v2 by `+6.3`, `+6.6` and
+`+11.0` points. Its Clean result varied more across evaluation seeds than the
+baselines. These runs vary only the evaluation initial-state seed: V2-Warm was
+trained once with seed 1000, so this is not a multi-training-seed estimate.
