@@ -363,6 +363,61 @@
   .md-content hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
 
   /* ================================================================ */
+  /*  RESULTS DASHBOARD                                               */
+  /* ================================================================ */
+  .results-main {
+    width: min(1380px, calc(100% - 48px)); margin: 52px auto 0; padding: 36px 0 100px;
+  }
+  .results-hero {
+    display: flex; justify-content: space-between; gap: 24px; align-items: end;
+    padding: 30px 34px; margin-bottom: 24px; border: 1px solid var(--border);
+    border-radius: 16px; background: linear-gradient(135deg, #eff6ff, #f8fafc 55%, #f0fdf4);
+  }
+  .results-hero h1 { font-size: 30px; line-height: 1.2; margin-bottom: 7px; }
+  .results-hero p { color: var(--text-dim); margin: 0; }
+  .results-updated { color: var(--text-dim); font-size: 12px; white-space: nowrap; }
+  .results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 18px 0 28px; }
+  .result-model-card {
+    border: 1px solid var(--border); border-radius: 14px; padding: 20px; background: #fff;
+    text-align: left; cursor: pointer; box-shadow: var(--shadow); transition: .16s ease;
+  }
+  .result-model-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .result-model-card.active { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(37,99,235,.12); }
+  .result-model-top { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+  .result-model-name { font-size: 16px; font-weight: 800; color: var(--text); }
+  .result-model-desc { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  .result-score { font-size: 28px; font-weight: 800; color: var(--accent); line-height: 1; }
+  .result-score small { display: block; font-size: 10px; color: var(--text-dim); margin-top: 6px; text-align: right; }
+  .level-bars { display: grid; gap: 8px; margin-top: 18px; }
+  .level-bar { display: grid; grid-template-columns: 54px 1fr 42px; gap: 9px; align-items: center; font-size: 11px; color: var(--text-dim); }
+  .level-track { height: 7px; border-radius: 8px; background: var(--surface2); overflow: hidden; }
+  .level-fill { height: 100%; border-radius: inherit; background: var(--accent); }
+  .result-meta { display: flex; gap: 14px; margin-top: 16px; font-size: 11px; color: var(--text-dim); }
+  .results-section { margin-top: 30px; }
+  .results-section-head { display: flex; justify-content: space-between; gap: 18px; align-items: end; margin-bottom: 14px; }
+  .results-section-head h2 { font-size: 20px; }
+  .results-section-head p { color: var(--text-dim); font-size: 12px; margin: 2px 0 0; }
+  .result-filters { display: flex; gap: 9px; flex-wrap: wrap; }
+  .result-filters select {
+    min-width: 130px; padding: 8px 30px 8px 10px; border: 1px solid var(--border);
+    border-radius: 8px; background: #fff; color: var(--text); font-size: 12px;
+  }
+  .rollout-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .rollout-card { overflow: hidden; border: 1px solid var(--border); border-radius: 12px; background: #fff; box-shadow: var(--shadow); }
+  .rollout-card video { display: block; width: 100%; aspect-ratio: 16/10; background: #0f172a; object-fit: contain; }
+  .rollout-info { padding: 12px 13px; }
+  .rollout-title { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; font-weight: 700; }
+  .rollout-meta { font-size: 11px; color: var(--text-dim); margin-top: 5px; }
+  .status-pill { border-radius: 20px; padding: 2px 8px; font-size: 10px; font-weight: 800; }
+  .status-pill.success { color: #15803d; background: #dcfce7; }
+  .status-pill.failure { color: #b91c1c; background: #fee2e2; }
+  .results-empty { padding: 44px; text-align: center; color: var(--text-dim); border: 1px dashed var(--border); border-radius: 12px; }
+  .load-more {
+    display: block; margin: 22px auto 0; padding: 9px 18px; border: 1px solid var(--border);
+    background: #fff; border-radius: 9px; color: var(--accent); font-weight: 700; cursor: pointer;
+  }
+
+  /* ================================================================ */
   /*  RESPONSIVE                                                      */
   /* ================================================================ */
   @media (max-width: 900px) {
@@ -373,6 +428,9 @@
     .diagram-row { grid-template-columns: 1fr; }
     .work-summary { grid-template-columns: repeat(2, 1fr); }
     .entry-form .form-row { flex-direction: column; }
+    .results-grid, .rollout-grid { grid-template-columns: 1fr; }
+    .results-main { width: calc(100% - 28px); padding-top: 22px; }
+    .results-hero, .results-section-head { align-items: start; flex-direction: column; }
   }
 
   /* scrollbar */
@@ -390,6 +448,7 @@
   <div class="brand"><span>Causal</span>VLA</div>
   <button class="tab-btn active" onclick="switchTab('planning')">Planning</button>
   <button class="tab-btn" onclick="switchTab('mywork')">My Work</button>
+  <button class="tab-btn" onclick="switchTab('results')">Results</button>
   <a class="tab-btn" href="augment_preview/" style="text-decoration:none;">Augment Preview</a>
   <a class="tab-btn" href="papers/" style="text-decoration:none;">Papers</a>
 </div>
@@ -1013,6 +1072,45 @@ def test_ablation_no_action():
 </div><!-- /tab-planning -->
 
 <!-- ================================================================ -->
+<!-- TAB: RESULTS                                                     -->
+<!-- ================================================================ -->
+<div id="tab-results" class="tab-content">
+  <main class="results-main">
+    <div class="results-hero">
+      <div>
+        <h1>Evaluation Results</h1>
+        <p>ภาพรวม robustness และ rollout จริงของ Model A, Model B, V2 Warm และ Model F</p>
+      </div>
+      <div class="results-updated" id="results-count">กำลังโหลดผลการทดลอง…</div>
+    </div>
+
+    <section class="results-section" aria-labelledby="results-overview-heading">
+      <div class="results-section-head">
+        <div><h2 id="results-overview-heading">Model Overview</h2><p>Success rate รวมจากทุก eval run ที่มีอยู่ในโปรเจกต์</p></div>
+      </div>
+      <div class="results-grid" id="results-model-grid"></div>
+      <div class="table-wrap" id="results-table-wrap"></div>
+    </section>
+
+    <section class="results-section" aria-labelledby="rollout-heading">
+      <div class="results-section-head">
+        <div><h2 id="rollout-heading">Episode Rollouts</h2><p id="rollout-summary">เลือกโมเดลเพื่อดูวิดีโอราย episode</p></div>
+        <div class="result-filters">
+          <select id="result-level-filter" aria-label="OOD level"><option value="all">ทุก OOD Level</option></select>
+          <select id="result-seed-filter" aria-label="Seed"><option value="all">ทุก Seed</option></select>
+          <select id="result-task-filter" aria-label="Task"><option value="all">ทุก Task</option></select>
+          <select id="result-status-filter" aria-label="Result status">
+            <option value="all">ทุกสถานะ</option><option value="success">Success</option><option value="failure">Failure</option>
+          </select>
+        </div>
+      </div>
+      <div class="rollout-grid" id="rollout-grid"></div>
+      <button class="load-more" id="rollout-more" type="button" hidden>แสดงเพิ่ม</button>
+    </section>
+  </main>
+</div>
+
+<!-- ================================================================ -->
 <!-- TAB: MY WORK                                                     -->
 <!-- ================================================================ -->
 <div id="tab-mywork" class="tab-content">
@@ -1050,11 +1148,157 @@ def test_ablation_no_action():
 function switchTab(tab) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
-  document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
+  const content = document.getElementById('tab-' + tab);
+  const button = document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`);
+  if (!content || !button) return;
+  content.classList.add('active');
+  button.classList.add('active');
   document.querySelector('.sidebar:not(.work-sidebar)').style.display = tab === 'planning' ? 'block' : 'none';
   document.getElementById('work-sidebar').style.display = tab === 'mywork' ? 'block' : 'none';
+  history.replaceState(null, '', `#tab=${tab}`);
+  window.scrollTo(0, 0);
 }
+
+// ================================================================
+// Results dashboard
+// ================================================================
+let resultsData = null;
+let selectedResultModel = 'a';
+let visibleRollouts = 12;
+
+const resultFilters = {
+  level: document.getElementById('result-level-filter'),
+  seed: document.getElementById('result-seed-filter'),
+  task: document.getElementById('result-task-filter'),
+  status: document.getElementById('result-status-filter'),
+};
+
+function formatRate(value) {
+  return Number(value || 0).toFixed(1) + '%';
+}
+
+function setSelectOptions(select, label, values, formatter) {
+  select.innerHTML = `<option value="all">${label}</option>`;
+  values.forEach(value => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = formatter(value);
+    select.appendChild(option);
+  });
+}
+
+function renderResultOverview() {
+  const grid = document.getElementById('results-model-grid');
+  grid.innerHTML = '';
+  resultsData.models.forEach(model => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'result-model-card' + (model.id === selectedResultModel ? ' active' : '');
+    card.dataset.model = model.id;
+    const levelBars = [0, 1, 2].map(level => {
+      const value = model.levelRates[String(level)] || 0;
+      return `<div class="level-bar"><span>Level ${level}</span><div class="level-track"><div class="level-fill" style="width:${value}%"></div></div><strong>${formatRate(value)}</strong></div>`;
+    }).join('');
+    card.innerHTML = `
+      <div class="result-model-top">
+        <div><div class="result-model-name">${model.name}</div><div class="result-model-desc">${model.description}</div></div>
+        <div class="result-score">${formatRate(model.successRate)}<small>SUCCESS RATE</small></div>
+      </div>
+      <div class="level-bars">${levelBars}</div>
+      <div class="result-meta"><span>${model.runs.toLocaleString()} runs</span><span>${model.episodes.toLocaleString()} episodes</span><span>${model.videos.toLocaleString()} videos</span></div>`;
+    card.addEventListener('click', () => selectResultModel(model.id));
+    grid.appendChild(card);
+  });
+
+  const rows = resultsData.models.map(model => `
+    <tr><td><strong>${model.name}</strong></td><td>${formatRate(model.successRate)}</td>
+    <td>${formatRate(model.levelRates['0'])}</td><td>${formatRate(model.levelRates['1'])}</td><td>${formatRate(model.levelRates['2'])}</td>
+    <td>${model.successes.toLocaleString()} / ${model.episodes.toLocaleString()}</td><td>${model.runs}</td></tr>`).join('');
+  document.getElementById('results-table-wrap').innerHTML = `
+    <table><thead><tr><th>Model</th><th>Overall</th><th>Level 0</th><th>Level 1</th><th>Level 2</th><th>Successful Episodes</th><th>Runs</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function selectResultModel(modelId) {
+  selectedResultModel = modelId;
+  visibleRollouts = 12;
+  document.querySelectorAll('.result-model-card').forEach(card => card.classList.toggle('active', card.dataset.model === modelId));
+  const episodes = resultsData.episodes.filter(episode => episode.model === modelId);
+  const levels = [...new Set(episodes.map(episode => episode.level))].sort((a, b) => a - b);
+  const seeds = [...new Set(episodes.map(episode => episode.seed))].sort((a, b) => a - b);
+  const tasks = [...new Set(episodes.map(episode => episode.task))].sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+  setSelectOptions(resultFilters.level, 'ทุก OOD Level', levels, value => `OOD Level ${value}`);
+  setSelectOptions(resultFilters.seed, 'ทุก Seed', seeds, value => `Seed ${value}`);
+  setSelectOptions(resultFilters.task, 'ทุก Task', tasks, value => value);
+  resultFilters.status.value = 'all';
+  renderRollouts();
+}
+
+function filteredRollouts() {
+  return resultsData.episodes.filter(episode => {
+    if (episode.model !== selectedResultModel) return false;
+    if (resultFilters.level.value !== 'all' && String(episode.level) !== resultFilters.level.value) return false;
+    if (resultFilters.seed.value !== 'all' && String(episode.seed) !== resultFilters.seed.value) return false;
+    if (resultFilters.task.value !== 'all' && episode.task !== resultFilters.task.value) return false;
+    if (resultFilters.status.value === 'success' && !episode.success) return false;
+    if (resultFilters.status.value === 'failure' && episode.success) return false;
+    return true;
+  });
+}
+
+function renderRollouts() {
+  const model = resultsData.models.find(item => item.id === selectedResultModel);
+  const episodes = filteredRollouts();
+  const shown = episodes.slice(0, visibleRollouts);
+  const grid = document.getElementById('rollout-grid');
+  grid.innerHTML = '';
+  document.getElementById('rollout-summary').textContent = `${model.name} · พบ ${episodes.length.toLocaleString()} rollout videos`;
+
+  if (!shown.length) {
+    grid.innerHTML = '<div class="results-empty">ไม่พบ rollout ที่ตรงกับตัวกรอง</div>';
+  } else {
+    shown.forEach(item => {
+      const card = document.createElement('article');
+      card.className = 'rollout-card';
+      const video = document.createElement('video');
+      video.controls = true;
+      video.preload = 'metadata';
+      video.src = item.video;
+      const info = document.createElement('div');
+      info.className = 'rollout-info';
+      info.innerHTML = `<div class="rollout-title"><span>${item.task} · EP ${item.episode}</span><span class="status-pill ${item.success ? 'success' : 'failure'}">${item.success ? 'SUCCESS' : 'FAILURE'}</span></div><div class="rollout-meta">OOD Level ${item.level} · Seed ${item.seed}</div>`;
+      card.append(video, info);
+      grid.appendChild(card);
+    });
+  }
+  const more = document.getElementById('rollout-more');
+  more.hidden = shown.length >= episodes.length;
+  more.textContent = `แสดงเพิ่ม (${shown.length.toLocaleString()} / ${episodes.length.toLocaleString()})`;
+}
+
+async function initResults() {
+  if (resultsData) return;
+  try {
+    const response = await fetch('results-data.json');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    resultsData = await response.json();
+    const videoCount = resultsData.models.reduce((sum, model) => sum + model.videos, 0);
+    document.getElementById('results-count').textContent = `${resultsData.models.length} models · ${videoCount.toLocaleString()} rollout videos`;
+    renderResultOverview();
+    selectResultModel(selectedResultModel);
+  } catch (error) {
+    document.getElementById('results-count').textContent = 'โหลดผลการทดลองไม่สำเร็จ';
+    document.getElementById('results-model-grid').innerHTML = '<div class="results-empty">ไม่พบ results-data.json — รัน scripts/build_results_data.py เพื่อสร้างข้อมูลใหม่</div>';
+  }
+}
+
+Object.values(resultFilters).forEach(filter => filter.addEventListener('change', () => {
+  visibleRollouts = 12;
+  renderRollouts();
+}));
+document.getElementById('rollout-more').addEventListener('click', () => {
+  visibleRollouts += 12;
+  renderRollouts();
+});
 
 // --- Phase collapse ---
 function togglePhase(header) {
@@ -1280,6 +1524,7 @@ async function selectWorkPhase(num) {
 const origSwitchTab = switchTab;
 switchTab = function(tab) {
   origSwitchTab(tab);
+  if (tab === 'results') initResults();
   if (tab === 'mywork') {
     if (!worklogNavBuilt) {
       buildWorkNav().then(() => {
@@ -1295,7 +1540,7 @@ switchTab = function(tab) {
 (function() {
   const hash = location.hash;
   const m = hash.match(/^#tab=(\w+)$/);
-  if (m && (m[1] === 'planning' || m[1] === 'mywork')) {
+  if (m && (m[1] === 'planning' || m[1] === 'mywork' || m[1] === 'results')) {
     switchTab(m[1]);
   }
 })();
