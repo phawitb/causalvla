@@ -67,8 +67,9 @@ augmentation intensity 1.0 and Hub repository
 - [x] V2-Warm policy registered without changing V2 defaults
 - [x] Reproducible smoke/full training launcher added
 - [x] Local MPS smoke: 2/2 steps, batch 2, checkpoint finite, schedule step 2
-- [ ] CUDA smoke
-- [ ] Full 25K training
+- [x] CUDA smoke
+- [x] Full 25K training
+- [x] Seed-1000 Clean/Mild/Extreme evaluation
 - [ ] Three-seed Clean/Mild/Extreme evaluation
 
 ## Local MPS Smoke Result
@@ -78,3 +79,36 @@ The local smoke completed two optimizer steps with batch size 2 and ended with
 `lambda_action=0.05`, `action_warmup_steps=10000`, and
 `consistency_schedule.step=2`. All 501 tensors were finite. Hub upload was
 disabled, and the run saved optimizer, scheduler, RNG and training-step state.
+
+## Full Training Result
+
+The CUDA run completed 25,000 optimizer steps in `4:16:23` with 400,000
+sampled examples. Final metrics were total loss `0.349`, clean task loss
+`0.345`, augmented task loss `0.352`, action-consistency loss `0.006`, gradient
+norm `1.626`, throughput about 27 samples/s and GPU memory 6.86 GB. The final
+checkpoint serialized `consistency_schedule.step=25000`; all 501 tensors were
+finite. No traceback, runtime error, CUDA OOM or NaN was found.
+
+Pinned Hub checkpoint:
+
+```text
+Repo: phawitbinabik/causalvla-v2-warm
+Revision: 119ee2e25cb1e190e89561287dad8c2ffc967d4f
+```
+
+## Seed-1000 Evaluation Result
+
+The pinned revision was evaluated locally on MPS using LIBERO Spatial, 10
+tasks, 10 episodes/task, synchronous environments and seed 1000.
+
+| Model | Clean | Mild OOD | Extreme OOD | Three-mode mean |
+|---|---:|---:|---:|---:|
+| CausalVLA-v2 | 63% | 60% | 45% | 56.0% |
+| Model F — Online DR | 64% | 62% | 49% | 58.3% |
+| **V2-Warm** | **72%** | **67%** | **53%** | **64.0%** |
+
+V2-Warm exceeded V2 by `+9`, `+7` and `+8` percentage points on Clean, Mild
+and Extreme. It exceeded Model F by `+8`, `+5` and `+4` points. Evaluation
+times were 756.7 s, 1095.0 s and 1392.3 s respectively. This is a positive
+seed-1000 result but not yet a multi-seed claim; seeds 2000 and 3000 remain
+required to measure robustness to evaluation initial states.
