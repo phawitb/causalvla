@@ -11,6 +11,8 @@ from scripts.fair_protocol import (
     load_protocol,
     protocol_hash,
     start_run_manifest,
+    resolve_hf_revision,
+    validate_downloaded_metadata,
 )
 from scripts.smoke_fair_v1 import validate_smoke_artifacts
 
@@ -112,3 +114,25 @@ def test_smoke_validator_rejects_failed_acceptance_fields(tmp_path, override):
     (tmp_path / "smoke_metrics.json").write_text(json.dumps(metrics))
     with pytest.raises(ValueError, match="smoke acceptance"):
         validate_smoke_artifacts(tmp_path)
+
+
+def test_resolve_model_revision_returns_immutable_sha():
+    class FakeApi:
+        def model_info(self, repo_id, revision=None):
+            return type("Info", (), {"sha": "a" * 40})()
+
+    assert resolve_hf_revision("model", "owner/model", api=FakeApi()) == "a" * 40
+
+
+def test_resolve_revision_rejects_mutable_response():
+    class FakeApi:
+        def dataset_info(self, repo_id, revision=None):
+            return type("Info", (), {"sha": "main"})()
+
+    with pytest.raises(ValueError, match="immutable"):
+        resolve_hf_revision("dataset", "owner/data", api=FakeApi())
+
+
+def test_downloaded_metadata_rejects_wrong_protocol_hash():
+    with pytest.raises(ValueError, match="protocol hash"):
+        validate_downloaded_metadata({"protocol_sha256": "bad"}, "good")

@@ -20,6 +20,7 @@ from scripts.fair_protocol import (
     load_protocol,
     start_run_manifest,
     validate_protocol,
+    resolve_hf_revision,
 )
 
 
@@ -116,6 +117,34 @@ def main() -> None:
     finish_run_manifest(manifest, "completed")
     shutil.copy2(manifest, output_dir / "run_manifest.json")
     shutil.move(log_path, output_dir / "train.log")
+    if args.mode == "full":
+        from huggingface_hub import HfApi
+
+        repo_id = protocol["models"][args.model_id]["repo_id"]
+        api = HfApi()
+        model_card = output_dir / "README.md"
+        model_card.write_text(
+            f"# {args.model_id} — Fair Protocol v1\n\n"
+            "LIBERO-Spatial pilot model. Training seed: 1000. Primary checkpoint: step 25000.\n\n"
+            "This model is one cell of a fixed-source-exposure comparison; do not interpret a single "
+            "evaluation seed as statistical superiority.\n"
+        )
+        uploads = (
+            (output_dir / "run_manifest.json", "run_manifest.json"),
+            (output_dir / "train.log", "train.log"),
+            (protocol_path, "fair_v1.json"),
+            (protocol_path.parent / protocol["augmentation_manifest"]["path"], "fair_v1_augmentation.json"),
+            (model_card, "README.md"),
+        )
+        for local_path, remote_path in uploads:
+            api.upload_file(
+                path_or_fileobj=str(local_path), path_in_repo=remote_path, repo_id=repo_id,
+                repo_type="model", commit_message="Record Fair v1 provenance",
+            )
+        revision = resolve_hf_revision("model", repo_id, api=api)
+        completed = json.loads((output_dir / "run_manifest.json").read_text())
+        completed["hf_revision"] = revision
+        (output_dir / "run_manifest.json").write_text(json.dumps(completed, indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":

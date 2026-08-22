@@ -194,3 +194,36 @@ def finish_run_manifest(path: Path, status: str, error: str | None = None) -> No
     if error is not None:
         payload["error"] = error
     _atomic_json(Path(path), payload)
+
+
+def resolve_hf_revision(
+    repo_type: Literal["model", "dataset"],
+    repo_id: str,
+    revision: str | None = None,
+    api=None,
+) -> str:
+    if api is None:
+        from huggingface_hub import HfApi
+
+        api = HfApi()
+    info = api.model_info(repo_id, revision=revision) if repo_type == "model" else api.dataset_info(
+        repo_id, revision=revision
+    )
+    if not SHA_PATTERN.fullmatch(info.sha):
+        raise ValueError(f"Hugging Face did not resolve {repo_id} to an immutable commit")
+    return info.sha
+
+
+def validate_downloaded_metadata(metadata: dict, expected_protocol_hash: str) -> dict:
+    if metadata.get("protocol_sha256") != expected_protocol_hash:
+        raise ValueError("downloaded checkpoint protocol hash does not match")
+    return metadata
+
+
+def validate_hf_checkpoint(repo_id: str, revision: str, expected_protocol_hash: str) -> dict:
+    from huggingface_hub import hf_hub_download
+
+    resolved = resolve_hf_revision("model", repo_id, revision)
+    path = hf_hub_download(repo_id, "run_manifest.json", revision=resolved)
+    metadata = validate_downloaded_metadata(json.loads(Path(path).read_text()), expected_protocol_hash)
+    return {**metadata, "resolved_revision": resolved}
