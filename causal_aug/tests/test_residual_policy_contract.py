@@ -55,6 +55,7 @@ def test_online_dr_exact_balance_selects_half_the_batch():
 
     policy = object.__new__(OnlineDRPolicy)
     policy.config = OnlineDRConfig(exact_balance=True, aug_probability=0.5)
+    policy.fair_manifest = None
     policy.augmenter = type(
         "Augmenter", (), {"augment_camera_views": lambda self, images: [[image + 1 for image in images]]}
     )()

@@ -7,6 +7,63 @@
 
 ---
 
+## Fair Protocol v1 — M0/M1/M2/M3
+
+`configs/fair_v1.json` is the source of truth. Full runs use 25,000 optimizer steps,
+batch size 16, training seed 1000, and checkpoints every 5,000 steps.
+
+### Mac smoke test
+
+```bash
+/opt/miniconda3/envs/causalvla/bin/python scripts/smoke_fair_v1.py \
+  --protocol configs/fair_v1.json
+```
+
+Smoke outputs stay under `outputs/smoke/fair-v1/`, use one optimizer step on MPS,
+and never upload to Hugging Face.
+
+### Prepare M1 offline dataset on the GPU server
+
+```bash
+hf auth login
+python scripts/install_policy_patches.py online_dr causal_vla causal_vla_warm
+PYTHONPATH="$PWD/causal_aug:$PWD/lerobot/src:$PWD" \
+python scripts/materialize_fair_offline.py \
+  --protocol configs/fair_v1.json \
+  --output-root outputs/datasets/libero-spatial-offline-dr-fair-v1 \
+  --records-out outputs/datasets/libero-spatial-offline-dr-fair-v1/augmentation_records.jsonl \
+  --push-to-hub
+export FAIR_V1_OFFLINE_REVISION="$(python -c \
+  'from huggingface_hub import HfApi; print(HfApi().dataset_info("phawitbinabik/libero-spatial-offline-dr-fair-v1").sha)')"
+```
+
+### GPU training
+
+```bash
+./scripts/run_fair_v1.sh M0-clean --mode full
+./scripts/run_fair_v1.sh M1-offline-dr --mode full
+./scripts/run_fair_v1.sh M2-online-dr --mode full
+./scripts/run_fair_v1.sh M3-v2-warm --mode full
+```
+
+Each run uploads checkpoints and provenance to its dedicated HF repository. Resume with
+`--resume` only against the same protocol hash.
+
+### Mac evaluation after all four uploads
+
+```bash
+./scripts/run_fair_eval_v1.sh --phase preflight
+./scripts/run_fair_eval_v1.sh --phase full
+/opt/miniconda3/envs/causalvla/bin/python scripts/summarize_fair_v1.py
+```
+
+The evaluator pins every HF model commit. Preflight uses one episode/task at level 0;
+full evaluation uses 10 episodes/task at levels 0/1/2 with seed 4000. This is a feasibility
+pilot, not evidence of statistical superiority. The planned extension adds seeds 5000/6000,
+then LIBERO-Object and LIBERO-Goal.
+
+---
+
 ## สารบัญ
 
 - [ภาพรวม Experimental Design](#ภาพรวม-experimental-design)
