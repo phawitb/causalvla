@@ -6,6 +6,7 @@ import pytest
 
 from scripts.eval_fair_v1 import EvalExpectation, build_eval_command, evaluation_matrix, validate_eval_result
 from scripts.fair_protocol import load_protocol
+from scripts.summarize_fair_v1 import summarize_runs
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -74,3 +75,24 @@ def test_result_validator_rejects_incomplete_tasks(tmp_path):
     path.write_text(json.dumps(payload))
     with pytest.raises(ValueError, match="task count"):
         validate_eval_result(path, EvalExpectation("level_0", 4000, 10, 1, "a" * 40, "p"))
+
+
+def test_summary_reports_degradation_and_delta_vs_m0(tmp_path):
+    paths = []
+    rates = {
+        ("M0-clean", "level_0"): 0.8,
+        ("M0-clean", "level_2"): 0.3,
+        ("M1-offline-dr", "level_0"): 0.7,
+        ("M1-offline-dr", "level_2"): 0.4,
+    }
+    for (model, level), rate in rates.items():
+        path = tmp_path / model / level / "seed4000" / "eval_info.json"
+        path.parent.mkdir(parents=True)
+        successes = [True] * int(rate * 10) + [False] * (10 - int(rate * 10))
+        path.write_text(json.dumps({"per_task": [{"task_id": 0, "metrics": {"successes": successes}}]}))
+        paths.append(path)
+    report = summarize_runs(paths)
+    cell = report["M1-offline-dr"]["level_2"]
+    assert cell["success_rate"] == pytest.approx(0.4)
+    assert cell["degradation_from_level_0"] == pytest.approx(-0.3)
+    assert cell["delta_vs_m0"] == pytest.approx(0.1)
