@@ -266,6 +266,7 @@ def augment_image(image: torch.Tensor, ep_params: dict) -> torch.Tensor:
 
 def main():
     parser = argparse.ArgumentParser(description="Create augmented LeRobot dataset")
+    parser.add_argument("--fair-protocol", type=Path, default=None)
     parser.add_argument("--src_repo_id", type=str, default="lerobot/libero_spatial_image")
     parser.add_argument("--dst_repo_id", type=str, required=True)
     parser.add_argument("--dst_root", type=str, default=None, help="Local dir for output dataset")
@@ -276,6 +277,12 @@ def main():
     parser.add_argument("--push_to_hub", action="store_true")
     parser.add_argument("--private", action="store_true")
     args = parser.parse_args()
+
+    if args.fair_protocol is not None:
+        raise SystemExit(
+            "Fair v1 paired materialization uses scripts/materialize_fair_offline.py "
+            "so clean/augmented ordering and provenance cannot drift."
+        )
 
     aug_params = AUG_LEVELS[args.aug_level]
     logger.info(f"Source: {args.src_repo_id}")

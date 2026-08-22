@@ -13,6 +13,7 @@ from .cover_control import COVER_GROUPS, CoverCleanController, CoverageControlle
 from .consistency_warmup import LinearConsistencyWarmup
 from .ood_wrapper import OOD_LEVELS, OODPerturbation
 from .balanced_sampler import PairedBatchSampler, exact_half_mask
+from .fair_augmentation import apply_record, derive_record
 
 __all__ = [
     "CausalAugmenter",
@@ -33,4 +34,6 @@ __all__ = [
     "OOD_LEVELS",
     "PairedBatchSampler",
     "exact_half_mask",
+    "apply_record",
+    "derive_record",
 ]

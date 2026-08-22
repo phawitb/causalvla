@@ -13,6 +13,8 @@ class OnlineDRConfig(SmolVLAConfig):
     aug_probability: float = 0.5
     aug_intensity: float = 1.0
     exact_balance: bool = True
+    fair_augmentation_manifest: str | None = None
+    fair_seed: int = 1000
 
     def __post_init__(self):
         super().__post_init__()

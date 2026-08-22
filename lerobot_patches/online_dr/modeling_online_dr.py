@@ -1,5 +1,8 @@
 """Model F: single-forward online domain-randomization baseline."""
 
+import json
+from pathlib import Path
+
 import torch
 from torch import Tensor
 
@@ -27,9 +30,13 @@ class OnlineDRPolicy(SmolVLAPolicy):
         from causal_aug import CausalAugmenter
 
         self.augmenter = CausalAugmenter(K=1, intensity=config.aug_intensity)
+        self.fair_manifest = None
+        if config.fair_augmentation_manifest:
+            self.fair_manifest = json.loads(Path(config.fair_augmentation_manifest).read_text())
 
-    def _randomize_images(self, images: list[Tensor]) -> tuple[list[Tensor], Tensor]:
-        augmented = self.augmenter.augment_camera_views([image.detach() for image in images])[0]
+    def _randomize_images(
+        self, images: list[Tensor], batch: dict[str, Tensor] | None = None
+    ) -> tuple[list[Tensor], Tensor]:
         batch_size = images[0].shape[0]
         if self.config.exact_balance:
             from causal_aug import exact_half_mask
@@ -37,6 +44,25 @@ class OnlineDRPolicy(SmolVLAPolicy):
             mask = exact_half_mask(batch_size, images[0].device)
         else:
             mask = torch.rand(batch_size, device=images[0].device) < self.config.aug_probability
+        if self.fair_manifest is None:
+            augmented = self.augmenter.augment_camera_views([image.detach() for image in images])[0]
+        else:
+            from causal_aug import apply_record, derive_record
+
+            if batch is None or "episode_index" not in batch or "frame_index" not in batch:
+                raise ValueError("fair online augmentation requires episode_index and frame_index")
+            augmented = [image.detach().clone() for image in images]
+            for index in mask.nonzero(as_tuple=False).flatten().tolist():
+                record = derive_record(
+                    self.fair_manifest,
+                    self.config.fair_seed,
+                    int(batch["episode_index"][index]),
+                    int(batch["frame_index"][index]),
+                    0,
+                )
+                views = apply_record([image[index : index + 1] for image in images], record)
+                for camera, view in zip(augmented, views, strict=True):
+                    camera[index : index + 1] = view
         broadcast_mask = mask[:, None, None, None]
         mixed = [torch.where(broadcast_mask, aug, clean) for clean, aug in zip(images, augmented)]
         return mixed, mask
@@ -51,7 +77,7 @@ class OnlineDRPolicy(SmolVLAPolicy):
             batch[ACTION] = self._pi_aloha_encode_actions_inv(batch[ACTION])
 
         images, img_masks = self.prepare_images(batch)
-        images, augmented_mask = self._randomize_images(images)
+        images, augmented_mask = self._randomize_images(images, batch)
         state = self.prepare_state(batch)
         lang_tokens = batch[OBS_LANGUAGE_TOKENS]
         lang_masks = batch[OBS_LANGUAGE_ATTENTION_MASK]
