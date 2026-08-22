@@ -39,6 +39,12 @@ MODEL_META = {
     },
 }
 RUN_PATTERN = re.compile(r"^model_(a|b|v2_warm|f)_level_(\d+)_(\d+)ep_seed(\d+)$")
+FAIR_META = {
+    "M0-clean": {"name": "M0 — Clean", "description": "Fair v1 clean baseline"},
+    "M1-offline-dr": {"name": "M1 — Offline DR", "description": "Fair v1 deterministic offline augmentation"},
+    "M2-online-dr": {"name": "M2 — Online DR", "description": "Fair v1 matched online augmentation"},
+    "M3-v2-warm": {"name": "M3 — V2-Warm", "description": "Fair v1 paired consistency training"},
+}
 
 
 def rate(successes: int, episodes: int) -> float:
@@ -75,11 +81,29 @@ def build_manifest(repo_root: Path) -> dict:
         except ValueError:
             return None
 
+    records = []
     for info_path in sorted(eval_root.glob("*/eval_info.json")):
         match = RUN_PATTERN.match(info_path.parent.name)
         if not match:
             continue
         model_id, level, _declared_episodes, seed = match.groups()
+        records.append((info_path, model_id, level, seed))
+    fair_root = repo_root / "outputs" / "eval" / "fair-v1" / "full"
+    for info_path in sorted(fair_root.glob("*/level_*/seed*/eval_info.json")):
+        model_id = info_path.parents[2].name
+        if model_id not in FAIR_META:
+            continue
+        level = info_path.parents[1].name.removeprefix("level_")
+        seed = info_path.parent.name.removeprefix("seed")
+        if model_id not in stats:
+            stats[model_id] = {
+                "id": model_id, **FAIR_META[model_id], "runs": 0, "episodes": 0,
+                "successes": 0, "videos": 0, "cleanVideos": 0, "policyVideos": 0,
+                "levels": defaultdict(lambda: {"episodes": 0, "successes": 0}),
+            }
+        records.append((info_path, model_id, level, seed))
+
+    for info_path, model_id, level, seed in records:
         model = stats[model_id]
         model["runs"] += 1
         payload = json.loads(info_path.read_text())
@@ -100,6 +124,8 @@ def build_manifest(repo_root: Path) -> dict:
                         "processor_position", "post-env-preprocessing"
                     ),
                 },
+                "modelRevision": payload.get("model_revision"),
+                "protocolSha256": payload.get("protocol_sha256"),
             }
         )
 
@@ -148,7 +174,7 @@ def build_manifest(repo_root: Path) -> dict:
                 )
 
     models = []
-    for model_id in MODEL_META:
+    for model_id in stats:
         model = stats[model_id]
         level_rates = {
             level: rate(values["successes"], values["episodes"])

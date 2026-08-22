@@ -11,6 +11,32 @@ SCRIPT = REPO_ROOT / "scripts" / "build_results_data.py"
 
 
 class BuildResultsDataTest(unittest.TestCase):
+    def test_includes_fair_v1_provenance_when_present(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            run_dir = root / "outputs/eval/fair-v1/full/M0-clean/level_0/seed4000"
+            run_dir.mkdir(parents=True)
+            payload = {
+                "ood_level": "level_0",
+                "ood_provenance": {"seed": 4000},
+                "model_revision": "a" * 40,
+                "protocol_sha256": "p",
+                "per_task": [{"task_id": 0, "metrics": {"successes": [True]}}],
+            }
+            (run_dir / "eval_info.json").write_text(json.dumps(payload))
+            output = root / "results-data.json"
+            completed = subprocess.run(
+                [sys.executable, str(SCRIPT), "--repo-root", str(root), "--output", str(output)],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            data = json.loads(output.read_text())
+            fair = next(model for model in data["models"] if model["id"] == "M0-clean")
+            self.assertEqual(fair["successRate"], 100.0)
+            fair_run = next(run for run in data["runs"] if run["model"] == "M0-clean")
+            self.assertEqual(fair_run["modelRevision"], "a" * 40)
+            self.assertEqual(fair_run["protocolSha256"], "p")
+
     def test_builds_dashboard_data_for_only_requested_models(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
