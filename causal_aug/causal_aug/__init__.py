@@ -12,6 +12,7 @@ from .residual_sampler import ResidualBranchSampler
 from .cover_control import COVER_GROUPS, CoverCleanController, CoverageController
 from .consistency_warmup import LinearConsistencyWarmup
 from .ood_wrapper import OOD_LEVELS, OODPerturbation
+from .balanced_sampler import PairedBatchSampler, exact_half_mask
 
 __all__ = [
     "CausalAugmenter",
@@ -30,4 +31,6 @@ __all__ = [
     "LinearConsistencyWarmup",
     "OODPerturbation",
     "OOD_LEVELS",
+    "PairedBatchSampler",
+    "exact_half_mask",
 ]

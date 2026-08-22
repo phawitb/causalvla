@@ -1,0 +1,59 @@
+diff --git a/src/lerobot/configs/train.py b/src/lerobot/configs/train.py
+--- a/src/lerobot/configs/train.py
++++ b/src/lerobot/configs/train.py
+@@ -102,4 +102,7 @@ class TrainPipelineConfig:
+     num_workers: int = 4
+     batch_size: int = 8
++    paired_clean_count: int | None = None
++    paired_augmented_count: int | None = None
++    paired_batch_seed: int = 1000
+     prefetch_factor: int = 4
+     persistent_workers: bool = True
+diff --git a/src/lerobot/scripts/lerobot_train.py b/src/lerobot/scripts/lerobot_train.py
+--- a/src/lerobot/scripts/lerobot_train.py
++++ b/src/lerobot/scripts/lerobot_train.py
+@@ -497,15 +497,33 @@ def train(cfg: TrainPipelineConfig, accelerator: "Accelerator | None" = None):
+     # collate so non-language training runs are unaffected.
+     collate_fn = lerobot_collate_fn if dataset.meta.has_language_columns else None
+-    dataloader = torch.utils.data.DataLoader(
+-        dataset,
+-        num_workers=cfg.num_workers,
+-        batch_size=cfg.batch_size,
+-        shuffle=shuffle and not cfg.dataset.streaming,
+-        sampler=sampler,
+-        pin_memory=device.type == "cuda",
+-        drop_last=False,
+-        collate_fn=collate_fn,
+-        **_dataloader_worker_kwargs(cfg),
+-    )
++    if cfg.paired_clean_count is not None or cfg.paired_augmented_count is not None:
++        from causal_aug import PairedBatchSampler
++
++        if cfg.dataset.streaming:
++            raise ValueError("paired fair sampling requires a map-style dataset")
++        if cfg.paired_clean_count is None or cfg.paired_augmented_count is None:
++            raise ValueError("paired_clean_count and paired_augmented_count must be set together")
++        if cfg.paired_clean_count != cfg.paired_augmented_count:
++            raise ValueError("paired clean and augmented pools must have equal size")
++        if len(dataset) != cfg.paired_clean_count + cfg.paired_augmented_count:
++            raise ValueError("paired pool counts must equal dataset length")
++        batch_sampler = PairedBatchSampler(
++            range(cfg.paired_clean_count),
++            range(cfg.paired_clean_count, len(dataset)),
++            batch_size=cfg.batch_size,
++            seed=cfg.paired_batch_seed,
++        )
++        dataloader = torch.utils.data.DataLoader(
++            dataset, num_workers=cfg.num_workers, batch_sampler=batch_sampler,
++            pin_memory=device.type == "cuda", collate_fn=collate_fn,
++            **_dataloader_worker_kwargs(cfg),
++        )
++    else:
++        dataloader = torch.utils.data.DataLoader(
++            dataset, num_workers=cfg.num_workers, batch_size=cfg.batch_size,
++            shuffle=shuffle and not cfg.dataset.streaming, sampler=sampler,
++            pin_memory=device.type == "cuda", drop_last=False, collate_fn=collate_fn,
++            **_dataloader_worker_kwargs(cfg),
++        )
+ 
+     # Build eval dataloader if a held-out split exists

@@ -31,7 +31,12 @@ class OnlineDRPolicy(SmolVLAPolicy):
     def _randomize_images(self, images: list[Tensor]) -> tuple[list[Tensor], Tensor]:
         augmented = self.augmenter.augment_camera_views([image.detach() for image in images])[0]
         batch_size = images[0].shape[0]
-        mask = torch.rand(batch_size, device=images[0].device) < self.config.aug_probability
+        if self.config.exact_balance:
+            from causal_aug import exact_half_mask
+
+            mask = exact_half_mask(batch_size, images[0].device)
+        else:
+            mask = torch.rand(batch_size, device=images[0].device) < self.config.aug_probability
         broadcast_mask = mask[:, None, None, None]
         mixed = [torch.where(broadcast_mask, aug, clean) for clean, aug in zip(images, augmented)]
         return mixed, mask

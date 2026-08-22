@@ -1,6 +1,7 @@
 import inspect
 
 import pytest
+import torch
 
 from lerobot.policies.residual_rapid.configuration_residual_rapid import ResidualRapidConfig
 from lerobot.policies.residual_rapid.modeling_residual_rapid import ResidualRapidPolicy
@@ -46,3 +47,17 @@ def test_policy_uses_one_standard_model_forward():
     assert "forward_with_latent" not in source
     assert "loss_latent" not in source
     assert "loss_action" not in source
+
+
+def test_online_dr_exact_balance_selects_half_the_batch():
+    from lerobot.policies.online_dr.configuration_online_dr import OnlineDRConfig
+    from lerobot.policies.online_dr.modeling_online_dr import OnlineDRPolicy
+
+    policy = object.__new__(OnlineDRPolicy)
+    policy.config = OnlineDRConfig(exact_balance=True, aug_probability=0.5)
+    policy.augmenter = type(
+        "Augmenter", (), {"augment_camera_views": lambda self, images: [[image + 1 for image in images]]}
+    )()
+    images = [torch.zeros(16, 3, 2, 2)]
+    _, mask = policy._randomize_images(images)
+    assert mask.sum().item() == 8

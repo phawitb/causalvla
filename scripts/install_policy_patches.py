@@ -52,6 +52,24 @@ def install_eval_policy_view_patch(repo: Path, policies_dir: Path) -> None:
     print(f"Installed policy-view eval patch: {eval_file}")
 
 
+def install_fair_sampler_patch(repo: Path, policies_dir: Path) -> None:
+    lerobot_src = policies_dir.parents[1]
+    train_file = lerobot_src / "lerobot" / "scripts" / "lerobot_train.py"
+    if "PairedBatchSampler" in train_file.read_text():
+        print("Fair sampler patch already installed")
+        return
+    patch_file = repo / "lerobot_patches" / "lerobot_fair_sampler.patch"
+    result = subprocess.run(
+        ["patch", "--batch", "--forward", "-p1", "-i", str(patch_file)],
+        cwd=lerobot_src.parent,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"Failed to install fair sampler patch:\n{result.stdout}\n{result.stderr}")
+    print(f"Installed fair sampler patch: {train_file}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -103,6 +121,7 @@ def main() -> None:
             print("forward_with_latent already installed")
 
     install_eval_policy_view_patch(repo, policies_dir)
+    install_fair_sampler_patch(repo, policies_dir)
 
     print(f"LeRobot policies directory: {policies_dir}")
 
