@@ -6,6 +6,7 @@ import hashlib
 import json
 import re
 import subprocess
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
@@ -89,7 +90,9 @@ def build_train_command(
         dataset_id = protocol["offline_dataset"]["repo_id"]
         dataset_revision = protocol["offline_dataset"].get("revision")
     command = [
-        "lerobot-train",
+        sys.executable,
+        "-m",
+        "lerobot.scripts.lerobot_train",
         _arg("policy.type", config["policy_type"]),
         _arg("policy.pretrained_path", protocol["base_model"]["repo_id"]),
         _arg("policy.pretrained_revision", protocol["base_model"]["revision"]),
@@ -104,14 +107,18 @@ def build_train_command(
         _arg("seed", protocol["training"]["seed"]),
         _arg("save_freq", 1 if smoke else protocol["training"]["save_freq"]),
         _arg("save_checkpoint_to_hub", not smoke),
+        _arg("log_freq", 1 if smoke else 100),
         _arg("num_workers", 0 if smoke else 4),
         _arg("persistent_workers", not smoke),
         _arg("env_eval_freq", 0),
     ]
     if dataset_revision:
         command.append(_arg("dataset.revision", dataset_revision))
+    dataset_root = protocol.get("offline_dataset", {}).get("root") if model_id == "M1-offline-dr" else None
+    if dataset_root:
+        command.append(_arg("dataset.root", dataset_root))
     if model_id == "M1-offline-dr":
-        count = 2 if smoke else protocol["dataset"]["total_frames"]
+        count = protocol["offline_dataset"].get("smoke_count", 2) if smoke else protocol["dataset"]["total_frames"]
         command.extend(
             [_arg("paired_clean_count", count), _arg("paired_augmented_count", count), _arg("paired_batch_seed", 1000)]
         )
@@ -152,7 +159,8 @@ def _atomic_json(path: Path, payload: dict) -> None:
 
 
 def start_run_manifest(output_dir: Path, protocol: dict, model_id: str) -> Path:
-    path = Path(output_dir) / "run_manifest.json"
+    output_dir = Path(output_dir)
+    path = output_dir.parent / f".{output_dir.name}.run_manifest.json"
     digest = protocol_hash(protocol)
     if path.exists():
         existing = json.loads(path.read_text())

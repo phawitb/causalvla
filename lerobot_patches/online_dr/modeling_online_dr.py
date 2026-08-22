@@ -49,15 +49,16 @@ class OnlineDRPolicy(SmolVLAPolicy):
         else:
             from causal_aug import apply_record, derive_record
 
-            if batch is None or "episode_index" not in batch or "frame_index" not in batch:
-                raise ValueError("fair online augmentation requires episode_index and frame_index")
+            if batch is None or "episode_index" not in batch or not ({"frame_index", "index"} & batch.keys()):
+                raise ValueError("fair online augmentation requires episode_index and frame identity")
+            frame_key = "frame_index" if "frame_index" in batch else "index"
             augmented = [image.detach().clone() for image in images]
             for index in mask.nonzero(as_tuple=False).flatten().tolist():
                 record = derive_record(
                     self.fair_manifest,
                     self.config.fair_seed,
                     int(batch["episode_index"][index]),
-                    int(batch["frame_index"][index]),
+                    int(batch[frame_key][index]),
                     0,
                 )
                 views = apply_record([image[index : index + 1] for image in images], record)

@@ -17,9 +17,11 @@ def _copy_frame(item: dict, features: dict, camera_keys: list[str], record: dict
     frame = {}
     for key in features:
         value = item[key]
-        if key in camera_keys and record is not None:
-            value = apply_record([value.unsqueeze(0) * 2.0 - 1.0], record)[0][0]
-            value = (((value + 1.0) / 2.0) * 255).round().to(torch.uint8).permute(1, 2, 0)
+        if key in camera_keys:
+            if record is not None:
+                value = apply_record([value.unsqueeze(0) * 2.0 - 1.0], record)[0][0]
+                value = (value + 1.0) / 2.0
+            value = (value.clamp(0.0, 1.0) * 255).round().to(torch.uint8).permute(1, 2, 0)
         frame[key] = value
     frame["task"] = item.get("task", "")
     return frame
@@ -74,7 +76,7 @@ def main() -> None:
                 item = source[source_index]
                 record = None
                 if domain == "augmented":
-                    record = derive_record(augmentation, protocol["training"]["seed"], episode_id, source_index - start, 0)
+                    record = derive_record(augmentation, protocol["training"]["seed"], episode_id, source_index, 0)
                     records.append({"source_index": source_index, **record})
                 destination.add_frame(_copy_frame(item, features, source_meta.camera_keys, record))
             destination.save_episode()

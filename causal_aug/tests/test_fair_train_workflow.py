@@ -12,6 +12,7 @@ from scripts.fair_protocol import (
     protocol_hash,
     start_run_manifest,
 )
+from scripts.smoke_fair_v1 import validate_smoke_artifacts
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -70,3 +71,44 @@ def test_run_manifest_rejects_protocol_drift_and_completed_runs(tmp_path):
 def test_protocol_hash_is_written_to_run_manifest(tmp_path):
     path = start_run_manifest(tmp_path, PROTOCOL, "M2-online-dr")
     assert json.loads(path.read_text())["protocol_sha256"] == protocol_hash(PROTOCOL)
+
+
+def test_smoke_validator_accepts_real_update_and_reload(tmp_path):
+    (tmp_path / "run_manifest.json").write_text(json.dumps({"status": "completed"}))
+    (tmp_path / "smoke_metrics.json").write_text(
+        json.dumps(
+            {
+                "loss": 0.25,
+                "parameter_changed": True,
+                "checkpoint_saved": True,
+                "reload_inference": True,
+                "batch_contract": True,
+            }
+        )
+    )
+    assert validate_smoke_artifacts(tmp_path)["loss"] == 0.25
+
+
+@pytest.mark.parametrize(
+    "override",
+    [
+        {"loss": float("nan")},
+        {"parameter_changed": False},
+        {"checkpoint_saved": False},
+        {"reload_inference": False},
+        {"batch_contract": False},
+    ],
+)
+def test_smoke_validator_rejects_failed_acceptance_fields(tmp_path, override):
+    (tmp_path / "run_manifest.json").write_text(json.dumps({"status": "completed"}))
+    metrics = {
+        "loss": 0.25,
+        "parameter_changed": True,
+        "checkpoint_saved": True,
+        "reload_inference": True,
+        "batch_contract": True,
+    }
+    metrics.update(override)
+    (tmp_path / "smoke_metrics.json").write_text(json.dumps(metrics))
+    with pytest.raises(ValueError, match="smoke acceptance"):
+        validate_smoke_artifacts(tmp_path)

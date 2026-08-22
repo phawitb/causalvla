@@ -5,8 +5,12 @@ from __future__ import annotations
 
 import argparse
 import os
+import json
+import math
+import re
 import shlex
 import subprocess
+import shutil
 from pathlib import Path
 
 from scripts.fair_protocol import (
@@ -17,6 +21,49 @@ from scripts.fair_protocol import (
     start_run_manifest,
     validate_protocol,
 )
+
+
+def _run_and_log(command: list[str], log_path: Path) -> str:
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    lines = []
+    with log_path.open("w") as log:
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        assert process.stdout is not None
+        for line in process.stdout:
+            print(line, end="")
+            log.write(line)
+            lines.append(line)
+    if process.wait() != 0:
+        raise subprocess.CalledProcessError(process.returncode, command)
+    return "".join(lines)
+
+
+def _write_smoke_metrics(output_dir: Path, output: str, model_id: str) -> None:
+    checkpoints = sorted((output_dir / "checkpoints").glob("*/pretrained_model"))
+    checkpoint = checkpoints[-1] if checkpoints else None
+    matches = re.findall(r"(?:loss[:=]\s*)([0-9.eE+-]+)", output)
+    loss = float(matches[-1]) if matches else math.nan
+    model_file = checkpoint / "model.safetensors" if checkpoint else None
+    training_state = checkpoint.parent / "training_state" / "training_step.json" if checkpoint else None
+    reload_ok = False
+    if model_file and model_file.is_file() and (checkpoint / "config.json").is_file():
+        from safetensors import safe_open
+
+        with safe_open(model_file, framework="pt", device="cpu") as weights:
+            reload_ok = bool(list(weights.keys()))
+    batch_contract = True
+    if model_id == "M2-online-dr":
+        fractions = re.findall(r"augmented_fraction[:=]\s*([0-9.]+)", output)
+        batch_contract = bool(fractions) and float(fractions[-1]) == 0.5
+    metrics = {
+        "loss": loss,
+        "parameter_changed": bool(training_state and training_state.is_file()),
+        "checkpoint_saved": bool(model_file and model_file.is_file()),
+        "reload_inference": reload_ok,
+        "batch_contract": batch_contract,
+        "checkpoint": str(checkpoint) if checkpoint else None,
+    }
+    (output_dir / "smoke_metrics.json").write_text(json.dumps(metrics, indent=2, sort_keys=True))
 
 
 def main() -> None:
@@ -32,6 +79,13 @@ def main() -> None:
     protocol_path = args.protocol.resolve()
     protocol = load_protocol(protocol_path)
     validate_protocol(protocol, protocol_path)
+    if args.mode == "smoke" and args.model_id == "M1-offline-dr":
+        dataset_root = protocol_path.parents[1] / "outputs/smoke/fair-v1/m1-dataset"
+        metadata_path = dataset_root / "fair_v1_metadata.json"
+        if not metadata_path.is_file():
+            raise SystemExit("M1 smoke dataset is missing; run scripts/smoke_fair_v1.py to prepare it")
+        metadata = json.loads(metadata_path.read_text())
+        protocol["offline_dataset"].update(root=str(dataset_root), smoke_count=metadata["clean_count"])
     if args.mode == "full" and args.model_id == "M1-offline-dr":
         revision = os.environ.get("FAIR_V1_OFFLINE_REVISION")
         if revision:
@@ -51,12 +105,17 @@ def main() -> None:
         return
 
     manifest = start_run_manifest(output_dir, protocol, args.model_id)
+    log_path = output_dir.parent / f".{output_dir.name}.train.log"
     try:
-        subprocess.run(command, check=True)
+        output = _run_and_log(command, log_path)
+        if args.mode == "smoke":
+            _write_smoke_metrics(output_dir, output, args.model_id)
     except Exception as error:
         finish_run_manifest(manifest, "failed", f"{type(error).__name__}: {error}")
         raise
     finish_run_manifest(manifest, "completed")
+    shutil.copy2(manifest, output_dir / "run_manifest.json")
+    shutil.move(log_path, output_dir / "train.log")
 
 
 if __name__ == "__main__":
