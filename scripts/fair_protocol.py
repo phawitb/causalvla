@@ -5,7 +5,10 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import subprocess
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Literal
 
 
 MODEL_IDS = ("M0-clean", "M1-offline-dr", "M2-online-dr", "M3-v2-warm")
@@ -61,3 +64,125 @@ def validate_protocol(protocol: dict, protocol_path: Path | None = None) -> None
         if actual != protocol["augmentation_manifest"]["sha256"]:
             raise ValueError("augmentation manifest hash does not match file contents")
 
+
+def _arg(name: str, value: object) -> str:
+    if isinstance(value, bool):
+        value = str(value).lower()
+    return f"--{name}={value}"
+
+
+def build_train_command(
+    protocol: dict,
+    model_id: str,
+    mode: Literal["smoke", "full"],
+    output_dir: Path,
+    protocol_path: Path,
+) -> list[str]:
+    validate_protocol(protocol, protocol_path)
+    config = model_config(protocol, model_id)
+    smoke = mode == "smoke"
+    if mode not in {"smoke", "full"}:
+        raise ValueError(f"unknown training mode: {mode}")
+    dataset_id = protocol["dataset"]["repo_id"]
+    dataset_revision = protocol["dataset"]["revision"]
+    if model_id == "M1-offline-dr":
+        dataset_id = protocol["offline_dataset"]["repo_id"]
+        dataset_revision = protocol["offline_dataset"].get("revision")
+    command = [
+        "lerobot-train",
+        _arg("policy.type", config["policy_type"]),
+        _arg("policy.pretrained_path", protocol["base_model"]["repo_id"]),
+        _arg("policy.pretrained_revision", protocol["base_model"]["revision"]),
+        _arg("policy.device", "mps" if smoke else "cuda"),
+        _arg("policy.push_to_hub", not smoke),
+        _arg("policy.repo_id", config["repo_id"]),
+        _arg("dataset.repo_id", dataset_id),
+        _arg("output_dir", output_dir),
+        _arg("job_name", f"fair_v1_{model_id.lower()}"),
+        _arg("batch_size", 2 if smoke else protocol["training"]["batch_size"]),
+        _arg("steps", 1 if smoke else protocol["training"]["steps"]),
+        _arg("seed", protocol["training"]["seed"]),
+        _arg("save_freq", 1 if smoke else protocol["training"]["save_freq"]),
+        _arg("save_checkpoint_to_hub", not smoke),
+        _arg("num_workers", 0 if smoke else 4),
+        _arg("persistent_workers", not smoke),
+        _arg("env_eval_freq", 0),
+    ]
+    if dataset_revision:
+        command.append(_arg("dataset.revision", dataset_revision))
+    if model_id == "M1-offline-dr":
+        count = 2 if smoke else protocol["dataset"]["total_frames"]
+        command.extend(
+            [_arg("paired_clean_count", count), _arg("paired_augmented_count", count), _arg("paired_batch_seed", 1000)]
+        )
+    elif model_id == "M2-online-dr":
+        manifest = (protocol_path.parent / protocol["augmentation_manifest"]["path"]).resolve()
+        command.extend(
+            [
+                _arg("policy.aug_probability", 0.5),
+                _arg("policy.aug_intensity", 1.0),
+                _arg("policy.exact_balance", True),
+                _arg("policy.fair_augmentation_manifest", manifest),
+                _arg("policy.fair_seed", protocol["training"]["seed"]),
+            ]
+        )
+    elif model_id == "M3-v2-warm":
+        command.extend(
+            [
+                _arg("policy.n_counterfactual", 1),
+                _arg("policy.aug_intensity", 1.0),
+                _arg("policy.clean_task_weight", 0.5),
+                _arg("policy.augmented_task_weight", 0.5),
+                _arg("policy.use_action_loss", True),
+                _arg("policy.lambda_action", 0.05),
+                _arg("policy.action_warmup_steps", 10000),
+                _arg("policy.use_latent_loss", False),
+                _arg("policy.lambda_latent", 0.0),
+                _arg("policy.lambda_smooth", 0.0),
+            ]
+        )
+    return command
+
+
+def _atomic_json(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(payload, indent=2, sort_keys=True))
+    temporary.replace(path)
+
+
+def start_run_manifest(output_dir: Path, protocol: dict, model_id: str) -> Path:
+    path = Path(output_dir) / "run_manifest.json"
+    digest = protocol_hash(protocol)
+    if path.exists():
+        existing = json.loads(path.read_text())
+        if existing.get("protocol_sha256") != digest:
+            raise ValueError("existing run manifest has a different protocol hash")
+        if existing.get("status") == "completed":
+            raise FileExistsError("completed run will not be overwritten")
+    try:
+        git_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+    except (OSError, subprocess.CalledProcessError):
+        git_commit = "unknown"
+    payload = {
+        "protocol_version": protocol["protocol_version"],
+        "protocol_sha256": digest,
+        "model_id": model_id,
+        "git_commit": git_commit,
+        "status": "started",
+        "started_at": datetime.now(UTC).isoformat(),
+        "base_model_revision": protocol["base_model"]["revision"],
+        "dataset_revision": protocol["dataset"]["revision"],
+    }
+    _atomic_json(path, payload)
+    return path
+
+
+def finish_run_manifest(path: Path, status: str, error: str | None = None) -> None:
+    if status not in {"completed", "failed"}:
+        raise ValueError("status must be completed or failed")
+    payload = json.loads(Path(path).read_text())
+    payload.update(status=status, finished_at=datetime.now(UTC).isoformat())
+    if error is not None:
+        payload["error"] = error
+    _atomic_json(Path(path), payload)

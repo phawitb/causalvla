@@ -6,7 +6,8 @@
   },
   "dataset": {
     "repo_id": "lerobot/libero_spatial_image",
-    "revision": "d86c0b94922572b3b657e1d1a3d01f0952ddeb46"
+    "revision": "d86c0b94922572b3b657e1d1a3d01f0952ddeb46",
+    "total_frames": 52970
   },
   "training": {
     "steps": 25000,
@@ -24,7 +25,8 @@
     "sha256": "1fe7671314c36e97e49df1085a65a64c847914599ef4fcbe12dddcac4f732b60"
   },
   "offline_dataset": {
-    "repo_id": "phawitbinabik/libero-spatial-offline-dr-fair-v1"
+    "repo_id": "phawitbinabik/libero-spatial-offline-dr-fair-v1",
+    "revision": null
   },
   "models": {
     "M0-clean": {
