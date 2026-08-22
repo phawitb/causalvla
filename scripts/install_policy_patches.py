@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import inspect
 import shutil
+import subprocess
 from pathlib import Path
 
 import lerobot.policies
@@ -31,6 +32,24 @@ def insert_after(source: str, anchor: str, line: str) -> str:
     if anchor not in source:
         raise RuntimeError(f"Registration anchor not found: {anchor}")
     return source.replace(anchor, f"{anchor}\n{line}", 1)
+
+
+def install_eval_policy_view_patch(repo: Path, policies_dir: Path) -> None:
+    lerobot_src = policies_dir.parents[1]
+    eval_file = lerobot_src / "lerobot" / "scripts" / "lerobot_eval.py"
+    if "policy_video_paths" in eval_file.read_text():
+        print("Policy-view eval patch already installed")
+        return
+    patch_file = repo / "lerobot_patches" / "lerobot_eval_policy_view.patch"
+    result = subprocess.run(
+        ["patch", "--batch", "--forward", "-p1", "-i", str(patch_file)],
+        cwd=lerobot_src.parent,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"Failed to install policy-view eval patch:\n{result.stdout}\n{result.stderr}")
+    print(f"Installed policy-view eval patch: {eval_file}")
 
 
 def main() -> None:
@@ -82,6 +101,8 @@ def main() -> None:
             print(f"Installed forward_with_latent: {model_file}")
         else:
             print("forward_with_latent already installed")
+
+    install_eval_policy_view_patch(repo, policies_dir)
 
     print(f"LeRobot policies directory: {policies_dir}")
 

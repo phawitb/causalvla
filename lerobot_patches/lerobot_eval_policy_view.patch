@@ -1,0 +1,228 @@
+diff --git a/src/lerobot/scripts/lerobot_eval.py b/src/lerobot/scripts/lerobot_eval.py
+index 7629d62e..8bb11f0d 100644
+--- a/src/lerobot/scripts/lerobot_eval.py
++++ b/src/lerobot/scripts/lerobot_eval.py
+@@ -164,6 +164,19 @@ def _build_raw_frame(
+     return frame
+ 
+ 
++def observation_to_video_frames(observation: dict[str, Any]) -> np.ndarray:
++    """Convert the primary post-environment-processor image into uint8 BHWC frames."""
++    image_keys = sorted(
++        key
++        for key, value in observation.items()
++        if key.startswith("observation.images.") and isinstance(value, torch.Tensor) and value.ndim == 4
++    )
++    if not image_keys:
++        raise ValueError("Processed observation has no batched image tensor to record.")
++    images = observation[image_keys[0]].detach().to(device="cpu", dtype=torch.float32)
++    return images.clamp(0, 1).mul(255).round().to(torch.uint8).permute(0, 2, 3, 1).numpy()
++
++
+ def rollout(
+     env: gym.vector.VectorEnv,
+     policy: PreTrainedPolicy,
+@@ -174,6 +187,7 @@ def rollout(
+     seeds: list[int] | None = None,
+     return_observations: bool = False,
+     render_callback: Callable[[gym.vector.VectorEnv], None] | None = None,
++    processed_render_callback: Callable[[dict[str, Any]], None] | None = None,
+     recording_dir: Path | None = None,
+     env_features: dict | None = None,
+     recording_repo_id: str | None = None,
+@@ -208,6 +222,8 @@ def rollout(
+             are returned optionally because they typically take more memory to cache. Defaults to False.
+         render_callback: Optional rendering callback to be used after the environments are reset, and after
+             every step.
++        processed_render_callback: Optional callback invoked with the environment observation after
++            environment preprocessing and before policy-specific preprocessing.
+         predicted_latents_callback: Optional callback invoked after every ``select_action`` with the policy
+             itself. World-model policies (e.g. LingBot-VA) stash predicted video latents on
+             ``policy.last_predicted_latents``; this lets the caller concatenate chunks and decode once.
+@@ -287,6 +303,8 @@ def rollout(
+ 
+             # Apply environment-specific preprocessing (e.g., LiberoProcessorStep for LIBERO)
+             observation = env_preprocessor(observation)
++            if processed_render_callback is not None:
++                processed_render_callback(observation)
+ 
+             observation = preprocessor(observation)
+             with torch.inference_mode():
+@@ -428,6 +446,7 @@ def eval_policy(
+     recording_repo_id: str | None = None,
+     recording_private: bool = False,
+     save_predicted_video: bool = False,
++    save_policy_view: bool = False,
+ ) -> dict:
+     """
+     Args:
+@@ -478,6 +497,7 @@ def eval_policy(
+     all_seeds = []
+     threads = []  # for video saving threads
+     n_episodes_rendered = 0  # for saving the correct number of videos
++    n_policy_episodes_rendered = 0
+ 
+     # Callback for visualization.
+     def render_frame(env: gym.vector.VectorEnv):
+@@ -492,8 +512,15 @@ def eval_policy(
+             # Covers AsyncVectorEnv and _LazyAsyncVectorEnv (which wraps one).
+             ep_frames.append(np.stack(env.call("render")[:n_to_render_now]))
+ 
++    def capture_policy_frame(observation: dict[str, Any]):
++        if n_policy_episodes_rendered >= max_episodes_rendered:
++            return
++        n_to_render_now = min(max_episodes_rendered - n_policy_episodes_rendered, env.num_envs)
++        policy_ep_frames.append(observation_to_video_frames(observation)[:n_to_render_now])
++
+     if max_episodes_rendered > 0:
+         video_paths: list[str] = []
++        policy_video_paths: list[str] = []
+ 
+     if save_predicted_video:
+         if not videos_dir:
+@@ -521,6 +548,7 @@ def eval_policy(
+         # step.
+         if max_episodes_rendered > 0:
+             ep_frames: list[np.ndarray] = []
++            policy_ep_frames: list[np.ndarray] = []
+ 
+         if save_predicted_video:
+             pred_latents: list[torch.Tensor] = []
+@@ -541,6 +569,9 @@ def eval_policy(
+             seeds=list(seeds) if seeds else None,
+             return_observations=return_episode_data,
+             render_callback=render_frame if max_episodes_rendered > 0 else None,
++            processed_render_callback=(
++                capture_policy_frame if max_episodes_rendered > 0 and save_policy_view else None
++            ),
+             recording_dir=recording_dir,
+             env_features=env_features,
+             recording_repo_id=recording_repo_id,
+@@ -611,6 +642,29 @@ def eval_policy(
+                 threads.append(thread)
+                 n_episodes_rendered += 1
+ 
++        if save_policy_view and max_episodes_rendered > 0 and len(policy_ep_frames) > 0:
++            batch_policy_frames = np.stack(policy_ep_frames, axis=1)
++            for stacked_frames, done_index in zip(
++                batch_policy_frames, done_indices.flatten().tolist(), strict=False
++            ):
++                if n_policy_episodes_rendered >= max_episodes_rendered:
++                    break
++                policy_videos_dir = videos_dir / "policy_view"
++                policy_videos_dir.mkdir(parents=True, exist_ok=True)
++                policy_video_path = policy_videos_dir / f"eval_episode_{n_policy_episodes_rendered}.mp4"
++                policy_video_paths.append(str(policy_video_path))
++                thread = threading.Thread(
++                    target=write_video,
++                    args=(
++                        str(policy_video_path),
++                        stacked_frames[: done_index + 1],
++                        env.unwrapped.metadata["render_fps"],
++                    ),
++                )
++                thread.start()
++                threads.append(thread)
++                n_policy_episodes_rendered += 1
++
+         # Maybe save the policy's predicted (imagined) video for this batch's rollout.
+         if save_predicted_video and len(pred_latents) > 0:
+             predicted_latent = torch.cat(pred_latents, dim=2)
+@@ -682,6 +736,7 @@ def eval_policy(
+ 
+     if max_episodes_rendered > 0:
+         info["video_paths"] = video_paths
++        info["policy_video_paths"] = policy_video_paths
+ 
+     if save_predicted_video:
+         info["predicted_video_paths"] = predicted_video_paths
+@@ -828,10 +883,18 @@ class TaskMetrics(TypedDict):
+     max_rewards: list[float]
+     successes: list[bool]
+     video_paths: list[str]
++    policy_video_paths: list[str]
+     predicted_video_paths: list[str]
+ 
+ 
+-ACC_KEYS = ("sum_rewards", "max_rewards", "successes", "video_paths", "predicted_video_paths")
++ACC_KEYS = (
++    "sum_rewards",
++    "max_rewards",
++    "successes",
++    "video_paths",
++    "policy_video_paths",
++    "predicted_video_paths",
++)
+ 
+ 
+ def eval_one(
+@@ -851,6 +914,7 @@ def eval_one(
+     env_features: dict | None = None,
+     recording_repo_id: str | None = None,
+     recording_private: bool = False,
++    save_policy_view: bool = False,
+ ) -> TaskMetrics:
+     """Evaluates one task_id of one suite using the provided vec env."""
+ 
+@@ -872,6 +936,7 @@ def eval_one(
+         env_features=env_features,
+         recording_repo_id=recording_repo_id,
+         recording_private=recording_private,
++        save_policy_view=save_policy_view,
+     )
+ 
+     per_episode = task_result["per_episode"]
+@@ -880,6 +945,7 @@ def eval_one(
+         max_rewards=[ep["max_reward"] for ep in per_episode],
+         successes=[ep["success"] for ep in per_episode],
+         video_paths=task_result.get("video_paths", []),
++        policy_video_paths=task_result.get("policy_video_paths", []),
+         predicted_video_paths=task_result.get("predicted_video_paths", []),
+     )
+ 
+@@ -903,6 +969,7 @@ def run_one(
+     env_features: dict | None = None,
+     recording_repo_id: str | None = None,
+     recording_private: bool = False,
++    save_policy_view: bool = False,
+ ):
+     """
+     Run eval_one for a single (task_group, task_id, env).
+@@ -937,10 +1004,12 @@ def run_one(
+         env_features=env_features,
+         recording_repo_id=task_repo_id,
+         recording_private=recording_private,
++        save_policy_view=save_policy_view,
+     )
+ 
+     if max_episodes_rendered > 0:
+         metrics.setdefault("video_paths", [])
++        metrics.setdefault("policy_video_paths", [])
+     metrics.setdefault("predicted_video_paths", [])
+     return task_group, task_id, metrics
+ 
+@@ -963,6 +1032,7 @@ def eval_policy_all(
+     return_episode_data: bool = False,
+     start_seed: int | None = None,
+     max_parallel_tasks: int = 1,
++    save_policy_view: bool = False,
+ ) -> dict:
+     """
+     Evaluate a nested `envs` dict: {task_group: {task_id: vec_env}}.
+@@ -999,7 +1069,7 @@ def eval_policy_all(
+         _append("sum_rewards", metrics.get("sum_rewards"))
+         _append("max_rewards", metrics.get("max_rewards"))
+         _append("successes", metrics.get("successes"))
+-        for key in ("video_paths", "predicted_video_paths"):
++        for key in ("video_paths", "policy_video_paths", "predicted_video_paths"):
+             paths = metrics.get(key, [])
+             if paths:
+                 group_acc[group][key].extend(paths)
+@@ -1022,6 +1092,7 @@ def eval_policy_all(
+         env_features=env_features,
+         recording_repo_id=recording_repo_id,
+         recording_private=recording_private,
++        save_policy_view=save_policy_view,
+     )
+ 
+     # Set the shared policy's mode before launching any workers. Restoring it

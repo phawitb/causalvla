@@ -416,6 +416,15 @@
     display: block; margin: 22px auto 0; padding: 9px 18px; border: 1px solid var(--border);
     background: #fff; border-radius: 9px; color: var(--accent); font-weight: 700; cursor: pointer;
   }
+  .view-toggle { display: inline-flex; padding: 3px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface2); }
+  .view-toggle button { padding: 6px 11px; border: 0; border-radius: 6px; background: transparent; color: var(--text-dim); font-size: 11px; font-weight: 700; cursor: pointer; }
+  .view-toggle button.active { background: #fff; color: var(--accent); box-shadow: var(--shadow); }
+  .view-pill { position: absolute; top: 9px; left: 9px; padding: 3px 8px; border-radius: 20px; background: rgba(15,23,42,.82); color: #fff; font-size: 9px; font-weight: 800; letter-spacing: .3px; }
+  .rollout-media { position: relative; }
+  .ood-config { margin: 0 0 15px; padding: 13px 15px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); font-size: 11px; color: var(--text-dim); }
+  .ood-config strong { color: var(--text); }
+  .ood-param-list { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .ood-param { padding: 2px 7px; border: 1px solid var(--border); border-radius: 12px; background: #fff; color: var(--text); }
 
   /* ================================================================ */
   /*  RESPONSIVE                                                      */
@@ -1079,14 +1088,14 @@ def test_ablation_no_action():
     <div class="results-hero">
       <div>
         <h1>Evaluation Results</h1>
-        <p>ภาพรวม robustness และ rollout จริงของ Model A, Model B, V2 Warm และ Model F</p>
+        <p>Robustness overview and real episode rollouts for all evaluated models</p>
       </div>
-      <div class="results-updated" id="results-count">กำลังโหลดผลการทดลอง…</div>
+      <div class="results-updated" id="results-count">Loading evaluation results…</div>
     </div>
 
     <section class="results-section" aria-labelledby="results-overview-heading">
       <div class="results-section-head">
-        <div><h2 id="results-overview-heading">Model Overview</h2><p>Success rate รวมจากทุก eval run ที่มีอยู่ในโปรเจกต์</p></div>
+        <div><h2 id="results-overview-heading">Model Overview</h2><p>Aggregate success rates across all evaluation runs available in this project</p></div>
       </div>
       <div class="results-grid" id="results-model-grid"></div>
       <div class="table-wrap" id="results-table-wrap"></div>
@@ -1094,18 +1103,23 @@ def test_ablation_no_action():
 
     <section class="results-section" aria-labelledby="rollout-heading">
       <div class="results-section-head">
-        <div><h2 id="rollout-heading">Episode Rollouts</h2><p id="rollout-summary">เลือกโมเดลเพื่อดูวิดีโอราย episode</p></div>
+        <div><h2 id="rollout-heading">Episode Rollouts</h2><p id="rollout-summary">Select a model to view episode-level rollout videos</p></div>
         <div class="result-filters">
-          <select id="result-level-filter" aria-label="OOD level"><option value="all">ทุก OOD Level</option></select>
-          <select id="result-seed-filter" aria-label="Seed"><option value="all">ทุก Seed</option></select>
-          <select id="result-task-filter" aria-label="Task"><option value="all">ทุก Task</option></select>
+          <div class="view-toggle" aria-label="Video view">
+            <button id="policy-view-btn" class="active" type="button">Policy View (OOD)</button>
+            <button id="clean-view-btn" type="button">Clean View</button>
+          </div>
+          <select id="result-level-filter" aria-label="OOD level"><option value="all">All OOD Levels</option></select>
+          <select id="result-seed-filter" aria-label="Seed"><option value="all">All Seeds</option></select>
+          <select id="result-task-filter" aria-label="Task"><option value="all">All Tasks</option></select>
           <select id="result-status-filter" aria-label="Result status">
-            <option value="all">ทุกสถานะ</option><option value="success">Success</option><option value="failure">Failure</option>
+            <option value="all">All Statuses</option><option value="success">Success</option><option value="failure">Failure</option>
           </select>
         </div>
       </div>
+      <div class="ood-config" id="ood-config">Select an OOD level to view the parameters used to generate the Policy View</div>
       <div class="rollout-grid" id="rollout-grid"></div>
-      <button class="load-more" id="rollout-more" type="button" hidden>แสดงเพิ่ม</button>
+      <button class="load-more" id="rollout-more" type="button" hidden>Show More</button>
     </section>
   </main>
 </div>
@@ -1165,6 +1179,7 @@ function switchTab(tab) {
 let resultsData = null;
 let selectedResultModel = 'a';
 let visibleRollouts = 12;
+let selectedVideoView = 'policy';
 
 const resultFilters = {
   level: document.getElementById('result-level-filter'),
@@ -1226,9 +1241,9 @@ function selectResultModel(modelId) {
   const levels = [...new Set(episodes.map(episode => episode.level))].sort((a, b) => a - b);
   const seeds = [...new Set(episodes.map(episode => episode.seed))].sort((a, b) => a - b);
   const tasks = [...new Set(episodes.map(episode => episode.task))].sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
-  setSelectOptions(resultFilters.level, 'ทุก OOD Level', levels, value => `OOD Level ${value}`);
-  setSelectOptions(resultFilters.seed, 'ทุก Seed', seeds, value => `Seed ${value}`);
-  setSelectOptions(resultFilters.task, 'ทุก Task', tasks, value => value);
+  setSelectOptions(resultFilters.level, 'All OOD Levels', levels, value => `OOD Level ${value}`);
+  setSelectOptions(resultFilters.seed, 'All Seeds', seeds, value => `Seed ${value}`);
+  setSelectOptions(resultFilters.task, 'All Tasks', tasks, value => value);
   resultFilters.status.value = 'all';
   renderRollouts();
 }
@@ -1251,28 +1266,63 @@ function renderRollouts() {
   const shown = episodes.slice(0, visibleRollouts);
   const grid = document.getElementById('rollout-grid');
   grid.innerHTML = '';
-  document.getElementById('rollout-summary').textContent = `${model.name} · พบ ${episodes.length.toLocaleString()} rollout videos`;
+  document.getElementById('rollout-summary').textContent = `${model.name} · ${episodes.length.toLocaleString()} rollout videos found`;
+  renderOodConfig(episodes);
 
   if (!shown.length) {
-    grid.innerHTML = '<div class="results-empty">ไม่พบ rollout ที่ตรงกับตัวกรอง</div>';
+    grid.innerHTML = '<div class="results-empty">No rollouts match the selected filters</div>';
   } else {
     shown.forEach(item => {
       const card = document.createElement('article');
       card.className = 'rollout-card';
+      const media = document.createElement('div');
+      media.className = 'rollout-media';
       const video = document.createElement('video');
       video.controls = true;
       video.preload = 'metadata';
-      video.src = item.video;
+      const requestedPolicyView = selectedVideoView === 'policy';
+      const isPolicyView = requestedPolicyView && Boolean(item.policyVideo);
+      video.src = isPolicyView ? item.policyVideo : (item.cleanVideo || item.policyVideo || item.video);
+      const viewPill = document.createElement('span');
+      viewPill.className = 'view-pill';
+      viewPill.textContent = isPolicyView ? 'POLICY VIEW · OOD' : (requestedPolicyView ? 'CLEAN ONLY · POLICY VIEW NOT RECORDED' : 'CLEAN SIMULATOR VIEW');
+      media.append(video, viewPill);
       const info = document.createElement('div');
       info.className = 'rollout-info';
       info.innerHTML = `<div class="rollout-title"><span>${item.task} · EP ${item.episode}</span><span class="status-pill ${item.success ? 'success' : 'failure'}">${item.success ? 'SUCCESS' : 'FAILURE'}</span></div><div class="rollout-meta">OOD Level ${item.level} · Seed ${item.seed}</div>`;
-      card.append(video, info);
+      card.append(media, info);
       grid.appendChild(card);
     });
   }
   const more = document.getElementById('rollout-more');
   more.hidden = shown.length >= episodes.length;
-  more.textContent = `แสดงเพิ่ม (${shown.length.toLocaleString()} / ${episodes.length.toLocaleString()})`;
+  more.textContent = `Show More (${shown.length.toLocaleString()} / ${episodes.length.toLocaleString()})`;
+}
+
+function renderOodConfig(episodes) {
+  const panel = document.getElementById('ood-config');
+  if (resultFilters.level.value === 'all' || !episodes.length) {
+    panel.textContent = 'Select an OOD level to view the parameters used to generate the Policy View';
+    return;
+  }
+  const run = resultsData.runs?.find(candidate => candidate.id === episodes[0].run);
+  if (!run) {
+    panel.textContent = 'OOD provenance metadata is unavailable for this evaluation run';
+    return;
+  }
+  const ood = run.ood || {};
+  const params = Object.entries(ood.params || {}).map(([key, value]) => {
+    const shownValue = Array.isArray(value) ? value.join(' – ') : String(value);
+    return `<span class="ood-param"><strong>${key}</strong>: ${shownValue}</span>`;
+  }).join('');
+  panel.innerHTML = `<strong>${ood.level || `level_${run.level}`}</strong> · ${ood.algorithm || 'OODPerturbation'} v${ood.version || 1} · Seed ${run.seed} · ${ood.processorPosition || 'post-env-preprocessing'}<div class="ood-param-list">${params || '<span class="ood-param">Clean — no perturbation</span>'}</div>`;
+}
+
+function selectVideoView(view) {
+  selectedVideoView = view;
+  document.getElementById('policy-view-btn').classList.toggle('active', view === 'policy');
+  document.getElementById('clean-view-btn').classList.toggle('active', view === 'clean');
+  renderRollouts();
 }
 
 async function initResults() {
@@ -1286,8 +1336,8 @@ async function initResults() {
     renderResultOverview();
     selectResultModel(selectedResultModel);
   } catch (error) {
-    document.getElementById('results-count').textContent = 'โหลดผลการทดลองไม่สำเร็จ';
-    document.getElementById('results-model-grid').innerHTML = '<div class="results-empty">ไม่พบ results-data.json — รัน scripts/build_results_data.py เพื่อสร้างข้อมูลใหม่</div>';
+    document.getElementById('results-count').textContent = 'Unable to load evaluation results';
+    document.getElementById('results-model-grid').innerHTML = '<div class="results-empty">results-data.json was not found — run scripts/build_results_data.py to rebuild it</div>';
   }
 }
 
@@ -1299,6 +1349,8 @@ document.getElementById('rollout-more').addEventListener('click', () => {
   visibleRollouts += 12;
   renderRollouts();
 });
+document.getElementById('policy-view-btn').addEventListener('click', () => selectVideoView('policy'));
+document.getElementById('clean-view-btn').addEventListener('click', () => selectVideoView('clean'));
 
 // --- Phase collapse ---
 function togglePhase(header) {

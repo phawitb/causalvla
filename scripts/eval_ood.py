@@ -82,6 +82,16 @@ class OODEvalConfig(EvalPipelineConfig):
     ood_level: str = "level_0"
 
 
+def build_ood_provenance(level: str, seed: int) -> dict:
+    return {
+        "algorithm": "causal_aug.OODPerturbation",
+        "version": 1,
+        "processor_position": "post-env-preprocessing",
+        "level": level,
+        "seed": seed,
+    }
+
+
 @parser.wrap()
 def eval_ood_main(cfg: OODEvalConfig):
     logging.basicConfig(level=logging.INFO)
@@ -158,6 +168,7 @@ def eval_ood_main(cfg: OODEvalConfig):
             return_episode_data=False,
             start_seed=cfg.seed,
             max_parallel_tasks=cfg.env.max_parallel_tasks,
+            save_policy_view=True,
             recording_dir=recording_dir,
             env_features=cfg.env.features if cfg.eval.recording else None,
             recording_repo_id=cfg.eval.recording_repo_id,
@@ -167,6 +178,7 @@ def eval_ood_main(cfg: OODEvalConfig):
     # Add OOD metadata to results
     info["ood_level"] = cfg.ood_level
     info["ood_params"] = OOD_LEVELS[cfg.ood_level]
+    info["ood_provenance"] = build_ood_provenance(cfg.ood_level, cfg.seed)
 
     logger.info(f"\n{'='*60}")
     logger.info(f"OOD Level: {cfg.ood_level}")
