@@ -376,6 +376,9 @@
   .results-hero h1 { font-size: 30px; line-height: 1.2; margin-bottom: 7px; }
   .results-hero p { color: var(--text-dim); margin: 0; }
   .results-updated { color: var(--text-dim); font-size: 12px; white-space: nowrap; }
+  .results-subtabs { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface2); }
+  .results-subtab { padding: 8px 15px; border: 0; border-radius: 8px; background: transparent; color: var(--text-dim); font-size: 12px; font-weight: 800; cursor: pointer; }
+  .results-subtab.active { background: #fff; color: var(--accent); box-shadow: var(--shadow); }
   .results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 18px 0 28px; }
   .result-model-card {
     border: 1px solid var(--border); border-radius: 14px; padding: 20px; background: #fff;
@@ -1093,6 +1096,11 @@ def test_ablation_no_action():
       <div class="results-updated" id="results-count">Loading evaluation results…</div>
     </div>
 
+    <nav class="results-subtabs" aria-label="Result model groups">
+      <button class="results-subtab active" type="button" data-results-view="all">All Models</button>
+      <button class="results-subtab" type="button" data-results-view="m-models">M-Models</button>
+    </nav>
+
     <section class="results-section" aria-labelledby="results-overview-heading">
       <div class="results-section-head">
         <div><h2 id="results-overview-heading">Model Overview</h2><p>Aggregate success rates across all evaluation runs available in this project</p></div>
@@ -1157,6 +1165,7 @@ def test_ablation_no_action():
 <!-- ================================================================ -->
 <!-- JAVASCRIPT                                                       -->
 <!-- ================================================================ -->
+<script src="scripts/results_dashboard.js"></script>
 <script>
 // --- Tab switching ---
 function switchTab(tab) {
@@ -1180,6 +1189,7 @@ let resultsData = null;
 let selectedResultModel = 'a';
 let visibleRollouts = 12;
 let selectedVideoView = 'policy';
+let selectedResultsView = 'all';
 
 const resultFilters = {
   level: document.getElementById('result-level-filter'),
@@ -1205,7 +1215,13 @@ function setSelectOptions(select, label, values, formatter) {
 function renderResultOverview() {
   const grid = document.getElementById('results-model-grid');
   grid.innerHTML = '';
-  resultsData.models.forEach(model => {
+  const visibleModels = ResultDashboard.filterModelsForResultView(resultsData.models, selectedResultsView);
+  if (!visibleModels.length) {
+    grid.innerHTML = '<div class="results-empty">No M-Model evaluation results are available yet</div>';
+    document.getElementById('results-table-wrap').innerHTML = '';
+    return;
+  }
+  visibleModels.forEach(model => {
     const card = document.createElement('button');
     card.type = 'button';
     card.className = 'result-model-card' + (model.id === selectedResultModel ? ' active' : '');
@@ -1225,12 +1241,30 @@ function renderResultOverview() {
     grid.appendChild(card);
   });
 
-  const rows = resultsData.models.map(model => `
+  const rows = visibleModels.map(model => `
     <tr><td><strong>${model.name}</strong></td><td>${formatRate(model.successRate)}</td>
     <td>${formatRate(model.levelRates['0'])}</td><td>${formatRate(model.levelRates['1'])}</td><td>${formatRate(model.levelRates['2'])}</td>
     <td>${model.successes.toLocaleString()} / ${model.episodes.toLocaleString()}</td><td>${model.runs}</td></tr>`).join('');
   document.getElementById('results-table-wrap').innerHTML = `
     <table><thead><tr><th>Model</th><th>Overall</th><th>Level 0</th><th>Level 1</th><th>Level 2</th><th>Successful Episodes</th><th>Runs</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function selectResultsView(view) {
+  selectedResultsView = view;
+  visibleRollouts = 12;
+  document.querySelectorAll('.results-subtab').forEach(button => {
+    button.classList.toggle('active', button.dataset.resultsView === view);
+  });
+  selectedResultModel = ResultDashboard.defaultModelForResultView(resultsData.models, view);
+  renderResultOverview();
+  if (selectedResultModel) {
+    selectResultModel(selectedResultModel);
+  } else {
+    document.getElementById('rollout-summary').textContent = 'No M-Model rollouts are available yet';
+    document.getElementById('rollout-grid').innerHTML = '<div class="results-empty">Run the fair-v1 evaluations and rebuild results-data.json to populate M0, M1, M2, and M3</div>';
+    document.getElementById('ood-config').textContent = 'OOD provenance will appear when M-Model evaluation results are available';
+    document.getElementById('rollout-more').hidden = true;
+  }
 }
 
 function selectResultModel(modelId) {
@@ -1262,6 +1296,7 @@ function filteredRollouts() {
 
 function renderRollouts() {
   const model = resultsData.models.find(item => item.id === selectedResultModel);
+  if (!model) return;
   const episodes = filteredRollouts();
   const shown = episodes.slice(0, visibleRollouts);
   const grid = document.getElementById('rollout-grid');
@@ -1328,7 +1363,7 @@ function selectVideoView(view) {
 async function initResults() {
   if (resultsData) return;
   try {
-    const response = await fetch('results-data.json');
+    const response = await fetch('results-data.json', ResultDashboard.resultsManifestRequestOptions());
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     resultsData = await response.json();
     const videoCount = resultsData.models.reduce((sum, model) => sum + model.videos, 0);
@@ -1348,6 +1383,9 @@ Object.values(resultFilters).forEach(filter => filter.addEventListener('change',
 document.getElementById('rollout-more').addEventListener('click', () => {
   visibleRollouts += 12;
   renderRollouts();
+});
+document.querySelectorAll('.results-subtab').forEach(button => {
+  button.addEventListener('click', () => selectResultsView(button.dataset.resultsView));
 });
 document.getElementById('policy-view-btn').addEventListener('click', () => selectVideoView('policy'));
 document.getElementById('clean-view-btn').addEventListener('click', () => selectVideoView('clean'));
