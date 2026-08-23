@@ -14,6 +14,7 @@ from .consistency_warmup import LinearConsistencyWarmup
 from .ood_wrapper import OOD_LEVELS, OODPerturbation
 from .balanced_sampler import PairedBatchSampler, exact_half_mask
 from .fair_augmentation import apply_record, derive_record
+from .fixed_ood import FixedOODIdentity, apply_fixed_ood_record, derive_fixed_ood_record
 
 __all__ = [
     "CausalAugmenter",
@@ -36,4 +37,7 @@ __all__ = [
     "exact_half_mask",
     "apply_record",
     "derive_record",
+    "FixedOODIdentity",
+    "apply_fixed_ood_record",
+    "derive_fixed_ood_record",
 ]
