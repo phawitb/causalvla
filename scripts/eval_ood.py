@@ -31,7 +31,7 @@ from termcolor import colored
 # Add lerobot to path if running from CausalVLA root
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "lerobot" / "src"))
 
-from causal_aug import OOD_LEVELS, OODPerturbation
+from causal_aug import FixedEpisodeOODProcessor, OOD_LEVELS, OODPerturbation
 
 from lerobot.configs import parser
 from lerobot.configs.eval import EvalPipelineConfig
@@ -57,11 +57,18 @@ class OODProcessorStep(ObservationProcessorStep):
 
     name = "ood_perturbation"
 
-    def __init__(self, ood_level: str = "level_0", seed: int | None = None):
+    def __init__(self, ood_level: str = "level_0", seed: int | None = None, augmentation_scope: str = "frame"):
         self.perturbation = OODPerturbation(level=ood_level, seed=seed)
+        self.fixed = FixedEpisodeOODProcessor(ood_level, seed or 0) if augmentation_scope == "episode" else None
         self.ood_level = ood_level
 
+    def begin_rollout(self, task_id: int, episode_indices: list[int]) -> None:
+        if self.fixed is not None:
+            self.fixed.begin_rollout(task_id, episode_indices)
+
     def observation(self, observation: dict) -> dict:
+        if self.fixed is not None:
+            return self.fixed.apply(observation)
         for key in list(observation.keys()):
             if "image" in key and isinstance(observation[key], torch.Tensor):
                 observation[key] = self.perturbation(observation[key])
@@ -80,6 +87,7 @@ class OODProcessorStep(ObservationProcessorStep):
 @dataclass
 class OODEvalConfig(EvalPipelineConfig):
     ood_level: str = "level_0"
+    augmentation_scope: str = "frame"
 
 
 def build_ood_provenance(level: str, seed: int) -> dict:
@@ -145,7 +153,7 @@ def eval_ood_main(cfg: OODEvalConfig):
     )
 
     # Inject OOD perturbation step at the end of env_preprocessor
-    ood_step = OODProcessorStep(ood_level=cfg.ood_level, seed=cfg.seed)
+    ood_step = OODProcessorStep(ood_level=cfg.ood_level, seed=cfg.seed, augmentation_scope=cfg.augmentation_scope)
     env_preprocessor.steps.append(ood_step)
     logger.info(f"Env preprocessor pipeline: {env_preprocessor.steps}")
 
@@ -178,7 +186,8 @@ def eval_ood_main(cfg: OODEvalConfig):
     # Add OOD metadata to results
     info["ood_level"] = cfg.ood_level
     info["ood_params"] = OOD_LEVELS[cfg.ood_level]
-    info["ood_provenance"] = build_ood_provenance(cfg.ood_level, cfg.seed)
+    info["ood_provenance"] = ood_step.fixed.provenance() if ood_step.fixed else build_ood_provenance(cfg.ood_level, cfg.seed)
+    info["augmentation_scope"] = cfg.augmentation_scope
 
     logger.info(f"\n{'='*60}")
     logger.info(f"OOD Level: {cfg.ood_level}")

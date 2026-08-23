@@ -115,3 +115,39 @@ def apply_fixed_ood_record(images: Tensor, record: dict) -> Tensor:
         left = int(record["cutout_x"] * max(width - cut_w, 0))
         out[:, :, top:top + cut_h, left:left + cut_w] = 0.0
     return out.clamp(0.0, 1.0)
+
+
+class FixedEpisodeOODProcessor:
+    def __init__(self, level: str, evaluation_seed: int):
+        self.level = level
+        self.evaluation_seed = evaluation_seed
+        self.records: list[dict] | None = None
+
+    def begin_rollout(self, task_id: int, episode_indices: list[int]) -> None:
+        self.records = [
+            derive_fixed_ood_record(FixedOODIdentity(self.evaluation_seed, task_id, index, self.level))
+            for index in episode_indices
+        ]
+
+    def apply(self, observation: dict) -> dict:
+        if self.records is None:
+            raise RuntimeError("begin_rollout must be called before processing observations")
+        for key, value in list(observation.items()):
+            if "image" not in key or not isinstance(value, Tensor):
+                continue
+            if value.shape[0] != len(self.records):
+                raise ValueError(f"image batch size {value.shape[0]} does not match {len(self.records)} episode records")
+            observation[key] = torch.cat([
+                apply_fixed_ood_record(value[index:index + 1], record)
+                for index, record in enumerate(self.records)
+            ])
+        return observation
+
+    def provenance(self) -> dict:
+        return {
+            "algorithm": "causal_aug.FixedEpisodeOOD",
+            "version": 1,
+            "augmentation_scope": "episode",
+            "record_identity": ["evaluation_seed", "task_id", "episode_index", "level", "schema_version"],
+            "evaluation_seed": self.evaluation_seed,
+        }
