@@ -1,13 +1,13 @@
 diff --git a/src/lerobot/scripts/lerobot_eval.py b/src/lerobot/scripts/lerobot_eval.py
 --- a/src/lerobot/scripts/lerobot_eval.py
 +++ b/src/lerobot/scripts/lerobot_eval.py
-@@ -446,6 +446,7 @@ def eval_policy(
+@@ -446,4 +446,5 @@ def eval_policy(
      recording_private: bool = False,
      save_predicted_video: bool = False,
      save_policy_view: bool = False,
 +    task_id: int = 0,
  ) -> dict:
-@@ -559,6 +560,9 @@ def eval_policy(
+@@ -559,4 +560,7 @@ def eval_policy(
              seeds = range(
                  start_seed + (batch_ix * env.num_envs), start_seed + ((batch_ix + 1) * env.num_envs)
              )
@@ -15,8 +15,18 @@ diff --git a/src/lerobot/scripts/lerobot_eval.py b/src/lerobot/scripts/lerobot_e
 +        episode_indices = list(range(batch_ix * env.num_envs, (batch_ix + 1) * env.num_envs))
 +        initialize_episode_processors(env_preprocessor, task_id, episode_indices)
          rollout_data = rollout(
-@@ -936,6 +940,7 @@ def eval_one(
+@@ -906,3 +910,4 @@ def eval_one(
+     env: gym.vector.VectorEnv,
+     *,
++    task_id: int,
+     policy: PreTrainedPolicy,
+@@ -936,3 +941,4 @@ def eval_one(
          recording_private=recording_private,
          save_policy_view=save_policy_view,
 +        task_id=task_id,
      )
+@@ -996,3 +1002,4 @@ def run_one(
+     metrics = eval_one(
+         env,
++        task_id=task_id,
+         policy=policy,
