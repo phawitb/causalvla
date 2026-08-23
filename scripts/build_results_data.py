@@ -51,6 +51,39 @@ def rate(successes: int, episodes: int) -> float:
     return round(successes * 100 / episodes, 1) if episodes else 0.0
 
 
+def build_fixed_collection(repo_root: Path) -> tuple[list, list, list]:
+    stats, runs, episodes = {}, [], []
+    root = repo_root / "outputs/eval/fair-v1-fixed/full"
+    for info_path in sorted(root.glob("*/level_*/seed*/eval_info.json")):
+        model_id, level, seed = info_path.parents[2].name, info_path.parents[1].name.removeprefix("level_"), info_path.parent.name.removeprefix("seed")
+        if model_id not in FAIR_META:
+            continue
+        payload = json.loads(info_path.read_text())
+        if payload.get("augmentation_scope") != "episode":
+            continue
+        model = stats.setdefault(model_id, {"id":model_id, **FAIR_META[model_id], "runs":0, "episodes":0, "successes":0, "videos":0, "cleanVideos":0, "policyVideos":0, "levels":defaultdict(lambda:{"episodes":0,"successes":0})})
+        model["runs"] += 1
+        provenance = payload.get("ood_provenance", {})
+        run_id = f"fixed:{model_id}:{level}:seed{seed}"
+        runs.append({"id":run_id,"model":model_id,"level":int(level),"seed":int(seed),"ood":{"level":payload.get("ood_level",f"level_{level}"),"params":payload.get("ood_params",{}),"algorithm":provenance.get("algorithm"),"version":provenance.get("version",1),"augmentationScope":"episode"},"modelRevision":payload.get("model_revision"),"protocolSha256":payload.get("protocol_sha256")})
+        for task in payload.get("per_task", []):
+            metrics=task.get("metrics",{}); successes=metrics.get("successes",[]); clean_paths=metrics.get("video_paths",[]); policy_paths=metrics.get("policy_video_paths",[])
+            for index, succeeded in enumerate(successes):
+                model["episodes"]+=1; model["successes"]+=int(bool(succeeded)); model["levels"][level]["episodes"]+=1; model["levels"][level]["successes"]+=int(bool(succeeded))
+                def relative(paths):
+                    if index >= len(paths) or not Path(paths[index]).is_file(): return None
+                    try: return Path(paths[index]).resolve().relative_to(repo_root.resolve()).as_posix()
+                    except ValueError: return None
+                clean, policy = relative(clean_paths), relative(policy_paths)
+                if not clean and not policy: continue
+                model["videos"]+=1; model["cleanVideos"]+=int(clean is not None); model["policyVideos"]+=int(policy is not None)
+                episodes.append({"run":run_id,"model":model_id,"level":int(level),"seed":int(seed),"task":f"{task.get('task_group','unknown')} · Task {task.get('task_id','?')}","taskId":task.get("task_id","?"),"episode":index,"success":bool(succeeded),"video":policy or clean,"cleanVideo":clean,"policyVideo":policy})
+    models=[]
+    for model in stats.values():
+        model["levelRates"]={key:rate(value["successes"],value["episodes"]) for key,value in sorted(model.pop("levels").items())}; model["successRate"]=rate(model["successes"],model["episodes"]); models.append(model)
+    return models, runs, episodes
+
+
 def build_manifest(repo_root: Path) -> dict:
     eval_root = repo_root / "outputs" / "eval" / "full"
     stats = {
@@ -184,7 +217,8 @@ def build_manifest(repo_root: Path) -> dict:
         model["levelRates"] = level_rates
         models.append(model)
 
-    return {"models": models, "runs": runs, "episodes": episodes}
+    fixed_models, fixed_runs, fixed_episodes = build_fixed_collection(repo_root)
+    return {"models": models, "runs": runs, "episodes": episodes, "fixedModels": fixed_models, "fixedRuns": fixed_runs, "fixedEpisodes": fixed_episodes}
 
 
 def main() -> None:

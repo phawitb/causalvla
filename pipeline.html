@@ -1099,6 +1099,7 @@ def test_ablation_no_action():
     <nav class="results-subtabs" aria-label="Result model groups">
       <button class="results-subtab active" type="button" data-results-view="all">All Models</button>
       <button class="results-subtab" type="button" data-results-view="m-models">M-Models</button>
+      <button class="results-subtab" type="button" data-results-view="m-models-fixed">M-Models (Fix)</button>
     </nav>
 
     <section class="results-section" aria-labelledby="results-overview-heading">
@@ -1215,7 +1216,8 @@ function setSelectOptions(select, label, values, formatter) {
 function renderResultOverview() {
   const grid = document.getElementById('results-model-grid');
   grid.innerHTML = '';
-  const visibleModels = ResultDashboard.filterModelsForResultView(resultsData.models, selectedResultsView);
+  const collection = ResultDashboard.resultCollectionForView(resultsData, selectedResultsView);
+  const visibleModels = ResultDashboard.filterModelsForResultView(collection.models, selectedResultsView);
   if (!visibleModels.length) {
     grid.innerHTML = '<div class="results-empty">No M-Model evaluation results are available yet</div>';
     document.getElementById('results-table-wrap').innerHTML = '';
@@ -1255,12 +1257,13 @@ function selectResultsView(view) {
   document.querySelectorAll('.results-subtab').forEach(button => {
     button.classList.toggle('active', button.dataset.resultsView === view);
   });
-  selectedResultModel = ResultDashboard.defaultModelForResultView(resultsData.models, view);
+  const collection = ResultDashboard.resultCollectionForView(resultsData, view);
+  selectedResultModel = ResultDashboard.defaultModelForResultView(collection.models, view);
   renderResultOverview();
   if (selectedResultModel) {
     selectResultModel(selectedResultModel);
   } else {
-    document.getElementById('rollout-summary').textContent = 'No M-Model rollouts are available yet';
+    document.getElementById('rollout-summary').textContent = view === 'm-models-fixed' ? 'No fixed-per-episode rollouts are available yet' : 'No M-Model rollouts are available yet';
     document.getElementById('rollout-grid').innerHTML = '<div class="results-empty">Run the fair-v1 evaluations and rebuild results-data.json to populate M0, M1, M2, and M3</div>';
     document.getElementById('ood-config').textContent = 'OOD provenance will appear when M-Model evaluation results are available';
     document.getElementById('rollout-more').hidden = true;
@@ -1271,7 +1274,7 @@ function selectResultModel(modelId) {
   selectedResultModel = modelId;
   visibleRollouts = 12;
   document.querySelectorAll('.result-model-card').forEach(card => card.classList.toggle('active', card.dataset.model === modelId));
-  const episodes = resultsData.episodes.filter(episode => episode.model === modelId);
+  const episodes = ResultDashboard.resultCollectionForView(resultsData, selectedResultsView).episodes.filter(episode => episode.model === modelId);
   const levels = [...new Set(episodes.map(episode => episode.level))].sort((a, b) => a - b);
   const seeds = [...new Set(episodes.map(episode => episode.seed))].sort((a, b) => a - b);
   const tasks = [...new Set(episodes.map(episode => episode.task))].sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
@@ -1283,7 +1286,7 @@ function selectResultModel(modelId) {
 }
 
 function filteredRollouts() {
-  return resultsData.episodes.filter(episode => {
+  return ResultDashboard.resultCollectionForView(resultsData, selectedResultsView).episodes.filter(episode => {
     if (episode.model !== selectedResultModel) return false;
     if (resultFilters.level.value !== 'all' && String(episode.level) !== resultFilters.level.value) return false;
     if (resultFilters.seed.value !== 'all' && String(episode.seed) !== resultFilters.seed.value) return false;
@@ -1295,7 +1298,7 @@ function filteredRollouts() {
 }
 
 function renderRollouts() {
-  const model = resultsData.models.find(item => item.id === selectedResultModel);
+  const model = ResultDashboard.resultCollectionForView(resultsData, selectedResultsView).models.find(item => item.id === selectedResultModel);
   if (!model) return;
   const episodes = filteredRollouts();
   const shown = episodes.slice(0, visibleRollouts);
@@ -1340,7 +1343,7 @@ function renderOodConfig(episodes) {
     panel.textContent = 'Select an OOD level to view the parameters used to generate the Policy View';
     return;
   }
-  const run = resultsData.runs?.find(candidate => candidate.id === episodes[0].run);
+  const run = ResultDashboard.resultCollectionForView(resultsData, selectedResultsView).runs?.find(candidate => candidate.id === episodes[0].run);
   if (!run) {
     panel.textContent = 'OOD provenance metadata is unavailable for this evaluation run';
     return;
@@ -1350,7 +1353,8 @@ function renderOodConfig(episodes) {
     const shownValue = Array.isArray(value) ? value.join(' – ') : String(value);
     return `<span class="ood-param"><strong>${key}</strong>: ${shownValue}</span>`;
   }).join('');
-  panel.innerHTML = `<strong>${ood.level || `level_${run.level}`}</strong> · ${ood.algorithm || 'OODPerturbation'} v${ood.version || 1} · Seed ${run.seed} · ${ood.processorPosition || 'post-env-preprocessing'}<div class="ood-param-list">${params || '<span class="ood-param">Clean — no perturbation</span>'}</div>`;
+  const scope = ood.augmentationScope === 'episode' ? ' · Fixed per episode' : '';
+  panel.innerHTML = `<strong>${ood.level || `level_${run.level}`}</strong> · ${ood.algorithm || 'OODPerturbation'} v${ood.version || 1} · Seed ${run.seed}${scope} · ${ood.processorPosition || 'post-env-preprocessing'}<div class="ood-param-list">${params || '<span class="ood-param">Clean — no perturbation</span>'}</div>`;
 }
 
 function selectVideoView(view) {

@@ -7,6 +7,7 @@ const {
   defaultModelForResultView,
   filterModelsForResultView,
   resultsManifestRequestOptions,
+  resultCollectionForView,
 } = require('../scripts/results_dashboard.js');
 
 const models = [
@@ -39,4 +40,10 @@ test('switching result views selects the first visible model', () => {
 
 test('results manifest requests bypass stale browser caches', () => {
   assert.deepEqual(resultsManifestRequestOptions(), {cache: 'no-store'});
+});
+
+test('M-Models Fix selects only the fixed result collection', () => {
+  const data = {models, runs: ['original'], episodes: ['original'], fixedModels: [{id: 'M0-clean'}], fixedRuns: ['fixed'], fixedEpisodes: ['fixed']};
+  assert.deepEqual(resultCollectionForView(data, 'm-models-fixed'), {models: data.fixedModels, runs: data.fixedRuns, episodes: data.fixedEpisodes});
+  assert.equal(resultCollectionForView(data, 'all').runs, data.runs);
 });

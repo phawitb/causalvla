@@ -16,5 +16,12 @@
     return {cache: 'no-store'};
   }
 
-  return {filterModelsForResultView, defaultModelForResultView, resultsManifestRequestOptions};
+  function resultCollectionForView(data, view) {
+    if (view === 'm-models-fixed') {
+      return {models: data.fixedModels || [], runs: data.fixedRuns || [], episodes: data.fixedEpisodes || []};
+    }
+    return {models: data.models || [], runs: data.runs || [], episodes: data.episodes || []};
+  }
+
+  return {filterModelsForResultView, defaultModelForResultView, resultsManifestRequestOptions, resultCollectionForView};
 }));

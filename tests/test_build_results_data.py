@@ -11,6 +11,24 @@ SCRIPT = REPO_ROOT / "scripts" / "build_results_data.py"
 
 
 class BuildResultsDataTest(unittest.TestCase):
+    def test_separates_fixed_episode_results(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            run_dir = root / "outputs/eval/fair-v1-fixed/full/M0-clean/level_1/seed4000"
+            video_dir = run_dir / "videos/task0"
+            policy_dir = video_dir / "policy_view"
+            policy_dir.mkdir(parents=True)
+            clean = video_dir / "eval_episode_0.mp4"; clean.touch()
+            policy = policy_dir / "eval_episode_0.mp4"; policy.touch()
+            payload = {"augmentation_scope":"episode", "ood_level":"level_1", "ood_provenance":{"algorithm":"causal_aug.FixedEpisodeOOD","version":1,"evaluation_seed":4000}, "per_task":[{"task_group":"libero_spatial","task_id":0,"metrics":{"successes":[True],"video_paths":[str(clean)],"policy_video_paths":[str(policy)]}}]}
+            (run_dir / "eval_info.json").write_text(json.dumps(payload))
+            output = root / "results-data.json"
+            completed = subprocess.run([sys.executable, str(SCRIPT), "--repo-root", str(root), "--output", str(output)], capture_output=True, text=True)
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            data = json.loads(output.read_text())
+            self.assertEqual([model["id"] for model in data["fixedModels"]], ["M0-clean"])
+            self.assertEqual(data["fixedRuns"][0]["ood"]["augmentationScope"], "episode")
+            self.assertEqual(data["fixedEpisodes"][0]["model"], "M0-clean")
     def test_includes_fair_v1_provenance_when_present(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
