@@ -63,6 +63,25 @@ def install_eval_policy_view_patch(repo: Path, policies_dir: Path) -> None:
     print(f"Installed policy-view eval patch: {eval_file}")
 
 
+def install_fixed_episode_eval_patch(repo: Path, policies_dir: Path) -> None:
+    lerobot_src = policies_dir.parents[1]
+    eval_file = lerobot_src / "lerobot" / "scripts" / "lerobot_eval.py"
+    if not eval_file.is_file():
+        print(f"Skipping fixed-episode eval patch; module is absent: {eval_file}")
+        return
+    if "initialize_episode_processors(env_preprocessor" in eval_file.read_text():
+        print("Fixed-episode eval patch already installed")
+        return
+    patch_cwd, strip_level = patch_invocation(lerobot_src)
+    result = subprocess.run(
+        ["patch", "--batch", "--forward", strip_level, "-i", str(repo / "lerobot_patches" / "lerobot_eval_fixed_episode.patch")],
+        cwd=patch_cwd, capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"Failed to install fixed-episode eval patch:\n{result.stdout}\n{result.stderr}")
+    print(f"Installed fixed-episode eval patch: {eval_file}")
+
+
 def install_fair_sampler_patch(repo: Path, policies_dir: Path) -> None:
     lerobot_src = policies_dir.parents[1]
     train_file = lerobot_src / "lerobot" / "scripts" / "lerobot_train.py"
@@ -85,6 +104,7 @@ def install_fair_sampler_patch(repo: Path, policies_dir: Path) -> None:
 def install_shared_patches(repo: Path, policies_dir: Path) -> None:
     install_fair_sampler_patch(repo, policies_dir)
     install_eval_policy_view_patch(repo, policies_dir)
+    install_fixed_episode_eval_patch(repo, policies_dir)
 
 
 def main() -> None:
