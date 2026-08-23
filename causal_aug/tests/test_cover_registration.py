@@ -37,3 +37,26 @@ def test_installer_selects_patch_root_for_source_and_site_packages():
     assert patch_working_directory(Path("/env/lib/python3.12/site-packages")) == Path(
         "/env/lib/python3.12/site-packages"
     )
+
+
+def test_installer_applies_required_sampler_before_optional_eval(monkeypatch, tmp_path):
+    import scripts.install_policy_patches as installer
+
+    calls = []
+    monkeypatch.setattr(installer, "install_fair_sampler_patch", lambda repo, policies: calls.append("sampler"))
+    monkeypatch.setattr(installer, "install_eval_policy_view_patch", lambda repo, policies: calls.append("eval"))
+
+    installer.install_shared_patches(tmp_path, tmp_path)
+
+    assert calls == ["sampler", "eval"]
+
+
+def test_installer_skips_optional_eval_patch_when_eval_module_is_absent(tmp_path, capsys):
+    from scripts.install_policy_patches import install_eval_policy_view_patch
+
+    policies_dir = tmp_path / "site-packages/lerobot/policies"
+    policies_dir.mkdir(parents=True)
+
+    install_eval_policy_view_patch(tmp_path, policies_dir)
+
+    assert "Skipping policy-view eval patch" in capsys.readouterr().out

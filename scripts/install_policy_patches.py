@@ -42,6 +42,9 @@ def insert_after(source: str, anchor: str, line: str) -> str:
 def install_eval_policy_view_patch(repo: Path, policies_dir: Path) -> None:
     lerobot_src = policies_dir.parents[1]
     eval_file = lerobot_src / "lerobot" / "scripts" / "lerobot_eval.py"
+    if not eval_file.is_file():
+        print(f"Skipping policy-view eval patch; module is absent: {eval_file}")
+        return
     if "policy_video_paths" in eval_file.read_text():
         print("Policy-view eval patch already installed")
         return
@@ -73,6 +76,11 @@ def install_fair_sampler_patch(repo: Path, policies_dir: Path) -> None:
     if result.returncode != 0:
         raise RuntimeError(f"Failed to install fair sampler patch:\n{result.stdout}\n{result.stderr}")
     print(f"Installed fair sampler patch: {train_file}")
+
+
+def install_shared_patches(repo: Path, policies_dir: Path) -> None:
+    install_fair_sampler_patch(repo, policies_dir)
+    install_eval_policy_view_patch(repo, policies_dir)
 
 
 def main() -> None:
@@ -125,8 +133,7 @@ def main() -> None:
         else:
             print("forward_with_latent already installed")
 
-    install_eval_policy_view_patch(repo, policies_dir)
-    install_fair_sampler_patch(repo, policies_dir)
+    install_shared_patches(repo, policies_dir)
 
     print(f"LeRobot policies directory: {policies_dir}")
 
