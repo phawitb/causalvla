@@ -31,8 +31,10 @@ class OnlineDRPolicy(SmolVLAPolicy):
 
         self.augmenter = CausalAugmenter(K=1, intensity=config.aug_intensity)
         self.fair_manifest = None
-        if config.fair_augmentation_manifest:
-            self.fair_manifest = json.loads(Path(config.fair_augmentation_manifest).read_text())
+
+    def _load_fair_manifest(self) -> None:
+        if self.fair_manifest is None and self.config.fair_augmentation_manifest:
+            self.fair_manifest = json.loads(Path(self.config.fair_augmentation_manifest).read_text())
 
     def _randomize_images(
         self, images: list[Tensor], batch: dict[str, Tensor] | None = None
@@ -44,6 +46,7 @@ class OnlineDRPolicy(SmolVLAPolicy):
             mask = exact_half_mask(batch_size, images[0].device)
         else:
             mask = torch.rand(batch_size, device=images[0].device) < self.config.aug_probability
+        self._load_fair_manifest()
         if self.fair_manifest is None:
             augmented = self.augmenter.augment_camera_views([image.detach() for image in images])[0]
         else:

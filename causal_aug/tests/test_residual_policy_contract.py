@@ -62,3 +62,22 @@ def test_online_dr_exact_balance_selects_half_the_batch():
     images = [torch.zeros(16, 3, 2, 2)]
     _, mask = policy._randomize_images(images)
     assert mask.sum().item() == 8
+
+
+def test_online_dr_inference_init_does_not_require_training_manifest(monkeypatch, tmp_path):
+    from lerobot.policies.online_dr.configuration_online_dr import OnlineDRConfig
+    from lerobot.policies.online_dr.modeling_online_dr import OnlineDRPolicy
+    from lerobot.policies.smolvla.modeling_smolvla import SmolVLAPolicy
+
+    monkeypatch.setattr(
+        SmolVLAPolicy,
+        "__init__",
+        lambda self, config, **kwargs: torch.nn.Module.__init__(self),
+    )
+    config = OnlineDRConfig(
+        fair_augmentation_manifest=str(tmp_path / "gpu-server-only-manifest.json")
+    )
+
+    policy = OnlineDRPolicy(config)
+
+    assert policy.fair_manifest is None
