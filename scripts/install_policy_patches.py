@@ -26,6 +26,11 @@ POLICIES = {
 }
 
 
+def patch_working_directory(lerobot_src: Path) -> Path:
+    """Return the directory where patches with paths under src/lerobot should run."""
+    return lerobot_src.parent if lerobot_src.name == "src" else lerobot_src
+
+
 def insert_after(source: str, anchor: str, line: str) -> str:
     if line in source:
         return source
@@ -43,7 +48,7 @@ def install_eval_policy_view_patch(repo: Path, policies_dir: Path) -> None:
     patch_file = repo / "lerobot_patches" / "lerobot_eval_policy_view.patch"
     result = subprocess.run(
         ["patch", "--batch", "--forward", "-p1", "-i", str(patch_file)],
-        cwd=lerobot_src.parent,
+        cwd=patch_working_directory(lerobot_src),
         capture_output=True,
         text=True,
     )
@@ -61,7 +66,7 @@ def install_fair_sampler_patch(repo: Path, policies_dir: Path) -> None:
     patch_file = repo / "lerobot_patches" / "lerobot_fair_sampler.patch"
     result = subprocess.run(
         ["patch", "--batch", "--forward", "-p1", "-i", str(patch_file)],
-        cwd=lerobot_src.parent,
+        cwd=patch_working_directory(lerobot_src),
         capture_output=True,
         text=True,
     )

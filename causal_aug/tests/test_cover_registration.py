@@ -28,3 +28,12 @@ def test_cover_does_not_request_forward_with_latent_patch():
     )[1].split(":", 1)[0]
     assert "cover_base" not in patch_condition
     assert "cover_safe" not in patch_condition
+
+
+def test_installer_selects_patch_root_for_source_and_site_packages():
+    from scripts.install_policy_patches import patch_working_directory
+
+    assert patch_working_directory(Path("/repo/lerobot/src")) == Path("/repo/lerobot")
+    assert patch_working_directory(Path("/env/lib/python3.12/site-packages")) == Path(
+        "/env/lib/python3.12/site-packages"
+    )
