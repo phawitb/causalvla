@@ -31,11 +31,12 @@ def test_cover_does_not_request_forward_with_latent_patch():
 
 
 def test_installer_selects_patch_root_for_source_and_site_packages():
-    from scripts.install_policy_patches import patch_working_directory
+    from scripts.install_policy_patches import patch_invocation
 
-    assert patch_working_directory(Path("/repo/lerobot/src")) == Path("/repo/lerobot")
-    assert patch_working_directory(Path("/env/lib/python3.12/site-packages")) == Path(
-        "/env/lib/python3.12/site-packages"
+    assert patch_invocation(Path("/repo/lerobot/src")) == (Path("/repo/lerobot"), "-p1")
+    assert patch_invocation(Path("/env/lib/python3.12/site-packages")) == (
+        Path("/env/lib/python3.12/site-packages"),
+        "-p2",
     )
 
 

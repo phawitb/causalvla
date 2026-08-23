@@ -26,9 +26,11 @@ POLICIES = {
 }
 
 
-def patch_working_directory(lerobot_src: Path) -> Path:
-    """Return the directory where patches with paths under src/lerobot should run."""
-    return lerobot_src.parent if lerobot_src.name == "src" else lerobot_src
+def patch_invocation(lerobot_src: Path) -> tuple[Path, str]:
+    """Return cwd and strip level for patches whose paths start with a/src/lerobot."""
+    if lerobot_src.name == "src":
+        return lerobot_src.parent, "-p1"
+    return lerobot_src, "-p2"
 
 
 def insert_after(source: str, anchor: str, line: str) -> str:
@@ -49,9 +51,10 @@ def install_eval_policy_view_patch(repo: Path, policies_dir: Path) -> None:
         print("Policy-view eval patch already installed")
         return
     patch_file = repo / "lerobot_patches" / "lerobot_eval_policy_view.patch"
+    patch_cwd, strip_level = patch_invocation(lerobot_src)
     result = subprocess.run(
-        ["patch", "--batch", "--forward", "-p1", "-i", str(patch_file)],
-        cwd=patch_working_directory(lerobot_src),
+        ["patch", "--batch", "--forward", strip_level, "-i", str(patch_file)],
+        cwd=patch_cwd,
         capture_output=True,
         text=True,
     )
@@ -67,9 +70,10 @@ def install_fair_sampler_patch(repo: Path, policies_dir: Path) -> None:
         print("Fair sampler patch already installed")
         return
     patch_file = repo / "lerobot_patches" / "lerobot_fair_sampler.patch"
+    patch_cwd, strip_level = patch_invocation(lerobot_src)
     result = subprocess.run(
-        ["patch", "--batch", "--forward", "-p1", "-i", str(patch_file)],
-        cwd=patch_working_directory(lerobot_src),
+        ["patch", "--batch", "--forward", strip_level, "-i", str(patch_file)],
+        cwd=patch_cwd,
         capture_output=True,
         text=True,
     )
