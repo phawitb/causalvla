@@ -1,0 +1,35 @@
+{
+  "protocol_version": "fair-v1-object",
+  "base_model": {
+    "repo_id": "lerobot/smolvla_base",
+    "revision": "c83c3163b8ca9b7e67c509fffd9121e66cb96205"
+  },
+  "dataset": {
+    "repo_id": "lerobot/libero_object_image",
+    "revision": "e1e080d7df1d0a359dff5c86c222e047549f447f",
+    "total_frames": 66984
+  },
+  "training": {
+    "steps": 25000,
+    "batch_size": 16,
+    "seed": 1000,
+    "save_freq": 5000,
+    "action_warmup_steps": 10000
+  },
+  "optimizer": {"name": "adamw", "scheduler": "cosine_decay_with_warmup"},
+  "augmentation_manifest": {
+    "path": "fair_v1_augmentation.json",
+    "sha256": "1fe7671314c36e97e49df1085a65a64c847914599ef4fcbe12dddcac4f732b60"
+  },
+  "offline_dataset": {
+    "repo_id": "phawitbinabik/libero-object-offline-dr-fair-v1",
+    "revision": null
+  },
+  "models": {
+    "M0-clean": {"policy_type": "smolvla", "repo_id": "phawitbinabik/causalvla-fair-v1-m0-clean-object"},
+    "M1-offline-dr": {"policy_type": "smolvla", "repo_id": "phawitbinabik/causalvla-fair-v1-m1-offline-dr-object", "clean_per_batch": 8, "augmented_per_batch": 8},
+    "M2-online-dr": {"policy_type": "online_dr", "repo_id": "phawitbinabik/causalvla-fair-v1-m2-online-dr-object", "clean_per_batch": 8, "augmented_per_batch": 8, "exact_balance": true, "aug_intensity": 1.0},
+    "M3-v2-warm": {"policy_type": "causal_vla_warm", "repo_id": "phawitbinabik/causalvla-fair-v1-m3-v2-warm-object", "clean_task_weight": 0.5, "augmented_task_weight": 0.5, "lambda_action": 0.05, "n_counterfactual": 1}
+  },
+  "evaluation": {"suite": "libero_object", "seed": 4000, "levels": ["level_0", "level_1", "level_2"], "preflight_episodes_per_task": 1, "episodes_per_task": 10, "task_count": 10}
+}

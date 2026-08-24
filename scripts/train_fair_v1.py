@@ -24,6 +24,18 @@ from scripts.fair_protocol import (
 )
 
 
+def model_card_text(protocol: dict, model_id: str) -> str:
+    suite = protocol["evaluation"]["suite"].removeprefix("libero_")
+    suite_name = "LIBERO " + ("Long" if suite == "10" else suite.title())
+    return (
+        f"# {model_id} — Fair Protocol v1\n\n"
+        f"{suite_name} model. Training seed: {protocol['training']['seed']}. "
+        f"Primary checkpoint: step {protocol['training']['steps']}.\n\n"
+        "This model is one cell of a fixed-source-exposure comparison; do not interpret a single "
+        "evaluation seed as statistical superiority.\n"
+    )
+
+
 def _run_and_log(command: list[str], log_path: Path) -> str:
     log_path.parent.mkdir(parents=True, exist_ok=True)
     lines = []
@@ -123,12 +135,7 @@ def main() -> None:
         repo_id = protocol["models"][args.model_id]["repo_id"]
         api = HfApi()
         model_card = output_dir / "README.md"
-        model_card.write_text(
-            f"# {args.model_id} — Fair Protocol v1\n\n"
-            "LIBERO-Spatial pilot model. Training seed: 1000. Primary checkpoint: step 25000.\n\n"
-            "This model is one cell of a fixed-source-exposure comparison; do not interpret a single "
-            "evaluation seed as statistical superiority.\n"
-        )
+        model_card.write_text(model_card_text(protocol, args.model_id))
         uploads = (
             (output_dir / "run_manifest.json", "run_manifest.json"),
             (output_dir / "train.log", "train.log"),

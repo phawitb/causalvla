@@ -15,6 +15,7 @@ from scripts.fair_protocol import (
     validate_downloaded_metadata,
 )
 from scripts.smoke_fair_v1 import validate_smoke_artifacts
+from scripts.train_fair_v1 import model_card_text
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -136,3 +137,13 @@ def test_resolve_revision_rejects_mutable_response():
 def test_downloaded_metadata_rejects_wrong_protocol_hash():
     with pytest.raises(ValueError, match="protocol hash"):
         validate_downloaded_metadata({"protocol_sha256": "bad"}, "good")
+
+
+def test_model_card_names_the_suite_from_the_protocol():
+    protocol = json.loads(json.dumps(PROTOCOL))
+    protocol["evaluation"]["suite"] = "libero_goal"
+
+    card = model_card_text(protocol, "M2-online-dr")
+
+    assert "LIBERO Goal" in card
+    assert "LIBERO-Spatial" not in card
