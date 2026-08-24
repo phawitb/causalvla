@@ -1101,6 +1101,7 @@ def test_ablation_no_action():
       <button class="results-subtab" type="button" data-results-view="m-models">M-Models</button>
       <button class="results-subtab" type="button" data-results-view="m-models-fixed">M-Models (Fix)</button>
     </nav>
+    <div class="ood-config" id="results-mode-label" hidden>Fixed per episode · Seed 4000</div>
 
     <section class="results-section" aria-labelledby="results-overview-heading">
       <div class="results-section-head">
@@ -1254,6 +1255,7 @@ function renderResultOverview() {
 function selectResultsView(view) {
   selectedResultsView = view;
   visibleRollouts = 12;
+  document.getElementById('results-mode-label').hidden = view !== 'm-models-fixed';
   document.querySelectorAll('.results-subtab').forEach(button => {
     button.classList.toggle('active', button.dataset.resultsView === view);
   });
