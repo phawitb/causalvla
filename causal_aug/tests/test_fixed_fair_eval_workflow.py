@@ -9,9 +9,14 @@ def _protocol():
 
 def test_full_matrix_is_seed_4000_for_trained_models_only():
     matrix = build_fixed_matrix(_protocol(), "full")
-    assert {run.model_id for run in matrix} == set(FIXED_MODELS)
+    assert {run.model_id for run in matrix} == {
+        "M0-clean",
+        "M1-offline-dr",
+        "M2-online-dr",
+        "M3-v2-warm",
+    }
     assert {run.seed for run in matrix} == {4000}
-    assert len(matrix) == 9
+    assert len(matrix) == 12
 
 
 def test_command_targets_fixed_tree_and_episode_scope():

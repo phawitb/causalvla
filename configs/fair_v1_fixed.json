@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "algorithm_version": 1,
-  "models": ["M0-clean", "M2-online-dr", "M3-v2-warm"],
+  "models": ["M0-clean", "M1-offline-dr", "M2-online-dr", "M3-v2-warm"],
   "seeds": [4000],
   "levels": ["level_0", "level_1", "level_2"],
   "preflight_levels": ["level_0", "level_2"],
