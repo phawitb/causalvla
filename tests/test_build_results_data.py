@@ -11,6 +11,35 @@ SCRIPT = REPO_ROOT / "scripts" / "build_results_data.py"
 
 
 class BuildResultsDataTest(unittest.TestCase):
+    def test_fixed_videos_survive_worktree_absolute_paths(self):
+        with tempfile.TemporaryDirectory() as temp_dir, tempfile.TemporaryDirectory() as source_dir:
+            root = Path(temp_dir)
+            relative_video = Path("outputs/eval/fair-v1-fixed/full/M0-clean/level_0/seed4000/videos/task0/eval_episode_0.mp4")
+            actual_video = root / relative_video
+            actual_video.parent.mkdir(parents=True)
+            actual_video.touch()
+            recorded_video = Path(source_dir) / relative_video
+            run_dir = root / relative_video.parents[2]
+            payload = {
+                "augmentation_scope": "episode",
+                "ood_level": "level_0",
+                "per_task": [{"task_id": 0, "metrics": {
+                    "successes": [True], "video_paths": [str(recorded_video)]
+                }}],
+            }
+            (run_dir / "eval_info.json").write_text(json.dumps(payload))
+            output = root / "results-data.json"
+
+            completed = subprocess.run(
+                [sys.executable, str(SCRIPT), "--repo-root", str(root), "--output", str(output)],
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            data = json.loads(output.read_text())
+            self.assertEqual(data["fixedEpisodes"][0]["video"], relative_video.as_posix())
+
     def test_separates_fixed_episode_results(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

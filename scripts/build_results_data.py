@@ -51,6 +51,22 @@ def rate(successes: int, episodes: int) -> float:
     return round(successes * 100 / episodes, 1) if episodes else 0.0
 
 
+def repo_relative_existing(raw_path: str, repo_root: Path) -> str | None:
+    if not raw_path:
+        return None
+    path = Path(raw_path)
+    if path.is_file():
+        try:
+            return path.resolve().relative_to(repo_root.resolve()).as_posix()
+        except ValueError:
+            pass
+    if "outputs" in path.parts:
+        output_suffix = Path(*path.parts[path.parts.index("outputs"):])
+        if (repo_root / output_suffix).is_file():
+            return output_suffix.as_posix()
+    return None
+
+
 def build_fixed_collection(repo_root: Path) -> tuple[list, list, list]:
     stats, runs, episodes = {}, [], []
     root = repo_root / "outputs/eval/fair-v1-fixed/full"
@@ -71,9 +87,8 @@ def build_fixed_collection(repo_root: Path) -> tuple[list, list, list]:
             for index, succeeded in enumerate(successes):
                 model["episodes"]+=1; model["successes"]+=int(bool(succeeded)); model["levels"][level]["episodes"]+=1; model["levels"][level]["successes"]+=int(bool(succeeded))
                 def relative(paths):
-                    if index >= len(paths) or not Path(paths[index]).is_file(): return None
-                    try: return Path(paths[index]).resolve().relative_to(repo_root.resolve()).as_posix()
-                    except ValueError: return None
+                    if index >= len(paths): return None
+                    return repo_relative_existing(paths[index], repo_root)
                 clean, policy = relative(clean_paths), relative(policy_paths)
                 if not clean and not policy: continue
                 model["videos"]+=1; model["cleanVideos"]+=int(clean is not None); model["policyVideos"]+=int(policy is not None)
@@ -104,15 +119,7 @@ def build_manifest(repo_root: Path) -> dict:
     runs = []
 
     def relative_existing(raw_path: str) -> str | None:
-        if not raw_path:
-            return None
-        path = Path(raw_path)
-        if not path.is_file():
-            return None
-        try:
-            return path.resolve().relative_to(repo_root.resolve()).as_posix()
-        except ValueError:
-            return None
+        return repo_relative_existing(raw_path, repo_root)
 
     records = []
     for info_path in sorted(eval_root.glob("*/eval_info.json")):

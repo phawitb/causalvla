@@ -18,7 +18,7 @@ diff --git a/src/lerobot/scripts/lerobot_eval.py b/src/lerobot/scripts/lerobot_e
 @@ -906,3 +910,4 @@ def eval_one(
      env: gym.vector.VectorEnv,
      *,
-+    task_id: int,
++    task_id: int = 0,
      policy: PreTrainedPolicy,
 @@ -936,3 +941,4 @@ def eval_one(
          recording_private=recording_private,
