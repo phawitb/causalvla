@@ -8,6 +8,7 @@ const {
   filterModelsForResultView,
   resultsManifestRequestOptions,
   resultCollectionForView,
+  seedResultTables,
 } = require('../scripts/results_dashboard.js');
 
 const models = [
@@ -46,4 +47,25 @@ test('M-Models Fix selects only the fixed result collection', () => {
   const data = {models, runs: ['original'], episodes: ['original'], fixedModels: [{id: 'M0-clean'}], fixedRuns: ['fixed'], fixedEpisodes: ['fixed']};
   assert.deepEqual(resultCollectionForView(data, 'm-models-fixed'), {models: data.fixedModels, runs: data.fixedRuns, episodes: data.fixedEpisodes});
   assert.equal(resultCollectionForView(data, 'all').runs, data.runs);
+});
+
+test('seed result tables aggregate runs by model and level while preserving missing cells', () => {
+  const visibleModels = [{id: 'M0-clean', name: 'M0'}, {id: 'M1-offline-dr', name: 'M1'}];
+  const runs = [
+    {model: 'legacy', seed: 1000, level: 0, successes: 9, episodes: 10},
+    {model: 'M0-clean', seed: 4000, level: 0, successes: 6, episodes: 10},
+    {model: 'M0-clean', seed: 4000, level: 1, successes: 4, episodes: 10},
+    {model: 'M1-offline-dr', seed: 5000, level: 2, successes: 7, episodes: 10},
+  ];
+
+  assert.deepEqual(seedResultTables(visibleModels, runs), [
+    {seed: 4000, rows: [
+      {id: 'M0-clean', name: 'M0', successes: 10, episodes: 20, overall: 50, levels: {0: 60, 1: 40}},
+      {id: 'M1-offline-dr', name: 'M1', successes: 0, episodes: 0, overall: null, levels: {}},
+    ]},
+    {seed: 5000, rows: [
+      {id: 'M0-clean', name: 'M0', successes: 0, episodes: 0, overall: null, levels: {}},
+      {id: 'M1-offline-dr', name: 'M1', successes: 7, episodes: 10, overall: 70, levels: {2: 70}},
+    ]},
+  ]);
 });

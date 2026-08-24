@@ -51,6 +51,15 @@ def rate(successes: int, episodes: int) -> float:
     return round(successes * 100 / episodes, 1) if episodes else 0.0
 
 
+def payload_counts(payload: dict) -> tuple[int, int]:
+    values = [
+        bool(succeeded)
+        for task in payload.get("per_task", [])
+        for succeeded in task.get("metrics", {}).get("successes", [])
+    ]
+    return sum(values), len(values)
+
+
 def repo_relative_existing(raw_path: str, repo_root: Path) -> str | None:
     if not raw_path:
         return None
@@ -75,13 +84,14 @@ def build_fixed_collection(repo_root: Path) -> tuple[list, list, list]:
         if model_id not in FAIR_META:
             continue
         payload = json.loads(info_path.read_text())
+        run_successes, run_episodes = payload_counts(payload)
         if payload.get("augmentation_scope") != "episode":
             continue
         model = stats.setdefault(model_id, {"id":model_id, **FAIR_META[model_id], "runs":0, "episodes":0, "successes":0, "videos":0, "cleanVideos":0, "policyVideos":0, "levels":defaultdict(lambda:{"episodes":0,"successes":0})})
         model["runs"] += 1
         provenance = payload.get("ood_provenance", {})
         run_id = f"fixed:{model_id}:{level}:seed{seed}"
-        runs.append({"id":run_id,"model":model_id,"level":int(level),"seed":int(seed),"ood":{"level":payload.get("ood_level",f"level_{level}"),"params":payload.get("ood_params",{}),"algorithm":provenance.get("algorithm"),"version":provenance.get("version",1),"augmentationScope":"episode"},"modelRevision":payload.get("model_revision"),"protocolSha256":payload.get("protocol_sha256")})
+        runs.append({"id":run_id,"model":model_id,"level":int(level),"seed":int(seed),"successes":run_successes,"episodes":run_episodes,"ood":{"level":payload.get("ood_level",f"level_{level}"),"params":payload.get("ood_params",{}),"algorithm":provenance.get("algorithm"),"version":provenance.get("version",1),"augmentationScope":"episode"},"modelRevision":payload.get("model_revision"),"protocolSha256":payload.get("protocol_sha256")})
         for task in payload.get("per_task", []):
             metrics=task.get("metrics",{}); successes=metrics.get("successes",[]); clean_paths=metrics.get("video_paths",[]); policy_paths=metrics.get("policy_video_paths",[])
             for index, succeeded in enumerate(successes):
@@ -147,6 +157,7 @@ def build_manifest(repo_root: Path) -> dict:
         model = stats[model_id]
         model["runs"] += 1
         payload = json.loads(info_path.read_text())
+        run_successes, run_episodes = payload_counts(payload)
         run_id = info_path.parent.name
         provenance = payload.get("ood_provenance", {})
         runs.append(
@@ -155,6 +166,8 @@ def build_manifest(repo_root: Path) -> dict:
                 "model": model_id,
                 "level": int(level),
                 "seed": int(seed),
+                "successes": run_successes,
+                "episodes": run_episodes,
                 "ood": {
                     "level": payload.get("ood_level", f"level_{level}"),
                     "params": payload.get("ood_params", {}),

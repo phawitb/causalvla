@@ -58,6 +58,8 @@ class BuildResultsDataTest(unittest.TestCase):
             self.assertEqual([model["id"] for model in data["fixedModels"]], ["M0-clean"])
             self.assertEqual(data["fixedRuns"][0]["ood"]["augmentationScope"], "episode")
             self.assertEqual(data["fixedEpisodes"][0]["model"], "M0-clean")
+            self.assertEqual(data["fixedRuns"][0]["successes"], 1)
+            self.assertEqual(data["fixedRuns"][0]["episodes"], 1)
     def test_includes_fair_v1_provenance_when_present(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -83,6 +85,8 @@ class BuildResultsDataTest(unittest.TestCase):
             fair_run = next(run for run in data["runs"] if run["model"] == "M0-clean")
             self.assertEqual(fair_run["modelRevision"], "a" * 40)
             self.assertEqual(fair_run["protocolSha256"], "p")
+            self.assertEqual(fair_run["successes"], 1)
+            self.assertEqual(fair_run["episodes"], 1)
 
     def test_builds_dashboard_data_for_only_requested_models(self):
         with tempfile.TemporaryDirectory() as temp_dir:

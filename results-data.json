@@ -143,6 +143,8 @@
       "model": "a",
       "level": 0,
       "seed": 1000,
+      "successes": 66,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -158,6 +160,8 @@
       "model": "a",
       "level": 0,
       "seed": 2000,
+      "successes": 68,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -173,6 +177,8 @@
       "model": "a",
       "level": 0,
       "seed": 3000,
+      "successes": 62,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -188,6 +194,8 @@
       "model": "a",
       "level": 0,
       "seed": 1000,
+      "successes": 337,
+      "episodes": 500,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -203,6 +211,8 @@
       "model": "a",
       "level": 1,
       "seed": 1000,
+      "successes": 10,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -256,6 +266,8 @@
       "model": "a",
       "level": 1,
       "seed": 2000,
+      "successes": 12,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -309,6 +321,8 @@
       "model": "a",
       "level": 1,
       "seed": 3000,
+      "successes": 18,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -362,6 +376,8 @@
       "model": "a",
       "level": 1,
       "seed": 1000,
+      "successes": 71,
+      "episodes": 500,
       "ood": {
         "level": "level_1",
         "params": {
@@ -415,6 +431,8 @@
       "model": "a",
       "level": 2,
       "seed": 1000,
+      "successes": 0,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -469,6 +487,8 @@
       "model": "a",
       "level": 2,
       "seed": 2000,
+      "successes": 1,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -523,6 +543,8 @@
       "model": "a",
       "level": 2,
       "seed": 3000,
+      "successes": 0,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -577,6 +599,8 @@
       "model": "a",
       "level": 2,
       "seed": 1000,
+      "successes": 2,
+      "episodes": 500,
       "ood": {
         "level": "level_2",
         "params": {
@@ -631,6 +655,8 @@
       "model": "b",
       "level": 0,
       "seed": 1000,
+      "successes": 57,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -646,6 +672,8 @@
       "model": "b",
       "level": 0,
       "seed": 2000,
+      "successes": 64,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -661,6 +689,8 @@
       "model": "b",
       "level": 0,
       "seed": 3000,
+      "successes": 64,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -676,6 +706,8 @@
       "model": "b",
       "level": 0,
       "seed": 1000,
+      "successes": 309,
+      "episodes": 500,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -691,6 +723,8 @@
       "model": "b",
       "level": 1,
       "seed": 1000,
+      "successes": 52,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -744,6 +778,8 @@
       "model": "b",
       "level": 1,
       "seed": 2000,
+      "successes": 50,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -797,6 +833,8 @@
       "model": "b",
       "level": 1,
       "seed": 3000,
+      "successes": 53,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -850,6 +888,8 @@
       "model": "b",
       "level": 1,
       "seed": 1000,
+      "successes": 266,
+      "episodes": 500,
       "ood": {
         "level": "level_1",
         "params": {
@@ -903,6 +943,8 @@
       "model": "b",
       "level": 2,
       "seed": 1000,
+      "successes": 24,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -957,6 +999,8 @@
       "model": "b",
       "level": 2,
       "seed": 2000,
+      "successes": 26,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -1011,6 +1055,8 @@
       "model": "b",
       "level": 2,
       "seed": 3000,
+      "successes": 23,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -1065,6 +1111,8 @@
       "model": "b",
       "level": 2,
       "seed": 1000,
+      "successes": 151,
+      "episodes": 500,
       "ood": {
         "level": "level_2",
         "params": {
@@ -1119,6 +1167,8 @@
       "model": "f",
       "level": 0,
       "seed": 1000,
+      "successes": 64,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -1134,6 +1184,8 @@
       "model": "f",
       "level": 0,
       "seed": 2000,
+      "successes": 68,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -1149,6 +1201,8 @@
       "model": "f",
       "level": 0,
       "seed": 3000,
+      "successes": 64,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -1164,6 +1218,8 @@
       "model": "f",
       "level": 1,
       "seed": 1000,
+      "successes": 62,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -1217,6 +1273,8 @@
       "model": "f",
       "level": 1,
       "seed": 2000,
+      "successes": 55,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -1270,6 +1328,8 @@
       "model": "f",
       "level": 1,
       "seed": 3000,
+      "successes": 59,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -1323,6 +1383,8 @@
       "model": "f",
       "level": 2,
       "seed": 1000,
+      "successes": 49,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -1377,6 +1439,8 @@
       "model": "f",
       "level": 2,
       "seed": 2000,
+      "successes": 48,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -1431,6 +1495,8 @@
       "model": "f",
       "level": 2,
       "seed": 3000,
+      "successes": 51,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -1485,6 +1551,8 @@
       "model": "v2_warm",
       "level": 0,
       "seed": 1000,
+      "successes": 72,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -1500,6 +1568,8 @@
       "model": "v2_warm",
       "level": 0,
       "seed": 2000,
+      "successes": 68,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -1515,6 +1585,8 @@
       "model": "v2_warm",
       "level": 0,
       "seed": 3000,
+      "successes": 59,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -1530,6 +1602,8 @@
       "model": "v2_warm",
       "level": 0,
       "seed": 4000,
+      "successes": 64,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -1545,6 +1619,8 @@
       "model": "v2_warm",
       "level": 1,
       "seed": 1000,
+      "successes": 67,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -1598,6 +1674,8 @@
       "model": "v2_warm",
       "level": 1,
       "seed": 2000,
+      "successes": 63,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -1651,6 +1729,8 @@
       "model": "v2_warm",
       "level": 1,
       "seed": 3000,
+      "successes": 63,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -1704,6 +1784,8 @@
       "model": "v2_warm",
       "level": 1,
       "seed": 4000,
+      "successes": 62,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -1757,6 +1839,8 @@
       "model": "v2_warm",
       "level": 2,
       "seed": 1000,
+      "successes": 53,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -1811,6 +1895,8 @@
       "model": "v2_warm",
       "level": 2,
       "seed": 2000,
+      "successes": 60,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -1865,6 +1951,8 @@
       "model": "v2_warm",
       "level": 2,
       "seed": 3000,
+      "successes": 53,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -1919,6 +2007,8 @@
       "model": "v2_warm",
       "level": 2,
       "seed": 4000,
+      "successes": 51,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -1973,6 +2063,8 @@
       "model": "M0-clean",
       "level": 0,
       "seed": 4000,
+      "successes": 58,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -1988,6 +2080,8 @@
       "model": "M0-clean",
       "level": 0,
       "seed": 5000,
+      "successes": 60,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -2003,6 +2097,8 @@
       "model": "M0-clean",
       "level": 0,
       "seed": 6000,
+      "successes": 62,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -2018,6 +2114,8 @@
       "model": "M0-clean",
       "level": 1,
       "seed": 4000,
+      "successes": 45,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -2071,6 +2169,8 @@
       "model": "M0-clean",
       "level": 1,
       "seed": 5000,
+      "successes": 50,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -2124,6 +2224,8 @@
       "model": "M0-clean",
       "level": 1,
       "seed": 6000,
+      "successes": 49,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -2177,6 +2279,8 @@
       "model": "M0-clean",
       "level": 2,
       "seed": 4000,
+      "successes": 34,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -2231,6 +2335,8 @@
       "model": "M0-clean",
       "level": 2,
       "seed": 5000,
+      "successes": 26,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -2285,6 +2391,8 @@
       "model": "M0-clean",
       "level": 2,
       "seed": 6000,
+      "successes": 37,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -2339,6 +2447,8 @@
       "model": "M1-offline-dr",
       "level": 0,
       "seed": 4000,
+      "successes": 68,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -2354,6 +2464,8 @@
       "model": "M1-offline-dr",
       "level": 0,
       "seed": 5000,
+      "successes": 66,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -2369,6 +2481,8 @@
       "model": "M1-offline-dr",
       "level": 0,
       "seed": 6000,
+      "successes": 57,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -2384,6 +2498,8 @@
       "model": "M1-offline-dr",
       "level": 1,
       "seed": 4000,
+      "successes": 57,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -2437,6 +2553,8 @@
       "model": "M1-offline-dr",
       "level": 1,
       "seed": 5000,
+      "successes": 71,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -2490,6 +2608,8 @@
       "model": "M1-offline-dr",
       "level": 1,
       "seed": 6000,
+      "successes": 71,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -2543,6 +2663,8 @@
       "model": "M1-offline-dr",
       "level": 2,
       "seed": 4000,
+      "successes": 51,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -2597,6 +2719,8 @@
       "model": "M1-offline-dr",
       "level": 2,
       "seed": 5000,
+      "successes": 57,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -2651,6 +2775,8 @@
       "model": "M1-offline-dr",
       "level": 2,
       "seed": 6000,
+      "successes": 58,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -2705,6 +2831,8 @@
       "model": "M2-online-dr",
       "level": 0,
       "seed": 4000,
+      "successes": 70,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -2720,6 +2848,8 @@
       "model": "M2-online-dr",
       "level": 0,
       "seed": 5000,
+      "successes": 58,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -2735,6 +2865,8 @@
       "model": "M2-online-dr",
       "level": 0,
       "seed": 6000,
+      "successes": 74,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -2750,6 +2882,8 @@
       "model": "M2-online-dr",
       "level": 1,
       "seed": 4000,
+      "successes": 72,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -2803,6 +2937,8 @@
       "model": "M2-online-dr",
       "level": 1,
       "seed": 5000,
+      "successes": 63,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -2856,6 +2992,8 @@
       "model": "M2-online-dr",
       "level": 1,
       "seed": 6000,
+      "successes": 61,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -2909,6 +3047,8 @@
       "model": "M2-online-dr",
       "level": 2,
       "seed": 4000,
+      "successes": 51,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -2963,6 +3103,8 @@
       "model": "M2-online-dr",
       "level": 2,
       "seed": 5000,
+      "successes": 52,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -3017,6 +3159,8 @@
       "model": "M2-online-dr",
       "level": 2,
       "seed": 6000,
+      "successes": 54,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -3071,6 +3215,8 @@
       "model": "M3-v2-warm",
       "level": 0,
       "seed": 4000,
+      "successes": 65,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -3086,6 +3232,8 @@
       "model": "M3-v2-warm",
       "level": 0,
       "seed": 5000,
+      "successes": 60,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -3101,6 +3249,8 @@
       "model": "M3-v2-warm",
       "level": 0,
       "seed": 6000,
+      "successes": 65,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -3116,112 +3266,8 @@
       "model": "M3-v2-warm",
       "level": 1,
       "seed": 4000,
-      "ood": {
-        "level": "level_1",
-        "params": {
-          "affine_scale_range": [
-            1.0,
-            1.0
-          ],
-          "affine_shear": 0.0,
-          "affine_translate": 0.0,
-          "blur_kernel": 3,
-          "blur_prob": 0.2,
-          "blur_sigma": 0.5,
-          "brightness_range": [
-            0.7,
-            1.3
-          ],
-          "contrast_range": [
-            0.8,
-            1.2
-          ],
-          "cutout": false,
-          "hue_range": [
-            -0.03,
-            0.03
-          ],
-          "noise_sigma": 0.05,
-          "perspective_mag": 0.0,
-          "rotation_range": [
-            -5,
-            5
-          ],
-          "saturation_range": [
-            0.7,
-            1.3
-          ],
-          "shadow_alpha_range": [
-            0.1,
-            0.25
-          ],
-          "shadow_prob": 0.2
-        },
-        "algorithm": "causal_aug.OODPerturbation",
-        "version": 1,
-        "processorPosition": "post-env-preprocessing"
-      },
-      "modelRevision": "8856a919235bcf612f6444577c4aa63e89670578",
-      "protocolSha256": "eeaca248b756c0568f06aac95032a0e900405983f114cabc22de106f709cff50"
-    },
-    {
-      "id": "seed5000",
-      "model": "M3-v2-warm",
-      "level": 1,
-      "seed": 5000,
-      "ood": {
-        "level": "level_1",
-        "params": {
-          "affine_scale_range": [
-            1.0,
-            1.0
-          ],
-          "affine_shear": 0.0,
-          "affine_translate": 0.0,
-          "blur_kernel": 3,
-          "blur_prob": 0.2,
-          "blur_sigma": 0.5,
-          "brightness_range": [
-            0.7,
-            1.3
-          ],
-          "contrast_range": [
-            0.8,
-            1.2
-          ],
-          "cutout": false,
-          "hue_range": [
-            -0.03,
-            0.03
-          ],
-          "noise_sigma": 0.05,
-          "perspective_mag": 0.0,
-          "rotation_range": [
-            -5,
-            5
-          ],
-          "saturation_range": [
-            0.7,
-            1.3
-          ],
-          "shadow_alpha_range": [
-            0.1,
-            0.25
-          ],
-          "shadow_prob": 0.2
-        },
-        "algorithm": "causal_aug.OODPerturbation",
-        "version": 1,
-        "processorPosition": "post-env-preprocessing"
-      },
-      "modelRevision": "8856a919235bcf612f6444577c4aa63e89670578",
-      "protocolSha256": "eeaca248b756c0568f06aac95032a0e900405983f114cabc22de106f709cff50"
-    },
-    {
-      "id": "seed6000",
-      "model": "M3-v2-warm",
-      "level": 1,
-      "seed": 6000,
+      "successes": 66,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -3271,10 +3317,122 @@
       "protocolSha256": "eeaca248b756c0568f06aac95032a0e900405983f114cabc22de106f709cff50"
     },
     {
+      "id": "seed5000",
+      "model": "M3-v2-warm",
+      "level": 1,
+      "seed": 5000,
+      "successes": 68,
+      "episodes": 100,
+      "ood": {
+        "level": "level_1",
+        "params": {
+          "affine_scale_range": [
+            1.0,
+            1.0
+          ],
+          "affine_shear": 0.0,
+          "affine_translate": 0.0,
+          "blur_kernel": 3,
+          "blur_prob": 0.2,
+          "blur_sigma": 0.5,
+          "brightness_range": [
+            0.7,
+            1.3
+          ],
+          "contrast_range": [
+            0.8,
+            1.2
+          ],
+          "cutout": false,
+          "hue_range": [
+            -0.03,
+            0.03
+          ],
+          "noise_sigma": 0.05,
+          "perspective_mag": 0.0,
+          "rotation_range": [
+            -5,
+            5
+          ],
+          "saturation_range": [
+            0.7,
+            1.3
+          ],
+          "shadow_alpha_range": [
+            0.1,
+            0.25
+          ],
+          "shadow_prob": 0.2
+        },
+        "algorithm": "causal_aug.OODPerturbation",
+        "version": 1,
+        "processorPosition": "post-env-preprocessing"
+      },
+      "modelRevision": "8856a919235bcf612f6444577c4aa63e89670578",
+      "protocolSha256": "eeaca248b756c0568f06aac95032a0e900405983f114cabc22de106f709cff50"
+    },
+    {
+      "id": "seed6000",
+      "model": "M3-v2-warm",
+      "level": 1,
+      "seed": 6000,
+      "successes": 66,
+      "episodes": 100,
+      "ood": {
+        "level": "level_1",
+        "params": {
+          "affine_scale_range": [
+            1.0,
+            1.0
+          ],
+          "affine_shear": 0.0,
+          "affine_translate": 0.0,
+          "blur_kernel": 3,
+          "blur_prob": 0.2,
+          "blur_sigma": 0.5,
+          "brightness_range": [
+            0.7,
+            1.3
+          ],
+          "contrast_range": [
+            0.8,
+            1.2
+          ],
+          "cutout": false,
+          "hue_range": [
+            -0.03,
+            0.03
+          ],
+          "noise_sigma": 0.05,
+          "perspective_mag": 0.0,
+          "rotation_range": [
+            -5,
+            5
+          ],
+          "saturation_range": [
+            0.7,
+            1.3
+          ],
+          "shadow_alpha_range": [
+            0.1,
+            0.25
+          ],
+          "shadow_prob": 0.2
+        },
+        "algorithm": "causal_aug.OODPerturbation",
+        "version": 1,
+        "processorPosition": "post-env-preprocessing"
+      },
+      "modelRevision": "8856a919235bcf612f6444577c4aa63e89670578",
+      "protocolSha256": "eeaca248b756c0568f06aac95032a0e900405983f114cabc22de106f709cff50"
+    },
+    {
       "id": "seed4000",
       "model": "M3-v2-warm",
       "level": 2,
       "seed": 4000,
+      "successes": 57,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -3329,6 +3487,8 @@
       "model": "M3-v2-warm",
       "level": 2,
       "seed": 5000,
+      "successes": 49,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -3383,6 +3543,8 @@
       "model": "M3-v2-warm",
       "level": 2,
       "seed": 6000,
+      "successes": 52,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -54194,6 +54356,8 @@
       "model": "M0-clean",
       "level": 0,
       "seed": 4000,
+      "successes": 57,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -54209,6 +54373,8 @@
       "model": "M0-clean",
       "level": 1,
       "seed": 4000,
+      "successes": 48,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -54262,6 +54428,8 @@
       "model": "M0-clean",
       "level": 2,
       "seed": 4000,
+      "successes": 26,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -54316,6 +54484,8 @@
       "model": "M2-online-dr",
       "level": 0,
       "seed": 4000,
+      "successes": 70,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -54331,6 +54501,8 @@
       "model": "M2-online-dr",
       "level": 1,
       "seed": 4000,
+      "successes": 67,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -54384,6 +54556,8 @@
       "model": "M2-online-dr",
       "level": 2,
       "seed": 4000,
+      "successes": 49,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {
@@ -54438,6 +54612,8 @@
       "model": "M3-v2-warm",
       "level": 0,
       "seed": 4000,
+      "successes": 66,
+      "episodes": 100,
       "ood": {
         "level": "level_0",
         "params": {},
@@ -54453,6 +54629,8 @@
       "model": "M3-v2-warm",
       "level": 1,
       "seed": 4000,
+      "successes": 61,
+      "episodes": 100,
       "ood": {
         "level": "level_1",
         "params": {
@@ -54506,6 +54684,8 @@
       "model": "M3-v2-warm",
       "level": 2,
       "seed": 4000,
+      "successes": 58,
+      "episodes": 100,
       "ood": {
         "level": "level_2",
         "params": {

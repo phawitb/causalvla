@@ -400,6 +400,11 @@
   .results-section-head { display: flex; justify-content: space-between; gap: 18px; align-items: end; margin-bottom: 14px; }
   .results-section-head h2 { font-size: 20px; }
   .results-section-head p { color: var(--text-dim); font-size: 12px; margin: 2px 0 0; }
+  .seed-results { margin-top: 24px; }
+  .seed-results > h3 { font-size: 16px; margin-bottom: 4px; }
+  .seed-results > p { color: var(--text-dim); font-size: 12px; margin: 0 0 14px; }
+  .seed-table-block { margin-top: 18px; }
+  .seed-table-block h4 { color: var(--accent); font-size: 14px; margin: 0 0 8px; }
   .result-filters { display: flex; gap: 9px; flex-wrap: wrap; }
   .result-filters select {
     min-width: 130px; padding: 8px 30px 8px 10px; border: 1px solid var(--border);
@@ -1109,6 +1114,7 @@ def test_ablation_no_action():
       </div>
       <div class="results-grid" id="results-model-grid"></div>
       <div class="table-wrap" id="results-table-wrap"></div>
+      <div class="seed-results"><h3>Results by Seed</h3><p>Success rates calculated independently for each evaluation seed</p><div id="results-seed-tables"></div></div>
     </section>
 
     <section class="results-section" aria-labelledby="rollout-heading">
@@ -1204,6 +1210,10 @@ function formatRate(value) {
   return Number(value || 0).toFixed(1) + '%';
 }
 
+function formatOptionalRate(value) {
+  return value === null || value === undefined ? '—' : Number(value).toFixed(1) + '%';
+}
+
 function setSelectOptions(select, label, values, formatter) {
   select.innerHTML = `<option value="all">${label}</option>`;
   values.forEach(value => {
@@ -1222,6 +1232,7 @@ function renderResultOverview() {
   if (!visibleModels.length) {
     grid.innerHTML = '<div class="results-empty">No M-Model evaluation results are available yet</div>';
     document.getElementById('results-table-wrap').innerHTML = '';
+    document.getElementById('results-seed-tables').innerHTML = '';
     return;
   }
   visibleModels.forEach(model => {
@@ -1250,6 +1261,17 @@ function renderResultOverview() {
     <td>${model.successes.toLocaleString()} / ${model.episodes.toLocaleString()}</td><td>${model.runs}</td></tr>`).join('');
   document.getElementById('results-table-wrap').innerHTML = `
     <table><thead><tr><th>Model</th><th>Overall</th><th>Level 0</th><th>Level 1</th><th>Level 2</th><th>Successful Episodes</th><th>Runs</th></tr></thead><tbody>${rows}</tbody></table>`;
+
+  const seedTables = ResultDashboard.seedResultTables(visibleModels, collection.runs);
+  document.getElementById('results-seed-tables').innerHTML = seedTables.map(table => {
+    const seedRows = table.rows.map(row => `
+      <tr><td><strong>${row.name}</strong></td><td>${formatOptionalRate(row.overall)}</td>
+      <td>${formatOptionalRate(row.levels[0])}</td><td>${formatOptionalRate(row.levels[1])}</td><td>${formatOptionalRate(row.levels[2])}</td>
+      <td>${row.episodes ? `${row.successes.toLocaleString()} / ${row.episodes.toLocaleString()}` : '—'}</td></tr>`).join('');
+    return `<div class="seed-table-block"><h4>Seed ${table.seed}</h4><div class="table-wrap"><table>
+      <thead><tr><th>Model</th><th>Overall</th><th>Level 0</th><th>Level 1</th><th>Level 2</th><th>Successful Episodes</th></tr></thead>
+      <tbody>${seedRows}</tbody></table></div></div>`;
+  }).join('') || '<div class="results-empty">No per-seed results are available for this view</div>';
 }
 
 function selectResultsView(view) {
