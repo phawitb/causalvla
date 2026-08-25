@@ -15,7 +15,7 @@ from scripts.fair_protocol import (
     validate_downloaded_metadata,
 )
 from scripts.smoke_fair_v1 import validate_smoke_artifacts
-from scripts.train_fair_v1 import model_card_text
+from scripts.train_fair_v1 import latest_checkpoint_config, model_card_text
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -147,3 +147,21 @@ def test_model_card_names_the_suite_from_the_protocol():
 
     assert "LIBERO Goal" in card
     assert "LIBERO-Spatial" not in card
+
+
+def test_latest_checkpoint_config_selects_highest_saved_step(tmp_path):
+    for step in (5000, 15000, 10000):
+        config = tmp_path / "checkpoints" / f"{step:06d}" / "pretrained_model" / "train_config.json"
+        config.parent.mkdir(parents=True)
+        config.write_text("{}")
+
+    assert latest_checkpoint_config(tmp_path) == (
+        tmp_path / "checkpoints" / "015000" / "pretrained_model" / "train_config.json"
+    )
+
+
+def test_latest_checkpoint_config_rejects_run_without_saved_checkpoint(tmp_path):
+    tmp_path.mkdir(exist_ok=True)
+
+    with pytest.raises(FileNotFoundError, match="no saved checkpoint"):
+        latest_checkpoint_config(tmp_path)

@@ -36,6 +36,20 @@ def model_card_text(protocol: dict, model_id: str) -> str:
     )
 
 
+def latest_checkpoint_config(output_dir: Path) -> Path:
+    candidates = []
+    for config in (output_dir / "checkpoints").glob("*/pretrained_model/train_config.json"):
+        step_name = config.parents[1].name
+        if step_name.isdigit():
+            candidates.append((int(step_name), config))
+    if not candidates:
+        raise FileNotFoundError(
+            f"no saved checkpoint exists under {output_dir / 'checkpoints'}; "
+            "restart this run without --resume"
+        )
+    return max(candidates, key=lambda item: item[0])[1]
+
+
 def _run_and_log(command: list[str], log_path: Path) -> str:
     log_path.parent.mkdir(parents=True, exist_ok=True)
     lines = []
@@ -112,7 +126,7 @@ def main() -> None:
     output_dir = (args.output_dir or default_root / args.model_id).resolve()
     command = build_train_command(protocol, args.model_id, args.mode, output_dir, protocol_path)
     if args.resume:
-        command.append("--resume=true")
+        command.extend(("--resume=true", f"--config_path={latest_checkpoint_config(output_dir)}"))
     if args.dry_run:
         print(shlex.join(command))
         return
