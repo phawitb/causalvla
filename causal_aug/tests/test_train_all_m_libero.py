@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.train_all_m_libero import MODEL_IDS, SUITES, build_run_matrix, missing_policy_modules
+from scripts.train_all_m_libero import MODEL_IDS, SUITES, build_run_matrix, missing_policy_modules, should_resume_run
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -82,3 +82,16 @@ def test_preflight_reports_each_policy_patch_that_is_not_importable():
         "lerobot.policies.online_dr",
         "lerobot.policies.causal_vla_warm",
     ]
+
+
+def test_resume_only_applies_to_runs_that_already_have_output(tmp_path):
+    runs = build_run_matrix(ROOT, ("object",), ("M0-clean", "M1-offline-dr"))
+    started = runs[0]
+    not_started = runs[1]
+    object.__setattr__(started, "output_dir", tmp_path / "started")
+    object.__setattr__(not_started, "output_dir", tmp_path / "not-started")
+    started.output_dir.mkdir()
+
+    assert should_resume_run(started, requested=True)
+    assert not should_resume_run(not_started, requested=True)
+    assert not should_resume_run(started, requested=False)

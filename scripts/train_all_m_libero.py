@@ -187,6 +187,10 @@ def _is_completed(output_dir: Path) -> bool:
     return manifest.is_file() and json.loads(manifest.read_text()).get("status") == "completed"
 
 
+def should_resume_run(run: TrainingRun, requested: bool) -> bool:
+    return requested and run.output_dir.is_dir()
+
+
 def _print_dry_run(root: Path, runs: list[TrainingRun], resume: bool) -> None:
     prepared: set[str] = set()
     for run in runs:
@@ -239,7 +243,12 @@ def main() -> None:
         run_env = env.copy()
         if run.needs_offline_dataset:
             run_env["FAIR_V1_OFFLINE_REVISION"] = offline_revisions[run.suite]
-        subprocess.run(_train_command(root, run, args.resume), cwd=root, env=run_env, check=True)
+        subprocess.run(
+            _train_command(root, run, should_resume_run(run, args.resume)),
+            cwd=root,
+            env=run_env,
+            check=True,
+        )
 
 
 if __name__ == "__main__":
