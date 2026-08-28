@@ -52,7 +52,7 @@ diff --git a/src/lerobot/scripts/lerobot_train.py b/src/lerobot/scripts/lerobot_
 +        dataloader = torch.utils.data.DataLoader(
 +            dataset, num_workers=cfg.num_workers, batch_size=cfg.batch_size,
 +            shuffle=shuffle and not cfg.dataset.streaming, sampler=sampler,
-+            pin_memory=device.type == "cuda", drop_last=False, collate_fn=collate_fn,
++            pin_memory=device.type == "cuda", drop_last=bool(getattr(cfg.policy, 'exact_balance', False)), collate_fn=collate_fn,
 +            **_dataloader_worker_kwargs(cfg),
 +        )
  

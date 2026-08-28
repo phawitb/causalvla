@@ -61,3 +61,20 @@ def test_installer_skips_optional_eval_patch_when_eval_module_is_absent(tmp_path
     install_eval_policy_view_patch(tmp_path, policies_dir)
 
     assert "Skipping policy-view eval patch" in capsys.readouterr().out
+
+
+def test_installer_upgrades_existing_sampler_to_drop_odd_online_dr_batch(tmp_path):
+    from scripts.install_policy_patches import install_fair_sampler_patch
+
+    policies_dir = tmp_path / "site-packages/lerobot/policies"
+    train_file = tmp_path / "site-packages/lerobot/scripts/lerobot_train.py"
+    policies_dir.mkdir(parents=True)
+    train_file.parent.mkdir(parents=True)
+    train_file.write_text(
+        "from causal_aug import PairedBatchSampler\n"
+        "pin_memory=device.type == 'cuda', drop_last=False, collate_fn=collate_fn,\n"
+    )
+
+    install_fair_sampler_patch(tmp_path, policies_dir)
+
+    assert "drop_last=bool(getattr(cfg.policy, 'exact_balance', False))" in train_file.read_text()

@@ -9,10 +9,6 @@ import shutil
 import subprocess
 from pathlib import Path
 
-import lerobot.policies
-import lerobot.policies.smolvla.modeling_smolvla as smolvla
-
-
 POLICIES = {
     "causal_vla": "CausalVLAConfig",
     "causal_vla_warm": "CausalVLAWarmConfig",
@@ -85,8 +81,18 @@ def install_fixed_episode_eval_patch(repo: Path, policies_dir: Path) -> None:
 def install_fair_sampler_patch(repo: Path, policies_dir: Path) -> None:
     lerobot_src = policies_dir.parents[1]
     train_file = lerobot_src / "lerobot" / "scripts" / "lerobot_train.py"
-    if "PairedBatchSampler" in train_file.read_text():
-        print("Fair sampler patch already installed")
+    train_source = train_file.read_text()
+    exact_balance_drop_last = "drop_last=bool(getattr(cfg.policy, 'exact_balance', False))"
+    if "PairedBatchSampler" in train_source:
+        if exact_balance_drop_last not in train_source:
+            old = "drop_last=False, collate_fn=collate_fn,"
+            if old not in train_source:
+                raise RuntimeError(f"Fair sampler drop_last anchor not found: {train_file}")
+            replacement = f"{exact_balance_drop_last}, collate_fn=collate_fn,"
+            train_file.write_text(train_source.replace(old, replacement, 1))
+            print("Upgraded fair sampler exact-balance drop_last behavior")
+        else:
+            print("Fair sampler patch already installed")
         return
     patch_file = repo / "lerobot_patches" / "lerobot_fair_sampler.patch"
     patch_cwd, strip_level = patch_invocation(lerobot_src)
@@ -108,6 +114,9 @@ def install_shared_patches(repo: Path, policies_dir: Path) -> None:
 
 
 def main() -> None:
+    import lerobot.policies
+    import lerobot.policies.smolvla.modeling_smolvla as smolvla
+
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "policies",
