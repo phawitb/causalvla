@@ -10,7 +10,8 @@
     "M0-clean": {"policy_type": "smolvla", "repo_id": "phawitbinabik/causalvla-fair-v1-m0-clean-long"},
     "M1-offline-dr": {"policy_type": "smolvla", "repo_id": "phawitbinabik/causalvla-fair-v1-m1-offline-dr-long", "clean_per_batch": 8, "augmented_per_batch": 8},
     "M2-online-dr": {"policy_type": "online_dr", "repo_id": "phawitbinabik/causalvla-fair-v1-m2-online-dr-long", "clean_per_batch": 8, "augmented_per_batch": 8, "exact_balance": true, "aug_intensity": 1.0},
-    "M3-v2-warm": {"policy_type": "causal_vla_warm", "repo_id": "phawitbinabik/causalvla-fair-v1-m3-v2-warm-long", "clean_task_weight": 0.5, "augmented_task_weight": 0.5, "lambda_action": 0.05, "n_counterfactual": 1}
+    "M3-v2-warm": {"policy_type": "causal_vla_warm", "repo_id": "phawitbinabik/causalvla-fair-v1-m3-v2-warm-long", "clean_task_weight": 0.5, "augmented_task_weight": 0.5, "lambda_action": 0.05, "n_counterfactual": 1},
+    "M4-v2-warm-030": {"policy_type": "causal_vla_warm", "repo_id": "phawitbinabik/causalvla-fair-v1-m4-v2-warm-030-long", "clean_task_weight": 0.5, "augmented_task_weight": 0.5, "lambda_action": 0.03, "n_counterfactual": 1}
   },
   "evaluation": {"suite": "libero_10", "seed": 4000, "levels": ["level_0", "level_1", "level_2"], "preflight_episodes_per_task": 1, "episodes_per_task": 10, "task_count": 10}
 }

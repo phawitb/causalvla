@@ -8,7 +8,7 @@ from pathlib import Path
 
 from scripts.fair_protocol import SHA_PATTERN, load_protocol, protocol_hash, resolve_hf_revision, validate_protocol
 
-FIXED_MODELS = ("M0-clean", "M1-offline-dr", "M2-online-dr", "M3-v2-warm")
+FIXED_MODELS = ("M0-clean", "M1-offline-dr", "M2-online-dr", "M3-v2-warm", "M4-v2-warm-030")
 
 @dataclass(frozen=True)
 class EvalRun:

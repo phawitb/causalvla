@@ -10,13 +10,13 @@ from scripts.train_all_m_libero import MODEL_IDS, SUITES, build_run_matrix, miss
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def test_default_matrix_covers_four_models_across_three_suites():
+def test_default_matrix_covers_five_models_across_three_suites():
     runs = build_run_matrix(ROOT, tuple(SUITES), MODEL_IDS)
 
     assert [(run.suite, run.model_id) for run in runs] == [
         (suite, model) for suite in ("object", "goal", "long") for model in MODEL_IDS
     ]
-    assert len(runs) == 12
+    assert len(runs) == 15
 
 
 @pytest.mark.parametrize(
@@ -55,7 +55,7 @@ def test_dry_run_prints_all_training_commands_without_starting_training():
     )
 
     assert result.returncode == 0, result.stderr
-    assert result.stdout.count("scripts/train_fair_v1.py") == 12
+    assert result.stdout.count("scripts/train_fair_v1.py") == 15
     assert "materialize_fair_offline.py" in result.stdout
     assert "fair_object.json" in result.stdout
     assert "fair_goal.json" in result.stdout

@@ -37,6 +37,7 @@ def test_protocol_hash_is_order_independent():
         (lambda p: p["training"].update(steps=20000), "training.steps must equal 25000"),
         (lambda p: p["models"]["M1-offline-dr"].update(clean_per_batch=7), "8 clean and 8 augmented"),
         (lambda p: p["models"]["M3-v2-warm"].update(lambda_action=0.1), "lambda_action must equal 0.05"),
+        (lambda p: p["models"]["M4-v2-warm-030"].update(lambda_action=0.05), "lambda_action must equal 0.03"),
     ],
 )
 def test_protocol_rejects_drift(mutate, message):
@@ -51,3 +52,14 @@ def test_protocol_rejects_augmentation_hash_mismatch():
     protocol["augmentation_manifest"]["sha256"] = "0" * 64
     with pytest.raises(ValueError, match="augmentation manifest hash"):
         validate_protocol(protocol, PROTOCOL_PATH)
+
+
+def test_m4_differs_from_m3_only_by_identity_and_action_weight():
+    protocol = load_protocol(PROTOCOL_PATH)
+    m3 = protocol["models"]["M3-v2-warm"]
+    m4 = protocol["models"]["M4-v2-warm-030"]
+    comparable_m3 = {**m3, "repo_id": None, "lambda_action": None}
+    comparable_m4 = {**m4, "repo_id": None, "lambda_action": None}
+    assert comparable_m4 == comparable_m3
+    assert m3["lambda_action"] == 0.05
+    assert m4["lambda_action"] == 0.03

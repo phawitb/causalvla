@@ -54,6 +54,14 @@
       "augmented_task_weight": 0.5,
       "lambda_action": 0.05,
       "n_counterfactual": 1
+    },
+    "M4-v2-warm-030": {
+      "policy_type": "causal_vla_warm",
+      "repo_id": "phawitbinabik/causalvla-fair-v1-m4-v2-warm-030-spatial",
+      "clean_task_weight": 0.5,
+      "augmented_task_weight": 0.5,
+      "lambda_action": 0.03,
+      "n_counterfactual": 1
     }
   },
   "evaluation": {

@@ -46,6 +46,9 @@ def test_commands_route_model_specific_contracts(tmp_path):
     assert "--policy.type=causal_vla_warm" in commands["M3-v2-warm"]
     assert "--policy.lambda_action=0.05" in commands["M3-v2-warm"]
     assert "--policy.action_warmup_steps=10000" in commands["M3-v2-warm"]
+    assert "--policy.type=causal_vla_warm" in commands["M4-v2-warm-030"]
+    assert "--policy.lambda_action=0.03" in commands["M4-v2-warm-030"]
+    assert "--policy.action_warmup_steps=10000" in commands["M4-v2-warm-030"]
 
 
 @pytest.mark.parametrize("model_id", MODEL_IDS)

@@ -44,6 +44,7 @@ FAIR_META = {
     "M1-offline-dr": {"name": "M1 — Offline DR", "description": "Fair v1 deterministic offline augmentation"},
     "M2-online-dr": {"name": "M2 — Online DR", "description": "Fair v1 matched online augmentation"},
     "M3-v2-warm": {"name": "M3 — V2-Warm", "description": "Fair v1 paired consistency training"},
+    "M4-v2-warm-030": {"name": "M4 — V2-Warm λ=0.03", "description": "M3 ablation with lower action-consistency weight"},
 }
 
 

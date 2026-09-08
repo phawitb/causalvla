@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Literal
 
 
-MODEL_IDS = ("M0-clean", "M1-offline-dr", "M2-online-dr", "M3-v2-warm")
+MODEL_IDS = ("M0-clean", "M1-offline-dr", "M2-online-dr", "M3-v2-warm", "M4-v2-warm-030")
 SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 
 
@@ -58,6 +58,14 @@ def validate_protocol(protocol: dict, protocol_path: Path | None = None) -> None
         raise ValueError("M3-v2-warm task weights must equal 0.5/0.5")
     if warm.get("lambda_action") != 0.05:
         raise ValueError("M3-v2-warm lambda_action must equal 0.05")
+    m4 = protocol["models"]["M4-v2-warm-030"]
+    if (m4.get("clean_task_weight"), m4.get("augmented_task_weight")) != (0.5, 0.5):
+        raise ValueError("M4-v2-warm-030 task weights must equal 0.5/0.5")
+    if m4.get("lambda_action") != 0.03:
+        raise ValueError("M4-v2-warm-030 lambda_action must equal 0.03")
+    for key in ("policy_type", "clean_task_weight", "augmented_task_weight", "n_counterfactual"):
+        if m4.get(key) != warm.get(key):
+            raise ValueError(f"M4-v2-warm-030 {key} must match M3-v2-warm")
 
     if protocol_path is not None:
         manifest = Path(protocol_path).parent / protocol["augmentation_manifest"]["path"]
@@ -133,7 +141,7 @@ def build_train_command(
                 _arg("policy.fair_seed", protocol["training"]["seed"]),
             ]
         )
-    elif model_id == "M3-v2-warm":
+    elif model_id in ("M3-v2-warm", "M4-v2-warm-030"):
         command.extend(
             [
                 _arg("policy.n_counterfactual", 1),
@@ -141,7 +149,7 @@ def build_train_command(
                 _arg("policy.clean_task_weight", 0.5),
                 _arg("policy.augmented_task_weight", 0.5),
                 _arg("policy.use_action_loss", True),
-                _arg("policy.lambda_action", 0.05),
+                _arg("policy.lambda_action", config["lambda_action"]),
                 _arg("policy.action_warmup_steps", 10000),
                 _arg("policy.use_latent_loss", False),
                 _arg("policy.lambda_latent", 0.0),

@@ -7,7 +7,7 @@
 
 ---
 
-## Fair Protocol v1 — M0/M1/M2/M3
+## Fair Protocol v1 — M0/M1/M2/M3/M4
 
 `configs/fair_v1.json` is the source of truth. Full runs use 25,000 optimizer steps,
 batch size 16, training seed 1000, and checkpoints every 5,000 steps.
@@ -44,12 +44,25 @@ export FAIR_V1_OFFLINE_REVISION="$(python -c \
 ./scripts/run_fair_v1.sh M1-offline-dr --mode full
 ./scripts/run_fair_v1.sh M2-online-dr --mode full
 ./scripts/run_fair_v1.sh M3-v2-warm --mode full
+./scripts/run_fair_v1.sh M4-v2-warm-030 --mode full
+```
+
+M4 is the controlled M3 ablation: every training setting is identical except
+the final action-consistency weight is 0.03 instead of 0.05. On the GPU server,
+run only M4 in the background with:
+
+```bash
+mkdir -p logs
+nohup ./scripts/run_fair_v1.sh M4-v2-warm-030 --mode full \
+  > logs/m4-v2-warm-030.log 2>&1 &
+echo $! > logs/m4-v2-warm-030.pid
+tail -f logs/m4-v2-warm-030.log
 ```
 
 Each run uploads checkpoints and provenance to its dedicated HF repository. Resume with
 `--resume` only against the same protocol hash.
 
-### Mac evaluation after all four uploads
+### Mac evaluation after uploads
 
 ```bash
 ./scripts/run_fair_eval_v1.sh --phase preflight

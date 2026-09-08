@@ -14,9 +14,10 @@ def test_full_matrix_is_seed_4000_for_trained_models_only():
         "M1-offline-dr",
         "M2-online-dr",
         "M3-v2-warm",
+        "M4-v2-warm-030",
     }
     assert {run.seed for run in matrix} == {4000}
-    assert len(matrix) == 12
+    assert len(matrix) == 15
 
 
 def test_command_targets_fixed_tree_and_episode_scope():
