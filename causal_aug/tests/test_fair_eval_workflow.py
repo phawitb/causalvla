@@ -13,17 +13,17 @@ ROOT = Path(__file__).resolve().parents[2]
 PROTOCOL = load_protocol(ROOT / "configs/fair_v1.json")
 
 
-def test_primary_matrix_has_fifteen_paired_runs():
+def test_primary_matrix_has_eighteen_paired_runs():
     matrix = evaluation_matrix(PROTOCOL, "full")
-    assert len(matrix) == 15
+    assert len(matrix) == 18
     assert {run.seed for run in matrix} == {4000}
     assert {run.level for run in matrix} == {"level_0", "level_1", "level_2"}
     assert {run.episodes_per_task for run in matrix} == {10}
 
 
-def test_preflight_has_five_level_zero_runs():
+def test_preflight_has_six_level_zero_runs():
     matrix = evaluation_matrix(PROTOCOL, "preflight")
-    assert len(matrix) == 5
+    assert len(matrix) == 6
     assert {run.level for run in matrix} == {"level_0"}
     assert {run.episodes_per_task for run in matrix} == {1}
 

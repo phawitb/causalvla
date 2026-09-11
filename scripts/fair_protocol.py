@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Literal
 
 
-MODEL_IDS = ("M0-clean", "M1-offline-dr", "M2-online-dr", "M3-v2-warm", "M4-v2-warm-030")
+MODEL_IDS = ("M0-clean", "M1-offline-dr", "M2-online-dr", "M3-v2-warm", "M4-v2-warm-030", "M5-v2-warm-070")
 SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 
 
@@ -66,6 +66,14 @@ def validate_protocol(protocol: dict, protocol_path: Path | None = None) -> None
     for key in ("policy_type", "clean_task_weight", "augmented_task_weight", "n_counterfactual"):
         if m4.get(key) != warm.get(key):
             raise ValueError(f"M4-v2-warm-030 {key} must match M3-v2-warm")
+    m5 = protocol["models"]["M5-v2-warm-070"]
+    if (m5.get("clean_task_weight"), m5.get("augmented_task_weight")) != (0.5, 0.5):
+        raise ValueError("M5-v2-warm-070 task weights must equal 0.5/0.5")
+    if m5.get("lambda_action") != 0.07:
+        raise ValueError("M5-v2-warm-070 lambda_action must equal 0.07")
+    for key in ("policy_type", "clean_task_weight", "augmented_task_weight", "n_counterfactual"):
+        if m5.get(key) != warm.get(key):
+            raise ValueError(f"M5-v2-warm-070 {key} must match M3-v2-warm")
 
     if protocol_path is not None:
         manifest = Path(protocol_path).parent / protocol["augmentation_manifest"]["path"]
@@ -141,7 +149,7 @@ def build_train_command(
                 _arg("policy.fair_seed", protocol["training"]["seed"]),
             ]
         )
-    elif model_id in ("M3-v2-warm", "M4-v2-warm-030"):
+    elif model_id in ("M3-v2-warm", "M4-v2-warm-030", "M5-v2-warm-070"):
         command.extend(
             [
                 _arg("policy.n_counterfactual", 1),

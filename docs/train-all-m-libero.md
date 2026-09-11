@@ -1,9 +1,9 @@
-# Train M0–M4 on LIBERO Object, Goal, and Long
+# Train M0–M5 on LIBERO Object, Goal, and Long
 
-This workflow runs 15 full Fair Protocol v1 jobs sequentially on one GPU:
+This workflow runs 18 full Fair Protocol v1 jobs sequentially on one GPU:
 
 - Suites: LIBERO Object, Goal, and Long (`libero_10`)
-- Models: M0-clean, M1-offline-dr, M2-online-dr, M3-v2-warm, and M4-v2-warm-030
+- Models: M0-clean, M1-offline-dr, M2-online-dr, M3-v2-warm, M4-v2-warm-030, and M5-v2-warm-070
 - Training contract: 25,000 steps, batch size 16, seed 1000, checkpoint every 5,000 steps
 
 The runner validates CUDA, Hugging Face authentication, policy patches, and immutable source-dataset revisions before training. When an M1 offline dataset does not exist in the `phawitbinabik` namespace, it materializes and uploads that suite's deterministic clean/augmented dataset before starting any model training. Existing completed runs are skipped.

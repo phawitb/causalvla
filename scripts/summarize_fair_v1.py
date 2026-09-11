@@ -71,7 +71,7 @@ def main() -> None:
     args = parser.parse_args()
     paths = sorted(args.eval_root.glob("*/level_*/seed4000/eval_info.json"))
     summary = summarize_runs(paths)
-    expected = {f"{model}/{level}" for model in ("M0-clean", "M1-offline-dr", "M2-online-dr", "M3-v2-warm", "M4-v2-warm-030") for level in ("level_0", "level_1", "level_2")}
+    expected = {f"{model}/{level}" for model in ("M0-clean", "M1-offline-dr", "M2-online-dr", "M3-v2-warm", "M4-v2-warm-030", "M5-v2-warm-070") for level in ("level_0", "level_1", "level_2")}
     actual = {f"{path.parents[2].name}/{path.parents[1].name}" for path in paths}
     missing = sorted(expected - actual)
     if paths and missing and not args.allow_partial:

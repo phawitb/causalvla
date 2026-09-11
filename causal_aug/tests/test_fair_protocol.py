@@ -38,6 +38,7 @@ def test_protocol_hash_is_order_independent():
         (lambda p: p["models"]["M1-offline-dr"].update(clean_per_batch=7), "8 clean and 8 augmented"),
         (lambda p: p["models"]["M3-v2-warm"].update(lambda_action=0.1), "lambda_action must equal 0.05"),
         (lambda p: p["models"]["M4-v2-warm-030"].update(lambda_action=0.05), "lambda_action must equal 0.03"),
+        (lambda p: p["models"]["M5-v2-warm-070"].update(lambda_action=0.05), "lambda_action must equal 0.07"),
     ],
 )
 def test_protocol_rejects_drift(mutate, message):
@@ -63,3 +64,14 @@ def test_m4_differs_from_m3_only_by_identity_and_action_weight():
     assert comparable_m4 == comparable_m3
     assert m3["lambda_action"] == 0.05
     assert m4["lambda_action"] == 0.03
+
+
+def test_m5_differs_from_m3_only_by_identity_and_action_weight():
+    protocol = load_protocol(PROTOCOL_PATH)
+    m3 = protocol["models"]["M3-v2-warm"]
+    m5 = protocol["models"]["M5-v2-warm-070"]
+    comparable_m3 = {**m3, "repo_id": None, "lambda_action": None}
+    comparable_m5 = {**m5, "repo_id": None, "lambda_action": None}
+    assert comparable_m5 == comparable_m3
+    assert m3["lambda_action"] == 0.05
+    assert m5["lambda_action"] == 0.07

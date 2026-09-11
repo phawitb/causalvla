@@ -45,6 +45,7 @@ export FAIR_V1_OFFLINE_REVISION="$(python -c \
 ./scripts/run_fair_v1.sh M2-online-dr --mode full
 ./scripts/run_fair_v1.sh M3-v2-warm --mode full
 ./scripts/run_fair_v1.sh M4-v2-warm-030 --mode full
+./scripts/run_fair_v1.sh M5-v2-warm-070 --mode full
 ```
 
 M4 is the controlled M3 ablation: every training setting is identical except
@@ -57,6 +58,17 @@ nohup ./scripts/run_fair_v1.sh M4-v2-warm-030 --mode full \
   > logs/m4-v2-warm-030.log 2>&1 &
 echo $! > logs/m4-v2-warm-030.pid
 tail -f logs/m4-v2-warm-030.log
+```
+
+M5 is the controlled M3 ablation with a higher final action-consistency weight:
+0.07 instead of 0.05. Run only M5 on the GPU server with:
+
+```bash
+mkdir -p logs
+nohup ./scripts/run_fair_v1.sh M5-v2-warm-070 --mode full \
+  > logs/m5-v2-warm-070.log 2>&1 &
+echo $! > logs/m5-v2-warm-070.pid
+tail -f logs/m5-v2-warm-070.log
 ```
 
 Each run uploads checkpoints and provenance to its dedicated HF repository. Resume with
