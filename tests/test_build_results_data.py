@@ -60,6 +60,29 @@ class BuildResultsDataTest(unittest.TestCase):
             self.assertEqual(data["fixedEpisodes"][0]["model"], "M0-clean")
             self.assertEqual(data["fixedRuns"][0]["successes"], 1)
             self.assertEqual(data["fixedRuns"][0]["episodes"], 1)
+
+    def test_keeps_fixed_object_results_in_a_separate_suite(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            for tree, task_group in (("fair-v1-fixed", "libero_spatial"), ("fair-v1-fixed-object", "libero_object")):
+                run_dir = root / "outputs/eval" / tree / "full/M0-clean/level_0/seed4000"
+                run_dir.mkdir(parents=True)
+                payload = {
+                    "augmentation_scope": "episode",
+                    "ood_level": "level_0",
+                    "ood_provenance": {"algorithm": "causal_aug.FixedEpisodeOOD", "evaluation_seed": 4000},
+                    "per_task": [{"task_group": task_group, "task_id": 0, "metrics": {"successes": [True]}}],
+                }
+                (run_dir / "eval_info.json").write_text(json.dumps(payload))
+
+            output = root / "results-data.json"
+            completed = subprocess.run([sys.executable, str(SCRIPT), "--repo-root", str(root), "--output", str(output)], capture_output=True, text=True)
+
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            suites = json.loads(output.read_text())["fixedSuites"]
+            self.assertEqual(set(suites), {"libero_object"})
+            self.assertEqual(json.loads(output.read_text())["fixedRuns"][0]["suite"], "libero_spatial")
+            self.assertEqual(suites["libero_object"]["runs"][0]["suite"], "libero_object")
     def test_includes_fair_v1_provenance_when_present(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

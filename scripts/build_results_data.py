@@ -78,9 +78,9 @@ def repo_relative_existing(raw_path: str, repo_root: Path) -> str | None:
     return None
 
 
-def build_fixed_collection(repo_root: Path) -> tuple[list, list, list]:
+def build_fixed_collection(repo_root: Path, tree: str = "fair-v1-fixed", suite: str = "libero_spatial") -> tuple[list, list, list]:
     stats, runs, episodes = {}, [], []
-    root = repo_root / "outputs/eval/fair-v1-fixed/full"
+    root = repo_root / "outputs" / "eval" / tree / "full"
     for info_path in sorted(root.glob("*/level_*/seed*/eval_info.json")):
         model_id, level, seed = info_path.parents[2].name, info_path.parents[1].name.removeprefix("level_"), info_path.parent.name.removeprefix("seed")
         if model_id not in FAIR_META:
@@ -92,8 +92,8 @@ def build_fixed_collection(repo_root: Path) -> tuple[list, list, list]:
         model = stats.setdefault(model_id, {"id":model_id, **FAIR_META[model_id], "runs":0, "episodes":0, "successes":0, "videos":0, "cleanVideos":0, "policyVideos":0, "levels":defaultdict(lambda:{"episodes":0,"successes":0})})
         model["runs"] += 1
         provenance = payload.get("ood_provenance", {})
-        run_id = f"fixed:{model_id}:{level}:seed{seed}"
-        runs.append({"id":run_id,"model":model_id,"level":int(level),"seed":int(seed),"successes":run_successes,"episodes":run_episodes,"ood":{"level":payload.get("ood_level",f"level_{level}"),"params":payload.get("ood_params",{}),"algorithm":provenance.get("algorithm"),"version":provenance.get("version",1),"augmentationScope":"episode"},"modelRevision":payload.get("model_revision"),"protocolSha256":payload.get("protocol_sha256")})
+        run_id = f"fixed:{model_id}:{level}:seed{seed}" if suite == "libero_spatial" else f"fixed:{suite}:{model_id}:{level}:seed{seed}"
+        runs.append({"id":run_id,"suite":suite,"model":model_id,"level":int(level),"seed":int(seed),"successes":run_successes,"episodes":run_episodes,"ood":{"level":payload.get("ood_level",f"level_{level}"),"params":payload.get("ood_params",{}),"algorithm":provenance.get("algorithm"),"version":provenance.get("version",1),"augmentationScope":"episode"},"modelRevision":payload.get("model_revision"),"protocolSha256":payload.get("protocol_sha256")})
         for task in payload.get("per_task", []):
             metrics=task.get("metrics",{}); successes=metrics.get("successes",[]); clean_paths=metrics.get("video_paths",[]); policy_paths=metrics.get("policy_video_paths",[])
             for index, succeeded in enumerate(successes):
@@ -240,7 +240,11 @@ def build_manifest(repo_root: Path) -> dict:
         models.append(model)
 
     fixed_models, fixed_runs, fixed_episodes = build_fixed_collection(repo_root)
-    return {"models": models, "runs": runs, "episodes": episodes, "fixedModels": fixed_models, "fixedRuns": fixed_runs, "fixedEpisodes": fixed_episodes}
+    object_models, object_runs, object_episodes = build_fixed_collection(repo_root, "fair-v1-fixed-object", "libero_object")
+    fixed_suites = {
+        "libero_object": {"models": object_models, "runs": object_runs, "episodes": object_episodes},
+    }
+    return {"models": models, "runs": runs, "episodes": episodes, "fixedModels": fixed_models, "fixedRuns": fixed_runs, "fixedEpisodes": fixed_episodes, "fixedSuites": fixed_suites}
 
 
 def main() -> None:

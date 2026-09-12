@@ -54404,6 +54404,7 @@
   "fixedRuns": [
     {
       "id": "fixed:M0-clean:0:seed4000",
+      "suite": "libero_spatial",
       "model": "M0-clean",
       "level": 0,
       "seed": 4000,
@@ -54421,6 +54422,7 @@
     },
     {
       "id": "fixed:M0-clean:0:seed5000",
+      "suite": "libero_spatial",
       "model": "M0-clean",
       "level": 0,
       "seed": 5000,
@@ -54438,6 +54440,7 @@
     },
     {
       "id": "fixed:M0-clean:0:seed6000",
+      "suite": "libero_spatial",
       "model": "M0-clean",
       "level": 0,
       "seed": 6000,
@@ -54455,6 +54458,7 @@
     },
     {
       "id": "fixed:M0-clean:1:seed4000",
+      "suite": "libero_spatial",
       "model": "M0-clean",
       "level": 1,
       "seed": 4000,
@@ -54510,6 +54514,7 @@
     },
     {
       "id": "fixed:M0-clean:1:seed5000",
+      "suite": "libero_spatial",
       "model": "M0-clean",
       "level": 1,
       "seed": 5000,
@@ -54565,6 +54570,7 @@
     },
     {
       "id": "fixed:M0-clean:1:seed6000",
+      "suite": "libero_spatial",
       "model": "M0-clean",
       "level": 1,
       "seed": 6000,
@@ -54620,6 +54626,7 @@
     },
     {
       "id": "fixed:M0-clean:2:seed4000",
+      "suite": "libero_spatial",
       "model": "M0-clean",
       "level": 2,
       "seed": 4000,
@@ -54676,6 +54683,7 @@
     },
     {
       "id": "fixed:M0-clean:2:seed5000",
+      "suite": "libero_spatial",
       "model": "M0-clean",
       "level": 2,
       "seed": 5000,
@@ -54732,6 +54740,7 @@
     },
     {
       "id": "fixed:M0-clean:2:seed6000",
+      "suite": "libero_spatial",
       "model": "M0-clean",
       "level": 2,
       "seed": 6000,
@@ -54788,6 +54797,7 @@
     },
     {
       "id": "fixed:M1-offline-dr:0:seed4000",
+      "suite": "libero_spatial",
       "model": "M1-offline-dr",
       "level": 0,
       "seed": 4000,
@@ -54805,6 +54815,7 @@
     },
     {
       "id": "fixed:M1-offline-dr:0:seed5000",
+      "suite": "libero_spatial",
       "model": "M1-offline-dr",
       "level": 0,
       "seed": 5000,
@@ -54822,6 +54833,7 @@
     },
     {
       "id": "fixed:M1-offline-dr:0:seed6000",
+      "suite": "libero_spatial",
       "model": "M1-offline-dr",
       "level": 0,
       "seed": 6000,
@@ -54839,6 +54851,7 @@
     },
     {
       "id": "fixed:M1-offline-dr:1:seed4000",
+      "suite": "libero_spatial",
       "model": "M1-offline-dr",
       "level": 1,
       "seed": 4000,
@@ -54894,6 +54907,7 @@
     },
     {
       "id": "fixed:M1-offline-dr:1:seed5000",
+      "suite": "libero_spatial",
       "model": "M1-offline-dr",
       "level": 1,
       "seed": 5000,
@@ -54949,6 +54963,7 @@
     },
     {
       "id": "fixed:M1-offline-dr:1:seed6000",
+      "suite": "libero_spatial",
       "model": "M1-offline-dr",
       "level": 1,
       "seed": 6000,
@@ -55004,6 +55019,7 @@
     },
     {
       "id": "fixed:M1-offline-dr:2:seed4000",
+      "suite": "libero_spatial",
       "model": "M1-offline-dr",
       "level": 2,
       "seed": 4000,
@@ -55060,6 +55076,7 @@
     },
     {
       "id": "fixed:M1-offline-dr:2:seed5000",
+      "suite": "libero_spatial",
       "model": "M1-offline-dr",
       "level": 2,
       "seed": 5000,
@@ -55116,6 +55133,7 @@
     },
     {
       "id": "fixed:M1-offline-dr:2:seed6000",
+      "suite": "libero_spatial",
       "model": "M1-offline-dr",
       "level": 2,
       "seed": 6000,
@@ -55172,6 +55190,7 @@
     },
     {
       "id": "fixed:M2-online-dr:0:seed4000",
+      "suite": "libero_spatial",
       "model": "M2-online-dr",
       "level": 0,
       "seed": 4000,
@@ -55189,6 +55208,7 @@
     },
     {
       "id": "fixed:M2-online-dr:0:seed5000",
+      "suite": "libero_spatial",
       "model": "M2-online-dr",
       "level": 0,
       "seed": 5000,
@@ -55206,6 +55226,7 @@
     },
     {
       "id": "fixed:M2-online-dr:0:seed6000",
+      "suite": "libero_spatial",
       "model": "M2-online-dr",
       "level": 0,
       "seed": 6000,
@@ -55223,6 +55244,7 @@
     },
     {
       "id": "fixed:M2-online-dr:1:seed4000",
+      "suite": "libero_spatial",
       "model": "M2-online-dr",
       "level": 1,
       "seed": 4000,
@@ -55278,6 +55300,7 @@
     },
     {
       "id": "fixed:M2-online-dr:1:seed5000",
+      "suite": "libero_spatial",
       "model": "M2-online-dr",
       "level": 1,
       "seed": 5000,
@@ -55333,6 +55356,7 @@
     },
     {
       "id": "fixed:M2-online-dr:1:seed6000",
+      "suite": "libero_spatial",
       "model": "M2-online-dr",
       "level": 1,
       "seed": 6000,
@@ -55388,6 +55412,7 @@
     },
     {
       "id": "fixed:M2-online-dr:2:seed4000",
+      "suite": "libero_spatial",
       "model": "M2-online-dr",
       "level": 2,
       "seed": 4000,
@@ -55444,6 +55469,7 @@
     },
     {
       "id": "fixed:M2-online-dr:2:seed5000",
+      "suite": "libero_spatial",
       "model": "M2-online-dr",
       "level": 2,
       "seed": 5000,
@@ -55500,6 +55526,7 @@
     },
     {
       "id": "fixed:M2-online-dr:2:seed6000",
+      "suite": "libero_spatial",
       "model": "M2-online-dr",
       "level": 2,
       "seed": 6000,
@@ -55556,6 +55583,7 @@
     },
     {
       "id": "fixed:M3-v2-warm:0:seed4000",
+      "suite": "libero_spatial",
       "model": "M3-v2-warm",
       "level": 0,
       "seed": 4000,
@@ -55573,6 +55601,7 @@
     },
     {
       "id": "fixed:M3-v2-warm:1:seed4000",
+      "suite": "libero_spatial",
       "model": "M3-v2-warm",
       "level": 1,
       "seed": 4000,
@@ -55628,6 +55657,7 @@
     },
     {
       "id": "fixed:M3-v2-warm:2:seed4000",
+      "suite": "libero_spatial",
       "model": "M3-v2-warm",
       "level": 2,
       "seed": 4000,
@@ -55684,6 +55714,7 @@
     },
     {
       "id": "fixed:M4-v2-warm-030:0:seed4000",
+      "suite": "libero_spatial",
       "model": "M4-v2-warm-030",
       "level": 0,
       "seed": 4000,
@@ -55701,6 +55732,7 @@
     },
     {
       "id": "fixed:M4-v2-warm-030:1:seed4000",
+      "suite": "libero_spatial",
       "model": "M4-v2-warm-030",
       "level": 1,
       "seed": 4000,
@@ -55756,6 +55788,7 @@
     },
     {
       "id": "fixed:M4-v2-warm-030:2:seed4000",
+      "suite": "libero_spatial",
       "model": "M4-v2-warm-030",
       "level": 2,
       "seed": 4000,
@@ -55812,6 +55845,7 @@
     },
     {
       "id": "fixed:M5-v2-warm-070:0:seed4000",
+      "suite": "libero_spatial",
       "model": "M5-v2-warm-070",
       "level": 0,
       "seed": 4000,
@@ -55829,6 +55863,7 @@
     },
     {
       "id": "fixed:M5-v2-warm-070:0:seed5000",
+      "suite": "libero_spatial",
       "model": "M5-v2-warm-070",
       "level": 0,
       "seed": 5000,
@@ -55846,6 +55881,7 @@
     },
     {
       "id": "fixed:M5-v2-warm-070:0:seed6000",
+      "suite": "libero_spatial",
       "model": "M5-v2-warm-070",
       "level": 0,
       "seed": 6000,
@@ -55863,6 +55899,7 @@
     },
     {
       "id": "fixed:M5-v2-warm-070:1:seed4000",
+      "suite": "libero_spatial",
       "model": "M5-v2-warm-070",
       "level": 1,
       "seed": 4000,
@@ -55918,6 +55955,7 @@
     },
     {
       "id": "fixed:M5-v2-warm-070:1:seed5000",
+      "suite": "libero_spatial",
       "model": "M5-v2-warm-070",
       "level": 1,
       "seed": 5000,
@@ -55973,6 +56011,7 @@
     },
     {
       "id": "fixed:M5-v2-warm-070:1:seed6000",
+      "suite": "libero_spatial",
       "model": "M5-v2-warm-070",
       "level": 1,
       "seed": 6000,
@@ -56028,6 +56067,7 @@
     },
     {
       "id": "fixed:M5-v2-warm-070:2:seed4000",
+      "suite": "libero_spatial",
       "model": "M5-v2-warm-070",
       "level": 2,
       "seed": 4000,
@@ -56084,6 +56124,7 @@
     },
     {
       "id": "fixed:M5-v2-warm-070:2:seed5000",
+      "suite": "libero_spatial",
       "model": "M5-v2-warm-070",
       "level": 2,
       "seed": 5000,
@@ -56140,6 +56181,7 @@
     },
     {
       "id": "fixed:M5-v2-warm-070:2:seed6000",
+      "suite": "libero_spatial",
       "model": "M5-v2-warm-070",
       "level": 2,
       "seed": 6000,
@@ -110796,5 +110838,12 @@
       "cleanVideo": "outputs/eval/fair-v1-fixed/full/M5-v2-warm-070/level_2/seed6000/videos/libero_spatial_9/eval_episode_9.mp4",
       "policyVideo": "outputs/eval/fair-v1-fixed/full/M5-v2-warm-070/level_2/seed6000/videos/libero_spatial_9/policy_view/eval_episode_9.mp4"
     }
-  ]
+  ],
+  "fixedSuites": {
+    "libero_object": {
+      "models": [],
+      "runs": [],
+      "episodes": []
+    }
+  }
 }

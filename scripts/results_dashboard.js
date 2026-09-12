@@ -16,8 +16,9 @@
     return {cache: 'no-store'};
   }
 
-  function resultCollectionForView(data, view) {
+  function resultCollectionForView(data, view, suite = 'libero_spatial') {
     if (view === 'm-models-fixed') {
+      if (data.fixedSuites?.[suite]) return data.fixedSuites[suite];
       return {models: data.fixedModels || [], runs: data.fixedRuns || [], episodes: data.fixedEpisodes || []};
     }
     return {models: data.models || [], runs: data.runs || [], episodes: data.episodes || []};

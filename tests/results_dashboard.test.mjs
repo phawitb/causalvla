@@ -51,8 +51,23 @@ test('M-Models Fix selects only the fixed result collection', () => {
   assert.equal(resultCollectionForView(data, 'all').runs, data.runs);
 });
 
+test('M-Models Fix selects the requested LIBERO suite', () => {
+  const spatial = {models: [{id: 'M0-clean'}], runs: ['spatial'], episodes: []};
+  const object = {models: [{id: 'M5-v2-warm-070'}], runs: ['object'], episodes: []};
+  const data = {fixedSuites: {libero_spatial: spatial, libero_object: object}};
+
+  assert.deepEqual(resultCollectionForView(data, 'm-models-fixed', 'libero_object'), object);
+  assert.deepEqual(resultCollectionForView(data, 'm-models-fixed', 'libero_spatial'), spatial);
+});
+
 test('fixed result label lists every evaluation seed', () => {
   assert.match(html, /Fixed per episode · Seeds 4000, 5000, 6000/);
+});
+
+test('fixed results expose spatial and object suite choices', () => {
+  assert.match(html, /id="results-suite-filter"/);
+  assert.match(html, /value="libero_spatial"/);
+  assert.match(html, /value="libero_object"/);
 });
 
 test('seed result tables aggregate runs by model and level while preserving missing cells', () => {

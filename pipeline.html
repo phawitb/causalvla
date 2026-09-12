@@ -1106,7 +1106,15 @@ def test_ablation_no_action():
       <button class="results-subtab" type="button" data-results-view="m-models">M-Models</button>
       <button class="results-subtab" type="button" data-results-view="m-models-fixed">M-Models (Fix)</button>
     </nav>
-    <div class="ood-config" id="results-mode-label" hidden>Fixed per episode · Seeds 4000, 5000, 6000</div>
+    <div class="ood-config" id="results-mode-label" hidden>
+      Fixed per episode · Seeds 4000, 5000, 6000 ·
+      <label>Suite
+        <select id="results-suite-filter">
+          <option value="libero_spatial">LIBERO Spatial</option>
+          <option value="libero_object">LIBERO Object</option>
+        </select>
+      </label>
+    </div>
 
     <section class="results-section" aria-labelledby="results-overview-heading">
       <div class="results-section-head">
@@ -1198,6 +1206,7 @@ let selectedResultModel = 'a';
 let visibleRollouts = 12;
 let selectedVideoView = 'policy';
 let selectedResultsView = 'all';
+let selectedFixedSuite = 'libero_spatial';
 
 const resultFilters = {
   level: document.getElementById('result-level-filter'),
@@ -1227,7 +1236,7 @@ function setSelectOptions(select, label, values, formatter) {
 function renderResultOverview() {
   const grid = document.getElementById('results-model-grid');
   grid.innerHTML = '';
-  const collection = ResultDashboard.resultCollectionForView(resultsData, selectedResultsView);
+  const collection = ResultDashboard.resultCollectionForView(resultsData, selectedResultsView, selectedFixedSuite);
   const visibleModels = ResultDashboard.filterModelsForResultView(collection.models, selectedResultsView);
   if (!visibleModels.length) {
     grid.innerHTML = '<div class="results-empty">No M-Model evaluation results are available yet</div>';
@@ -1281,7 +1290,7 @@ function selectResultsView(view) {
   document.querySelectorAll('.results-subtab').forEach(button => {
     button.classList.toggle('active', button.dataset.resultsView === view);
   });
-  const collection = ResultDashboard.resultCollectionForView(resultsData, view);
+  const collection = ResultDashboard.resultCollectionForView(resultsData, view, selectedFixedSuite);
   selectedResultModel = ResultDashboard.defaultModelForResultView(collection.models, view);
   renderResultOverview();
   if (selectedResultModel) {
@@ -1298,7 +1307,7 @@ function selectResultModel(modelId) {
   selectedResultModel = modelId;
   visibleRollouts = 12;
   document.querySelectorAll('.result-model-card').forEach(card => card.classList.toggle('active', card.dataset.model === modelId));
-  const episodes = ResultDashboard.resultCollectionForView(resultsData, selectedResultsView).episodes.filter(episode => episode.model === modelId);
+  const episodes = ResultDashboard.resultCollectionForView(resultsData, selectedResultsView, selectedFixedSuite).episodes.filter(episode => episode.model === modelId);
   const levels = [...new Set(episodes.map(episode => episode.level))].sort((a, b) => a - b);
   const seeds = [...new Set(episodes.map(episode => episode.seed))].sort((a, b) => a - b);
   const tasks = [...new Set(episodes.map(episode => episode.task))].sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
@@ -1310,7 +1319,7 @@ function selectResultModel(modelId) {
 }
 
 function filteredRollouts() {
-  return ResultDashboard.resultCollectionForView(resultsData, selectedResultsView).episodes.filter(episode => {
+  return ResultDashboard.resultCollectionForView(resultsData, selectedResultsView, selectedFixedSuite).episodes.filter(episode => {
     if (episode.model !== selectedResultModel) return false;
     if (resultFilters.level.value !== 'all' && String(episode.level) !== resultFilters.level.value) return false;
     if (resultFilters.seed.value !== 'all' && String(episode.seed) !== resultFilters.seed.value) return false;
@@ -1322,7 +1331,7 @@ function filteredRollouts() {
 }
 
 function renderRollouts() {
-  const model = ResultDashboard.resultCollectionForView(resultsData, selectedResultsView).models.find(item => item.id === selectedResultModel);
+  const model = ResultDashboard.resultCollectionForView(resultsData, selectedResultsView, selectedFixedSuite).models.find(item => item.id === selectedResultModel);
   if (!model) return;
   const episodes = filteredRollouts();
   const shown = episodes.slice(0, visibleRollouts);
@@ -1367,7 +1376,7 @@ function renderOodConfig(episodes) {
     panel.textContent = 'Select an OOD level to view the parameters used to generate the Policy View';
     return;
   }
-  const run = ResultDashboard.resultCollectionForView(resultsData, selectedResultsView).runs?.find(candidate => candidate.id === episodes[0].run);
+  const run = ResultDashboard.resultCollectionForView(resultsData, selectedResultsView, selectedFixedSuite).runs?.find(candidate => candidate.id === episodes[0].run);
   if (!run) {
     panel.textContent = 'OOD provenance metadata is unavailable for this evaluation run';
     return;
@@ -1414,6 +1423,10 @@ document.getElementById('rollout-more').addEventListener('click', () => {
 });
 document.querySelectorAll('.results-subtab').forEach(button => {
   button.addEventListener('click', () => selectResultsView(button.dataset.resultsView));
+});
+document.getElementById('results-suite-filter').addEventListener('change', event => {
+  selectedFixedSuite = event.target.value;
+  if (selectedResultsView === 'm-models-fixed') selectResultsView(selectedResultsView);
 });
 document.getElementById('policy-view-btn').addEventListener('click', () => selectVideoView('policy'));
 document.getElementById('clean-view-btn').addEventListener('click', () => selectVideoView('clean'));
