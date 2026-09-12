@@ -24,14 +24,19 @@ def build_fixed_matrix(protocol: dict, mode: str, seeds: tuple[int, ...] = (4000
         levels, episodes = tuple(protocol["evaluation"]["levels"]), protocol["evaluation"]["episodes_per_task"]
     else:
         raise ValueError(f"unknown mode: {mode}")
-    return [EvalRun(model, level, seed, episodes) for model in FIXED_MODELS for seed in seeds for level in levels]
+    return [EvalRun(model, level, seed, episodes) for seed in seeds for model in FIXED_MODELS for level in levels]
+
+def fixed_output_root(protocol: dict, repo_root: Path) -> Path:
+    suite = protocol["evaluation"].get("suite", "libero_spatial")
+    suffix = "" if suite == "libero_spatial" else f"-{suite.removeprefix('libero_')}"
+    return repo_root / f"outputs/eval/fair-v1-fixed{suffix}"
 
 def build_fixed_eval_command(protocol: dict, run: EvalRun, revision: str, output_dir: Path) -> list[str]:
     if not SHA_PATTERN.fullmatch(revision):
         raise ValueError("evaluation requires an immutable model revision")
     return [sys.executable, str(Path(__file__).with_name("eval_ood.py")),
         f"--policy.path={protocol['models'][run.model_id]['repo_id']}", f"--policy.pretrained_revision={revision}",
-        "--policy.device=mps", "--env.type=libero", "--env.task=libero_spatial",
+        "--policy.device=mps", "--env.type=libero", f"--env.task={protocol['evaluation'].get('suite', 'libero_spatial')}",
         '--rename_map={"observation.images.image2":"observation.images.wrist_image"}',
         f"--ood_level={run.level}", "--augmentation_scope=episode", f"--eval.n_episodes={run.episodes_per_task}",
         "--eval.batch_size=2", "--eval.use_async_envs=false", f"--output_dir={output_dir}", f"--seed={run.seed}"]
@@ -58,7 +63,7 @@ def main():
             except Exception:
                 if args.dry_run: print(f"PENDING {run.model_id}: immutable revision unavailable"); continue
                 raise
-        output=protocol_path.parents[1]/"outputs/eval/fair-v1-fixed"/args.mode/run.model_id/run.level/f"seed{run.seed}"; result=output/"eval_info.json"
+        output=fixed_output_root(protocol, protocol_path.parents[1])/args.mode/run.model_id/run.level/f"seed{run.seed}"; result=output/"eval_info.json"
         if result.is_file(): validate_fixed_result(result,run,revision,digest); continue
         command=build_fixed_eval_command(protocol,run,revision,output)
         if args.dry_run: print(shlex.join(command)); continue
