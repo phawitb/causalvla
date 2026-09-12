@@ -8,7 +8,7 @@ def _protocol():
 
 
 def test_full_matrix_is_seed_4000_for_trained_models_only():
-    matrix = build_fixed_matrix(_protocol(), "full")
+    matrix = build_fixed_matrix(_protocol(), "full", seeds=(4000,))
     assert {run.model_id for run in matrix} == {
         "M0-clean",
         "M1-offline-dr",
@@ -21,8 +21,36 @@ def test_full_matrix_is_seed_4000_for_trained_models_only():
     assert len(matrix) == 18
 
 
+def test_full_matrix_expands_requested_fixed_seeds():
+    matrix = build_fixed_matrix(_protocol(), "full", seeds=(5000, 6000))
+    assert {run.seed for run in matrix} == {5000, 6000}
+    assert len(matrix) == 36
+
+
 def test_command_targets_fixed_tree_and_episode_scope():
-    run = build_fixed_matrix(_protocol(), "full")[0]
+    run = build_fixed_matrix(_protocol(), "full", seeds=(5000,))[0]
     rendered = " ".join(build_fixed_eval_command(_protocol(), run, "a" * 40, Path("outputs/eval/fair-v1-fixed/full/M0")))
     assert "fair-v1-fixed/full" in rendered
     assert "--augmentation_scope=episode" in rendered
+    assert "--seed=5000" in rendered
+
+
+def test_validation_rejects_result_from_wrong_evaluation_seed(tmp_path):
+    run = build_fixed_matrix(_protocol(), "full", seeds=(5000,))[0]
+    payload = {
+        "augmentation_scope": "episode",
+        "ood_provenance": {"algorithm": "causal_aug.FixedEpisodeOOD", "evaluation_seed": 4000},
+        "model_revision": "a" * 40,
+        "protocol_sha256": "digest",
+        "per_task": [
+            {"metrics": {"successes": [True] * 10, "video_paths": ["x"] * 10, "policy_video_paths": ["y"] * 10}}
+            for _ in range(10)
+        ],
+    }
+    result = tmp_path / "eval_info.json"
+    result.write_text(__import__("json").dumps(payload))
+
+    import pytest
+    with pytest.raises(ValueError, match="evaluation seed"):
+        from scripts.eval_fair_v1_fixed import validate_fixed_result
+        validate_fixed_result(result, run, "a" * 40, "digest")

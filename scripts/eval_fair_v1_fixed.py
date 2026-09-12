@@ -17,14 +17,14 @@ class EvalRun:
     seed: int
     episodes_per_task: int
 
-def build_fixed_matrix(protocol: dict, mode: str) -> list[EvalRun]:
+def build_fixed_matrix(protocol: dict, mode: str, seeds: tuple[int, ...] = (4000,)) -> list[EvalRun]:
     if mode == "preflight":
         levels, episodes = ("level_0", "level_2"), protocol["evaluation"]["preflight_episodes_per_task"]
     elif mode == "full":
         levels, episodes = tuple(protocol["evaluation"]["levels"]), protocol["evaluation"]["episodes_per_task"]
     else:
         raise ValueError(f"unknown mode: {mode}")
-    return [EvalRun(model, level, 4000, episodes) for model in FIXED_MODELS for level in levels]
+    return [EvalRun(model, level, seed, episodes) for model in FIXED_MODELS for seed in seeds for level in levels]
 
 def build_fixed_eval_command(protocol: dict, run: EvalRun, revision: str, output_dir: Path) -> list[str]:
     if not SHA_PATTERN.fullmatch(revision):
@@ -34,11 +34,12 @@ def build_fixed_eval_command(protocol: dict, run: EvalRun, revision: str, output
         "--policy.device=mps", "--env.type=libero", "--env.task=libero_spatial",
         '--rename_map={"observation.images.image2":"observation.images.wrist_image"}',
         f"--ood_level={run.level}", "--augmentation_scope=episode", f"--eval.n_episodes={run.episodes_per_task}",
-        "--eval.batch_size=2", "--eval.use_async_envs=false", f"--output_dir={output_dir}", "--seed=4000"]
+        "--eval.batch_size=2", "--eval.use_async_envs=false", f"--output_dir={output_dir}", f"--seed={run.seed}"]
 
 def validate_fixed_result(path: Path, run: EvalRun, revision: str, digest: str) -> dict:
     payload = json.loads(path.read_text())
     if payload.get("augmentation_scope") != "episode" or payload.get("ood_provenance", {}).get("algorithm") != "causal_aug.FixedEpisodeOOD": raise ValueError("fixed augmentation provenance mismatch")
+    if payload.get("ood_provenance", {}).get("evaluation_seed") != run.seed: raise ValueError("evaluation seed provenance mismatch")
     if payload.get("model_revision") != revision or payload.get("protocol_sha256") != digest: raise ValueError("pinned provenance mismatch")
     if len(payload.get("per_task", [])) != 10: raise ValueError("evaluation task count is incomplete")
     for task in payload["per_task"]:
@@ -47,9 +48,9 @@ def validate_fixed_result(path: Path, run: EvalRun, revision: str, digest: str) 
     return payload
 
 def main():
-    parser = argparse.ArgumentParser(); parser.add_argument("--protocol", type=Path, default=Path("configs/fair_v1.json")); parser.add_argument("--mode", choices=("preflight","full"), required=True); parser.add_argument("--model", choices=FIXED_MODELS); parser.add_argument("--dry-run", action="store_true"); parser.add_argument("--revision", action="append", default=[]); args = parser.parse_args()
+    parser = argparse.ArgumentParser(); parser.add_argument("--protocol", type=Path, default=Path("configs/fair_v1.json")); parser.add_argument("--mode", choices=("preflight","full"), required=True); parser.add_argument("--model", choices=FIXED_MODELS); parser.add_argument("--seed", action="append", type=int, choices=(4000,5000,6000)); parser.add_argument("--dry-run", action="store_true"); parser.add_argument("--revision", action="append", default=[]); args = parser.parse_args()
     protocol_path=args.protocol.resolve(); protocol=load_protocol(protocol_path); validate_protocol(protocol, protocol_path); supplied=dict(item.split("=",1) for item in args.revision); digest=protocol_hash(protocol)
-    for run in build_fixed_matrix(protocol,args.mode):
+    for run in build_fixed_matrix(protocol,args.mode,tuple(args.seed or (4000,))):
         if args.model and run.model_id != args.model: continue
         revision=supplied.get(run.model_id)
         if revision is None:
@@ -57,7 +58,7 @@ def main():
             except Exception:
                 if args.dry_run: print(f"PENDING {run.model_id}: immutable revision unavailable"); continue
                 raise
-        output=protocol_path.parents[1]/"outputs/eval/fair-v1-fixed"/args.mode/run.model_id/run.level/"seed4000"; result=output/"eval_info.json"
+        output=protocol_path.parents[1]/"outputs/eval/fair-v1-fixed"/args.mode/run.model_id/run.level/f"seed{run.seed}"; result=output/"eval_info.json"
         if result.is_file(): validate_fixed_result(result,run,revision,digest); continue
         command=build_fixed_eval_command(protocol,run,revision,output)
         if args.dry_run: print(shlex.join(command)); continue
