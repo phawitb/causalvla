@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
+import {readFileSync} from 'node:fs';
 
 const require = createRequire(import.meta.url);
+const html = readFileSync(new URL('../pipeline.html', import.meta.url), 'utf8');
 const {
   defaultModelForResultView,
   filterModelsForResultView,
@@ -47,6 +49,10 @@ test('M-Models Fix selects only the fixed result collection', () => {
   const data = {models, runs: ['original'], episodes: ['original'], fixedModels: [{id: 'M0-clean'}], fixedRuns: ['fixed'], fixedEpisodes: ['fixed']};
   assert.deepEqual(resultCollectionForView(data, 'm-models-fixed'), {models: data.fixedModels, runs: data.fixedRuns, episodes: data.fixedEpisodes});
   assert.equal(resultCollectionForView(data, 'all').runs, data.runs);
+});
+
+test('fixed result label lists every evaluation seed', () => {
+  assert.match(html, /Fixed per episode · Seeds 4000, 5000, 6000/);
 });
 
 test('seed result tables aggregate runs by model and level while preserving missing cells', () => {
