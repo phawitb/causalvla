@@ -16,6 +16,12 @@
     return {cache: 'no-store'};
   }
 
+  async function fetchResultsManifest(fetcher = fetch) {
+    const response = await fetcher('results-data.json', resultsManifestRequestOptions());
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
+  }
+
   function resultCollectionForView(data, view, suite = 'libero_spatial') {
     if (view === 'm-models-fixed') {
       if (data.fixedSuites?.[suite]) return data.fixedSuites[suite];
@@ -58,5 +64,5 @@
     }));
   }
 
-  return {filterModelsForResultView, defaultModelForResultView, resultsManifestRequestOptions, resultCollectionForView, seedResultTables};
+  return {filterModelsForResultView, defaultModelForResultView, resultsManifestRequestOptions, fetchResultsManifest, resultCollectionForView, seedResultTables};
 }));

@@ -1181,7 +1181,7 @@ def test_ablation_no_action():
 <!-- ================================================================ -->
 <!-- JAVASCRIPT                                                       -->
 <!-- ================================================================ -->
-<script src="scripts/results_dashboard.js"></script>
+<script src="scripts/results_dashboard.js?v=20260913-object-refresh"></script>
 <script>
 // --- Tab switching ---
 function switchTab(tab) {
@@ -1397,16 +1397,18 @@ function selectVideoView(view) {
   renderRollouts();
 }
 
+async function reloadResultsData() {
+  document.getElementById('results-count').textContent = 'Refreshing evaluation results…';
+  resultsData = await ResultDashboard.fetchResultsManifest(fetch);
+  const videoCount = resultsData.models.reduce((sum, model) => sum + model.videos, 0);
+  document.getElementById('results-count').textContent = `${resultsData.models.length} models · ${videoCount.toLocaleString()} rollout videos`;
+  selectResultsView(selectedResultsView);
+}
+
 async function initResults() {
   if (resultsData) return;
   try {
-    const response = await fetch('results-data.json', ResultDashboard.resultsManifestRequestOptions());
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    resultsData = await response.json();
-    const videoCount = resultsData.models.reduce((sum, model) => sum + model.videos, 0);
-    document.getElementById('results-count').textContent = `${resultsData.models.length} models · ${videoCount.toLocaleString()} rollout videos`;
-    renderResultOverview();
-    selectResultModel(selectedResultModel);
+    await reloadResultsData();
   } catch (error) {
     document.getElementById('results-count').textContent = 'Unable to load evaluation results';
     document.getElementById('results-model-grid').innerHTML = '<div class="results-empty">results-data.json was not found — run scripts/build_results_data.py to rebuild it</div>';
@@ -1424,9 +1426,15 @@ document.getElementById('rollout-more').addEventListener('click', () => {
 document.querySelectorAll('.results-subtab').forEach(button => {
   button.addEventListener('click', () => selectResultsView(button.dataset.resultsView));
 });
-document.getElementById('results-suite-filter').addEventListener('change', event => {
+document.getElementById('results-suite-filter').addEventListener('change', async event => {
   selectedFixedSuite = event.target.value;
-  if (selectedResultsView === 'm-models-fixed') selectResultsView(selectedResultsView);
+  if (selectedResultsView === 'm-models-fixed') {
+    try {
+      await reloadResultsData();
+    } catch (error) {
+      document.getElementById('results-count').textContent = 'Unable to refresh evaluation results';
+    }
+  }
 });
 document.getElementById('policy-view-btn').addEventListener('click', () => selectVideoView('policy'));
 document.getElementById('clean-view-btn').addEventListener('click', () => selectVideoView('clean'));

@@ -9,6 +9,7 @@ const {
   defaultModelForResultView,
   filterModelsForResultView,
   resultsManifestRequestOptions,
+  fetchResultsManifest,
   resultCollectionForView,
   seedResultTables,
 } = require('../scripts/results_dashboard.js');
@@ -45,6 +46,18 @@ test('results manifest requests bypass stale browser caches', () => {
   assert.deepEqual(resultsManifestRequestOptions(), {cache: 'no-store'});
 });
 
+test('fetchResultsManifest reloads dashboard data without browser cache', async () => {
+  const calls = [];
+  const payload = {fixedSuites: {libero_object: {models: []}}};
+  const result = await fetchResultsManifest(async (url, options) => {
+    calls.push([url, options]);
+    return {ok: true, json: async () => payload};
+  });
+
+  assert.deepEqual(calls, [['results-data.json', {cache: 'no-store'}]]);
+  assert.equal(result, payload);
+});
+
 test('M-Models Fix selects only the fixed result collection', () => {
   const data = {models, runs: ['original'], episodes: ['original'], fixedModels: [{id: 'M0-clean'}], fixedRuns: ['fixed'], fixedEpisodes: ['fixed']};
   assert.deepEqual(resultCollectionForView(data, 'm-models-fixed'), {models: data.fixedModels, runs: data.fixedRuns, episodes: data.fixedEpisodes});
@@ -68,6 +81,14 @@ test('fixed results expose spatial and object suite choices', () => {
   assert.match(html, /id="results-suite-filter"/);
   assert.match(html, /value="libero_spatial"/);
   assert.match(html, /value="libero_object"/);
+});
+
+test('changing fixed suite reloads the results manifest', () => {
+  assert.match(html, /results-suite-filter'[\s\S]*?await reloadResultsData\(\)/);
+});
+
+test('dashboard script URL is cache-versioned', () => {
+  assert.match(html, /scripts\/results_dashboard\.js\?v=20260913-object-refresh/);
 });
 
 test('seed result tables aggregate runs by model and level while preserving missing cells', () => {
